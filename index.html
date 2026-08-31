@@ -292,15 +292,35 @@
 
     <!-- CRUD MODAL -->
     <div id="crud-modal" class="modal">
-        <div class="modal-content">
-            <h2 id="crud-modal-title">Add Item</h2>
-            <div class="form-group"><label>Title</label><input type="text" id="crud-title"></div>
-            <div class="form-group"><label>Description</label><textarea id="crud-desc"></textarea></div>
-            <div class="form-group"><label>Photo URL</label><input type="text" id="crud-img" value="https://via.placeholder.com/300x150"></div>
-            <button class="btn" id="crud-save-btn">Save</button>
-            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="closeModal('crud-modal')">Cancel</button>
+    <div class="modal-content">
+        <h2 id="crud-modal-title">Add Item</h2>
+        <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="crud-title">
         </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="crud-desc"></textarea>
+        </div>
+        <div class="form-group">
+            <label>Media Input Type</label>
+            <select id="crud-media-type" onchange="toggleMediaInput()">
+                <option value="url">URL (Image or Video)</option>
+                <option value="upload">Upload Local Image</option>
+            </select>
+        </div>
+        <div class="form-group" id="crud-url-group">
+            <label>Media URL (Image Link or YouTube Embed/Video Link)</label>
+            <input type="text" id="crud-img" placeholder="https://...">
+        </div>
+        <div class="form-group hidden" id="crud-file-group">
+            <label>Upload Image File</label>
+            <input type="file" id="crud-file" accept="image/*">
+        </div>
+        <button class="btn" id="crud-save-btn">Save</button>
+        <button class="btn btn-secondary" style="margin-top: 10px;" onclick="closeModal('crud-modal')">Cancel</button>
     </div>
+</div>
 
     <script>
         // Firebase Config
@@ -334,6 +354,26 @@
 
     if (isAdmin) fetchRegistrations();
 });
+
+        function toggleMediaInput() {
+    const type = document.getElementById('crud-media-type').value;
+    document.getElementById('crud-url-group').classList.toggle('hidden', type !== 'url');
+    document.getElementById('crud-file-group').classList.toggle('hidden', type !== 'upload');
+}
+
+        function renderMediaTag(mediaSrc, title) {
+    if (!mediaSrc) return `<img src="https://via.placeholder.com/300x150" alt="${title}">`;
+    
+    // Check for YouTube links or MP4 videos
+    if (mediaSrc.includes('youtube.com') || mediaSrc.includes('youtu.be')) {
+        let embedUrl = mediaSrc.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/');
+        return `<iframe width="100%" height="180" src="${embedUrl}" frameborder="0" allowfullscreen style="border:none;"></iframe>`;
+    } else if (mediaSrc.endsWith('.mp4') || mediaSrc.startsWith('data:video')) {
+        return `<video width="100%" height="180" controls><source src="${mediaSrc}" type="video/mp4"></video>`;
+    } else {
+        return `<img src="${mediaSrc}" alt="${title}">`;
+    }
+}
 
         function handleAuthClick() {
             if (isAdmin) {
@@ -403,7 +443,7 @@
                     const item = doc.data();
                     list.innerHTML += `
                         <div class="card">
-                            <img src="${item.img}" alt="${item.title}">
+${renderMediaTag(item.img, item.title)}
                             <div class="card-body">
                                 <h3 class="card-title">${item.title}</h3>
                                 <p class="card-desc">${item.desc}</p>
@@ -422,7 +462,7 @@
                     const item = doc.data();
                     list.innerHTML += `
                         <div class="card">
-                            <img src="${item.img}" alt="${item.title}">
+                            ${renderMediaTag(item.img, item.title)}
                             <div class="card-body">
                                 <h3 class="card-title">${item.title}</h3>
                                 <p class="card-desc">${item.desc}</p>
@@ -445,7 +485,7 @@
         if (container) {
             container.innerHTML += `
                 <div class="card">
-                    <img src="${m.img}" alt="${m.title}">
+                    ${renderMediaTag(item.img, item.title)}
                     <div class="card-body">
                         <h4 class="card-title">${m.title}</h4>
                         <p class="card-desc">${m.desc}</p>
@@ -515,16 +555,38 @@
         }
 
         document.getElementById('crud-save-btn').onclick = async function() {
-            const title = document.getElementById('crud-title').value;
-            const desc = document.getElementById('crud-desc').value;
-            const img = document.getElementById('crud-img').value;
+    const title = document.getElementById('crud-title').value;
+    const desc = document.getElementById('crud-desc').value;
+    const mediaType = document.getElementById('crud-media-type').value;
+    const fileInput = document.getElementById('crud-file');
+    let mediaUrl = document.getElementById('crud-img').value;
 
-            if (!title) return alert('Title required');
+    if (!title) return alert('Title required');
 
-            const targetCollection = activeEventContext === 'committee' ? 'committees' : 'sports';
-            await db.collection(targetCollection).add({ title, desc, img });
-            closeModal('crud-modal');
-        };
+    // Handle File Upload via FileReader (Base64 conversion)
+    if (mediaType === 'upload' && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        mediaUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    const targetCollection = activeEventContext === 'committee' ? 'committees' : 'sports';
+    await db.collection(targetCollection).add({ 
+        title, 
+        desc, 
+        img: mediaUrl 
+    });
+
+    // Reset inputs & close modal
+    document.getElementById('crud-title').value = '';
+    document.getElementById('crud-desc').value = '';
+    document.getElementById('crud-img').value = '';
+    document.getElementById('crud-file').value = '';
+    closeModal('crud-modal');
+};
 
         async function deleteDoc(collectionName, id) {
             if (confirm("Are you sure you want to delete this record?")) {
