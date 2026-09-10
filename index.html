@@ -6,263 +6,317 @@
     <title>JTC Events</title>
     <style>
     :root {
-    --bg-gradient: radial-gradient(circle at top left, #1e1b4b, #0f172a 60%, #020617);
-    --glass-bg: rgba(255, 255, 255, 0.05);
-    --glass-card: rgba(255, 255, 255, 0.07);
-    --glass-border: rgba(255, 255, 255, 0.12);
-    --glass-blur: blur(16px);
-    --primary: #6366f1;
-    --primary-hover: #4f46e5;
-    --secondary: #06b6d4;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --admin-color: #f43f5e;
-}
+        --bg-gradient: radial-gradient(circle at top left, #4c0519 0%, #451a03 50%, #0d0d12 100%);
+        --primary: #ef4444;
+        --primary-hover: #dc2626;
+        --secondary: #f59e0b;
+        --glass-bg: rgba(255, 255, 255, 0.04);
+        --glass-card: rgba(255, 255, 255, 0.06);
+        --glass-border: rgba(255, 255, 255, 0.15);
+        --glass-blur: blur(16px);
+        --text-main: #f8fafc;
+        --text-muted: #a1a1aa;
+        --admin-color: #f43f5e;
+    }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', sans-serif; }
 
-body { 
-    background: var(--bg-gradient);
-    background-attachment: fixed;
-    color: var(--text-main);
-    min-height: 100vh;
-    padding-bottom: 50px;
-}
+    body { 
+        background: var(--bg-gradient);
+        background-attachment: fixed;
+        color: var(--text-main);
+        min-height: 100vh;
+        padding-bottom: 50px;
+    }
 
-/* Glass Header */
-header { 
-    background: rgba(15, 23, 42, 0.65);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-bottom: 1px solid var(--glass-border);
-    padding: 1.2rem 2.5rem; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    position: sticky; 
-    top: 0; 
-    z-index: 100; 
-}
-header h1 { 
-    font-size: 1.6rem; 
-    font-weight: 700;
-    background: linear-gradient(135deg, #a5b4fc, #38bdf8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-nav { display: flex; gap: 10px; }
-nav button { 
-    background: transparent; 
-    border: 1px solid transparent; 
-    color: var(--text-muted); 
-    font-size: 0.95rem; 
-    cursor: pointer; 
-    padding: 8px 16px; 
-    border-radius: 8px; 
-    transition: all 0.3s ease;
-}
-nav button.active, nav button:hover { 
-    background: var(--glass-bg); 
-    color: var(--text-main);
-    border-color: var(--glass-border);
-}
+    /* Glass Header */
+    header { 
+        background: rgba(18, 16, 16, 0.75);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 1.2rem 2.5rem; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        position: sticky; 
+        top: 0; 
+        z-index: 100; 
+    }
+    header h1 { 
+        font-size: 1.6rem; 
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--text-main), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    nav { display: flex; gap: 10px; }
+    nav button { 
+        background: transparent; 
+        border: 1px solid transparent; 
+        color: var(--text-muted); 
+        font-size: 0.95rem; 
+        cursor: pointer; 
+        padding: 8px 16px; 
+        border-radius: 8px; 
+        transition: all 0.3s ease;
+    }
+    nav button.active, nav button:hover { 
+        background: var(--glass-bg); 
+        color: var(--text-main);
+        border-color: var(--glass-border);
+    }
 
-.auth-status { display: flex; align-items: center; gap: 12px; font-size: 0.9rem; }
-.auth-btn { 
-    background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-    color: white; 
-    border: none; 
-    padding: 8px 18px; 
-    border-radius: 8px; 
-    cursor: pointer; 
-    font-weight: 600;
-    transition: opacity 0.2s ease;
-}
-.auth-btn:hover { opacity: 0.9; }
+    .auth-status { display: flex; align-items: center; gap: 12px; font-size: 0.9rem; }
+    .auth-btn { 
+        background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+        color: white; 
+        border: none; 
+        padding: 8px 18px; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        font-weight: 600;
+        transition: opacity 0.2s ease;
+    }
+    .auth-btn:hover { opacity: 0.9; }
 
-/* Centered Glass Wrapper */
-.container { 
-    max-width: 1100px; 
-    margin: 2.5rem auto; 
-    padding: 2.5rem; 
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-}
-.page { display: none; }
-.page.active { display: block; }
+    /* Centered Glass Wrapper */
+    .container { 
+        max-width: 1100px; 
+        margin: 2.5rem auto; 
+        padding: 2.5rem; 
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    .page { display: none; }
+    .page.active { display: block; }
 
-/* Dynamic Grids */
-.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-top: 24px; }
-.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 24px; }
+    /* Dynamic Grids */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-top: 24px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 24px; }
 
-/* Cards & Big Tiles */
-.card, .big-tile { 
-    background: var(--glass-card); 
-    border-radius: 14px; 
-    border: 1px solid var(--glass-border); 
-    overflow: hidden; 
-    transition: all 0.3s ease;
-}
-.big-tile { 
-    padding: 40px 25px; 
-    text-align: center; 
-    cursor: pointer; 
-}
-.card:hover, .big-tile:hover { 
-    transform: translateY(-6px); 
-    border-color: rgba(99, 102, 241, 0.4); 
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
-}
-.big-tile h2 { font-size: 1.8rem; margin-bottom: 10px; color: var(--text-main); }
-.big-tile p { color: var(--text-muted); }
+    /* Cards & Big Tiles */
+    .card, .big-tile { 
+        background: var(--glass-card); 
+        border-radius: 14px; 
+        border: 1px solid var(--glass-border); 
+        overflow: hidden; 
+        transition: all 0.3s ease;
+    }
+    .big-tile { 
+        padding: 40px 25px; 
+        text-align: center; 
+        cursor: pointer; 
+    }
+    .card:hover, .big-tile:hover { 
+        transform: translateY(-6px); 
+        border-color: var(--primary); 
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    .big-tile h2 { font-size: 1.8rem; margin-bottom: 10px; color: var(--text-main); }
+    .big-tile p { color: var(--text-muted); }
 
-.card img, .card video, .card iframe { 
-    width: 100%; 
-    height: 190px; 
-    object-fit: cover; 
-    border-bottom: 1px solid var(--glass-border);
-}
-.card-body { padding: 18px; }
-.card-title { font-size: 1.25rem; margin-bottom: 8px; color: var(--text-main); }
-.card-desc { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5; }
+    .card img, .card video, .card iframe { 
+        width: 100%; 
+        height: 190px; 
+        object-fit: cover; 
+        border-bottom: 1px solid var(--glass-border);
+    }
+    .card-body { padding: 18px; }
+    .card-title { font-size: 1.25rem; margin-bottom: 8px; color: var(--text-main); }
+    .card-desc { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5; }
 
-/* Tables */
-.table-responsive { overflow-x: auto; margin-top: 20px; border-radius: 12px; border: 1px solid var(--glass-border); }
-table { width: 100%; border-collapse: collapse; background: rgba(15, 23, 42, 0.4); font-size: 0.9rem; }
-th, td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--glass-border); }
-th { background: rgba(255, 255, 255, 0.05); color: var(--text-main); font-weight: 600; }
-td { color: var(--text-muted); }
+    /* Tables */
+    .table-responsive { overflow-x: auto; margin-top: 20px; border-radius: 12px; border: 1px solid var(--glass-border); }
+    table { width: 100%; border-collapse: collapse; background: rgba(18, 16, 16, 0.5); font-size: 0.9rem; }
+    th, td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--glass-border); }
+    th { background: rgba(255, 255, 255, 0.05); color: var(--text-main); font-weight: 600; }
+    td { color: var(--text-muted); }
 
-/* Buttons & Inputs */
-.btn { 
-    background: linear-gradient(135deg, var(--primary), #4338ca); 
-    color: white; 
-    border: none; 
-    padding: 10px 18px; 
-    border-radius: 8px; 
-    cursor: pointer; 
-    width: 100%; 
-    font-size: 0.9rem; 
-    font-weight: 600;
-    transition: transform 0.2s ease;
-}
-.btn:hover { transform: translateY(-1px); }
-.btn-danger { background: linear-gradient(135deg, #f43f5e, #be123c); }
-.btn-secondary { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border); color: var(--text-main); }
+    /* Buttons & Inputs */
+    .btn { 
+        background: linear-gradient(135deg, var(--primary), var(--primary-hover)); 
+        color: white; 
+        border: none; 
+        padding: 10px 18px; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        width: 100%; 
+        font-size: 0.9rem; 
+        font-weight: 600;
+        transition: transform 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-danger { background: linear-gradient(135deg, #f43f5e, #be123c); }
+    .btn-secondary { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border); color: var(--text-main); }
 
-.admin-panel { 
-    background: rgba(244, 63, 94, 0.08); 
-    border: 1px dashed var(--admin-color); 
-    padding: 20px; 
-    border-radius: 12px; 
-    margin-bottom: 24px; 
-}
+    .admin-panel { 
+        background: rgba(244, 63, 94, 0.08); 
+        border: 1px dashed var(--admin-color); 
+        padding: 20px; 
+        border-radius: 12px; 
+        margin-bottom: 24px; 
+    }
 
-/* Modals */
-.modal { 
-    display: none; 
-    position: fixed; 
-    top: 0; left: 0; 
-    width: 100%; height: 100%; 
-    background: rgba(2, 6, 23, 0.75); 
-    backdrop-filter: blur(8px);
-    justify-content: center; 
-    align-items: center; 
-    z-index: 1000; 
-}
-.modal-content { 
-    background: #0f172a; 
-    border: 1px solid var(--glass-border);
-    padding: 30px; 
-    border-radius: 16px; 
-    width: 90%; 
-    max-width: 500px; 
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-}
-.form-group { margin-bottom: 18px; }
-.form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem; color: var(--text-muted); }
-.form-group input, .form-group textarea, .form-group select { 
-    width: 100%; 
-    padding: 10px; 
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--glass-border); 
-    border-radius: 8px; 
-    color: var(--text-main);
-    outline: none;
-}
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-    border-color: var(--primary);
-}
+    /* Modals */
+    .modal { 
+        display: none; 
+        position: fixed; 
+        top: 0; left: 0; 
+        width: 100%; height: 100%; 
+        background: rgba(5, 5, 8, 0.82); 
+        backdrop-filter: blur(8px);
+        justify-content: center; 
+        align-items: center; 
+        z-index: 1000; 
+    }
+    .modal-content { 
+        background: #121012; 
+        border: 1px solid var(--glass-border);
+        padding: 30px; 
+        border-radius: 16px; 
+        width: 90%; 
+        max-width: 500px; 
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+    }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem; color: var(--text-muted); }
+    .form-group input, .form-group textarea, .form-group select { 
+        width: 100%; 
+        padding: 10px; 
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border); 
+        border-radius: 8px; 
+        color: var(--text-main);
+        outline: none;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+        border-color: var(--primary);
+    }
 
-/* Guidelines Box */
-.rules-box { 
-    background: rgba(255, 255, 255, 0.03); 
-    padding: 24px; 
-    border-radius: 14px; 
-    border-left: 4px solid var(--primary); 
-    border: 1px solid var(--glass-border);
-    margin-top: 24px; 
-}
+    /* Guidelines Box */
+    .rules-box { 
+        background: rgba(255, 255, 255, 0.03); 
+        padding: 24px; 
+        border-radius: 14px; 
+        border-left: 4px solid var(--primary); 
+        border: 1px solid var(--glass-border);
+        margin-top: 24px; 
+    }
 
-.hidden { display: none !important; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .hidden { display: none !important; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
 
-/* Code of Conduct Badge Interactivity & Styles */
-.coc-badge-container {
-    margin: 25px 0;
-}
+    /* Code of Conduct Badge */
+    .coc-badge-container {
+        margin: 25px 0;
+    }
 
-.coc-badge {
-    background: var(--glass-card);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    color: var(--text-main);
-    padding: 20px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    cursor: pointer; /* Ensures hand cursor on hover */
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
+    .coc-badge {
+        background: var(--glass-card);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        color: var(--text-main);
+        padding: 20px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
 
-.coc-badge:hover {
-    transform: translateY(-4px);
-    border-color: var(--secondary);
-    box-shadow: 0 8px 25px rgba(6, 182, 212, 0.25);
-    background: rgba(255, 255, 255, 0.09);
-}
+    .coc-badge:hover {
+        transform: translateY(-4px);
+        border-color: var(--secondary);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        background: rgba(255, 255, 255, 0.09);
+    }
 
-.coc-icon {
-    font-size: 2rem;
-}
+    .coc-icon {
+        font-size: 2rem;
+    }
 
-.coc-info h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: var(--text-main);
-}
+    .coc-info h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: var(--text-main);
+    }
 
-.coc-info p {
-    margin: 4px 0 0 0;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
+    .coc-info p {
+        margin: 4px 0 0 0;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
 
-</style>
+    /* Dynamic Theme Overrides */
+    body[data-theme="home"], body:not([data-theme]) {
+        --bg-gradient: radial-gradient(circle at top left, #4c0519 0%, #451a03 50%, #0d0d12 100%);
+        --primary: #ef4444;
+        --primary-hover: #dc2626;
+        --secondary: #f59e0b;
+        --glass-border: rgba(255, 255, 255, 0.18);
+    }
+
+    /* JTC MUN: Red & White Theme */
+    body[data-theme="mun"] {
+        --bg-gradient: radial-gradient(circle at top left, #450a0a 0%, #180404 60%, #080202 100%);
+        --primary: #dc2626;
+        --primary-hover: #b91c1c;
+        --secondary: #ffffff;
+        --glass-border: rgba(239, 68, 68, 0.35);
+        --glass-card: rgba(220, 38, 38, 0.08);
+    }
+    body[data-theme="mun"] header h1 {
+        background: linear-gradient(135deg, #ffffff, #fca5a5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    body[data-theme="mun"] .btn {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: #ffffff;
+    }
+
+    /* JTC Sports Fest: Golden Theme */
+    body[data-theme="sports"] {
+        --bg-gradient: radial-gradient(circle at top left, #451a03 0%, #1e0e03 60%, #0a0602 100%);
+        --primary: #f59e0b;
+        --primary-hover: #d97706;
+        --secondary: #fbbf24;
+        --glass-border: rgba(245, 158, 11, 0.35);
+        --glass-card: rgba(245, 158, 11, 0.08);
+    }
+    body[data-theme="sports"] header h1 {
+        background: linear-gradient(135deg, #fef08a, #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    body[data-theme="sports"] .btn {
+        background: linear-gradient(135deg, #f59e0b, #b45309);
+        color: #ffffff;
+    }
+
+    /* Tall image boxes for Home page cards */
+    #home .card img {
+    height: 450px;
+    object-fit: cover;
+    object-position: center;
+    }
+    
+    </style>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 </head>
-<body>
+<body data-theme="home"></body>
 
     <header>
         <h1>JTC Events</h1>
@@ -281,28 +335,53 @@ td { color: var(--text-muted); }
     <div class="container">
 
         <!-- HOME PAGE -->
-        <div id="home" class="page active">
-            <h2>Welcome to JTC Events</h2>
-            <p style="margin: 10px 0 20px 0; color: #475569;">
-                Discover upcoming Model United Nations debates and thrilling athletic competitions all in one place.
-            </p>
-            <div class="grid-2">
-                <div class="card">
-                    <img src="https://via.placeholder.com/400x200?text=JTC+MUN+Debate" alt="MUN Placeholder">
-                    <div class="card-body">
-                        <h3 class="card-title">Model United Nations</h3>
-                        <p class="card-desc">Engage in high-level diplomacy, solve global issues, and debate with passionate delegates.</p>
-                    </div>
-                </div>
-                <div class="card">
-                    <img src="https://via.placeholder.com/400x200?text=JTC+Sports+Fest" alt="Sports Placeholder">
-                    <div class="card-body">
-                        <h3 class="card-title">Sports Fest</h3>
-                        <p class="card-desc">Compete across multiple athletic categories and lead your team to victory.</p>
-                    </div>
-                </div>
+    <div id="home" class="page active">
+    <div class="hero-section" style="text-align: center; margin-bottom: 30px;">
+        <h2 style="font-size: 2.2rem; margin-bottom: 8px;">Welcome to JTC Events</h2>
+        <p style="color: var(--secondary); font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; font-size: 0.8rem;">
+            Beaconhouse Johar Town Campus • Lahore
+        </p>
+    </div>
+
+    <div class="rules-box" style="margin-bottom: 32px; line-height: 1.7; color: var(--text-muted); border-left-color: var(--primary);">
+        <p style="margin-bottom: 16px;">
+            Beaconhouse Johar Town Campus (JTC) in Lahore is renowned not just for academic rigor, but for a vibrant student culture that comes alive through its flagship annual events. Among a bustling calendar, two spectacles stand as the pillars of JTC’s co-curricular identity: <strong style="color: #ef4444;">JTCMUN</strong> and <strong style="color: #f59e0b;">Sportsfest</strong>. Together, these events capture the dual spirit of the campus—where sharp intellect meets raw athletic drive.
+        </p>
+        <p style="margin-bottom: 16px;">
+            <strong style="color: #ef4444;">JTCMUN</strong> transforms the campus into a bustling arena of global diplomacy and high-stakes debate. For three intense days, students step into the shoes of international delegates, tackling pressing geopolitical crises, drafting complex resolutions, and mastering the art of diplomacy. The corridors buzz with unmoderated caucuses, passionate parliamentary debate, and strategic alliances forged over quick breaks. Beyond committee sessions, JTCMUN features social concert nights and formal dinners building connections across institutions.
+        </p>
+        <p style="margin-bottom: 16px;">
+            In sharp contrast, <strong style="color: #f59e0b;">Sportsfest</strong> unleashes pure adrenaline across the JTC grounds. The campus turns into a sea of vibrant house colors as student-athletes gear up for track and field events, high-stakes football matches, cricket showdowns, and fast-paced basketball games. Driven by house rivalries and intense school pride, it is a celebration of grit, sportsmanship, and endurance.
+        </p>
+        <p>
+            Ultimately, these twin traditions define the essence of student life at JTC. While <strong style="color: #ef4444;">JTCMUN</strong> sharpens the mind and nurtures future leaders, <strong style="color: #f59e0b;">Sportsfest</strong> builds character and team spirit—creating a balanced, high-energy environment long after the final committee adjourns and stadium lights fade.
+        </p>
+    </div>
+
+    <div class="grid-2">
+        <!-- Interactive MUN Card -->
+        <div class="card big-tile" onclick="switchPage('mun', document.querySelectorAll('nav button')[1])" style="text-align: left; padding: 0; cursor: pointer;">
+            <img src="JTCMUN.png">
+            <div class="card-body">
+                <span style="background: rgba(220, 38, 38, 0.2); color: #fca5a5; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.3);">Diplomacy & Debate</span>
+                <h3 class="card-title" style="margin-top: 12px; font-size: 1.4rem;">Model United Nations</h3>
+                <p class="card-desc" style="margin-bottom: 20px;">Engage in high-level diplomacy, solve global issues, and debate with passionate delegates.</p>
+                <button class="btn" style="background: linear-gradient(135deg, #dc2626, #991b1b);">Explore JTCMUN &rarr;</button>
             </div>
         </div>
+
+        <!-- Interactive Sportsfest Card -->
+        <div class="card big-tile" onclick="switchPage('sports', document.querySelectorAll('nav button')[2])" style="text-align: left; padding: 0; cursor: pointer;">
+            <img src="SF.png">
+            <div class="card-body">
+                <span style="background: rgba(245, 158, 11, 0.2); color: #fef08a; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.3);">Athletics & House Spirit</span>
+                <h3 class="card-title" style="margin-top: 12px; font-size: 1.4rem;">Sports Fest</h3>
+                <p class="card-desc" style="margin-bottom: 20px;">Compete across multiple athletic categories and lead your house team to victory.</p>
+                <button class="btn" style="background: linear-gradient(135deg, #f59e0b, #b45309);">Explore Sportsfest &rarr;</button>
+            </div>
+        </div>
+    </div>
+    </div>
 
         <!-- MUN PAGE -->
         <div id="mun" class="page">
@@ -637,11 +716,15 @@ td { color: var(--text-muted); }
 
         // Navigation Switcher Fix
         function switchPage(pageId, btnEl) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            if(btnEl) btnEl.classList.add('active');
-        }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById(pageId).classList.add('active');
+    if(btnEl) btnEl.classList.add('active');
+
+    // Update body theme state
+    document.body.setAttribute('data-theme', pageId);
+}
 
         function openMunSubSection(sec) {
             document.getElementById('mun-main-tiles').classList.add('hidden');
