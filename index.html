@@ -47,6 +47,7 @@
         font-size: 1.6rem; 
         font-weight: 700;
         background: linear-gradient(135deg, var(--text-main), var(--secondary));
+        background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
@@ -275,6 +276,7 @@
     }
     body[data-theme="mun"] header h1 {
         background: linear-gradient(135deg, #ffffff, #fca5a5);
+        background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
@@ -294,6 +296,7 @@
     }
     body[data-theme="sports"] header h1 {
         background: linear-gradient(135deg, #fef08a, #f59e0b);
+        background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
@@ -308,6 +311,78 @@
     object-fit: cover;
     object-position: center;
     }
+
+    /* Dynamic Badge Styling for Code of Conduct & Register Now */
+.coc-badge-container {
+    width: 100%;
+    margin: 16px 0;
+}
+
+.coc-badge {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 16px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.coc-icon {
+    font-size: 2rem;
+    margin-right: 16px;
+}
+
+.coc-info h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-main);
+}
+
+.coc-info p {
+    margin: 4px 0 0 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Sports Fest: Golden Theme Badges */
+body[data-theme="sports"] .coc-badge {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(180, 83, 9, 0.3));
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+}
+
+body[data-theme="sports"] .coc-badge:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #f59e0b, #b45309);
+    border-color: #fbbf24;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+/* JTC MUN: Red Theme Badges */
+body[data-theme="mun"] .coc-badge {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(153, 27, 27, 0.3));
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.15);
+}
+
+body[data-theme="mun"] .coc-badge:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+    border-color: #fca5a5;
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+}
+
+body[data-theme="sports"] .coc-badge:hover .coc-info h3,
+body[data-theme="sports"] .coc-badge:hover .coc-info p,
+body[data-theme="mun"] .coc-badge:hover .coc-info h3,
+body[data-theme="mun"] .coc-badge:hover .coc-info p {
+    color: #ffffff;
+}
+
     
     </style>
 
@@ -383,76 +458,84 @@
     </div>
     </div>
 
-        <!-- MUN PAGE -->
-        <div id="mun" class="page">
-            <div id="mun-main-tiles" class="grid-2">
-                <div class="big-tile" onclick="openMunSubSection('management')">
-                    <h2>Management</h2>
-                    <p>Meet the Secretariat, Directorate, and Executive Committee.</p>
-                </div>
-                <div class="big-tile" onclick="openMunSubSection('committees')">
-                    <h2>Committees</h2>
-                    <p>Explore committees, rules, and registration forms.</p>
-                </div>
-            </div>
-
-            <div class="coc-badge-container">
+    <!-- MUN PAGE -->
+<div id="mun" class="page">
+    <div id="mun-main-tiles" class="grid-2">
+        <div class="big-tile" onclick="openMunSubSection('management')">
+            <h2>Management</h2>
+            <p>Meet the Secretariat, Directorate, and Executive Committee.</p>
+        </div>
+        <div class="big-tile" onclick="openMunSubSection('committees')">
+            <h2>Committees</h2>
+            <p>Explore committees, rules, and registration forms.</p>
+        </div>
+    </div>
+    
+    <!-- Code of Conduct Badge -->
+    <div class="coc-badge-container">
         <div class="coc-badge" onclick="openCodeOfConduct('mun')">
-        <span class="coc-icon">📜</span>
-        <div class="coc-info">
-            <h3>Code of Conduct</h3>
-            <p id="mun-coc-status">Loading guidelines...</p>
-            </div>
-                </div>
-                <div class="admin-only hidden" style="margin-top: 10px;">
-                    <input type="file" id="mun-coc-file" accept=".pdf,.doc,.docx,image/*" class="hidden" onchange="uploadCodeOfConduct('mun', this)">
-                    <button class="btn btn-secondary" onclick="document.getElementById('mun-coc-file').click()">Upload / Replace MUN Code of Conduct</button>
-                </div>
-            </div>
-
-            <div id="mun-management" class="hidden">
-                <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToMunMain()">&larr; Back to Main MUN</button>
-                <h2>Management</h2>
-                
-                <div id="admin-mgmt-tools" class="admin-panel hidden">
-                    <h3>[Admin] Add New Management Member</h3>
-                    <div class="form-group"><label>Category</label><select id="mgmt-cat"><option>Secretariat</option><option>Directorate</option><option>EC</option></select></div>
-                    <div class="form-group"><label>Name/Title</label><input type="text" id="mgmt-title"></div>
-                    <div class="form-group"><label>Description</label><input type="text" id="mgmt-desc"></div>
-                    <div class="form-group"><label>Photo URL</label><input type="text" id="mgmt-img" value="https://via.placeholder.com/150"></div>
-                    <button class="btn" onclick="addManagementCard()">Add Member</button>
-                </div>
-
-                <h3>Secretariat</h3><div id="container-Secretariat" class="grid-3"></div>
-                <h3 style="margin-top:20px;">Directorate</h3><div id="container-Directorate" class="grid-3"></div>
-                <h3 style="margin-top:20px;">EC</h3><div id="container-EC" class="grid-3"></div>
-            </div>
-
-            <div id="mun-committees" class="hidden">
-                <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToMunMain()">&larr; Back to Main MUN</button>
-                <div class="section-header">
-                    <h2>MUN Committees</h2>
-                    <button id="admin-add-committee-btn" class="btn hidden" style="width:auto;" onclick="openCommitteeModal()">+ Add Committee</button>
-                </div>
-
-                <div id="mun-committee-list" class="grid-3"></div>
-
-                <div class="rules-box">
-                    <div class="section-header">
-                        <h3>Rules & Regulations</h3>
-                        <button class="admin-only btn btn-secondary hidden" style="width:auto;" onclick="editRules('mun')">Edit Rules</button>
-                    </div>
-                    <p id="mun-rules-text">Loading rules...</p>
-                </div>
-
-                    
-
+            <span class="coc-icon">📜</span>
+            <div class="coc-info">
+                <h3>Code of Conduct</h3>
+                <p id="mun-coc-status">Loading guidelines...</p>
             </div>
         </div>
+        <div class="admin-only hidden" style="margin-top: 10px;">
+            <input type="file" id="mun-coc-file" accept=".pdf,.doc,.docx,image/*" class="hidden" onchange="uploadCodeOfConduct('mun', this)">
+            <button class="btn btn-secondary" onclick="document.getElementById('mun-coc-file').click()">Upload / Replace MUN Code of Conduct</button>
+        </div>
+    </div>
 
-        <!-- SPORTS PAGE -->
-        <!-- SPORTS PAGE -->
-    <div id="sports" class="page">
+    <!-- Register Now Badge -->
+    <div class="coc-badge-container">
+        <div class="coc-badge" onclick="openRegisterModal('MUN')">
+            <span class="coc-icon">📝</span>
+            <div class="coc-info">
+                <h3>Register Now</h3>
+                <p>Click here to complete your MUN event registration</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="mun-management" class="hidden">
+        <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToMunMain()">&larr; Back to Main MUN</button>
+        <h2>Management</h2>
+        
+        <div id="admin-mgmt-tools" class="admin-panel hidden">
+            <h3>[Admin] Add New Management Member</h3>
+            <div class="form-group"><label>Category</label><select id="mgmt-cat"><option>Secretariat</option><option>Directorate</option><option>EC</option></select></div>
+            <div class="form-group"><label>Name/Title</label><input type="text" id="mgmt-title"></div>
+            <div class="form-group"><label>Description</label><input type="text" id="mgmt-desc"></div>
+            <div class="form-group"><label>Photo URL</label><input type="text" id="mgmt-img" value="https://via.placeholder.com/150"></div>
+            <button class="btn" onclick="addManagementCard()">Add Member</button>
+        </div>
+
+        <h3>Secretariat</h3><div id="container-Secretariat" class="grid-3"></div>
+        <h3 style="margin-top:20px;">Directorate</h3><div id="container-Directorate" class="grid-3"></div>
+        <h3 style="margin-top:20px;">EC</h3><div id="container-EC" class="grid-3"></div>
+    </div>
+
+    <div id="mun-committees" class="hidden">
+        <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToMunMain()">&larr; Back to Main MUN</button>
+        <div class="section-header">
+            <h2>MUN Committees</h2>
+            <button id="admin-add-committee-btn" class="btn hidden" style="width:auto;" onclick="openCommitteeModal()">+ Add Committee</button>
+        </div>
+
+        <div id="mun-committee-list" class="grid-3"></div>
+
+        <div class="rules-box">
+            <div class="section-header">
+                <h3>Rules & Regulations</h3>
+                <button class="admin-only btn btn-secondary hidden" style="width:auto;" onclick="editRules('mun')">Edit Rules</button>
+            </div>
+            <p id="mun-rules-text">Loading rules...</p>
+        </div>
+    </div>
+</div>
+
+<!-- SPORTS PAGE -->
+<div id="sports" class="page">
     <div id="sports-main-tiles" class="grid-2">
         <div class="big-tile" onclick="openSportsSubSection('management')">
             <h2>Management</h2>
@@ -461,6 +544,32 @@
         <div class="big-tile" onclick="openSportsSubSection('categories')">
             <h2>Categories</h2>
             <p>Explore sports categories, rules, and registration forms.</p>
+        </div>
+    </div>
+
+    <!-- Code of Conduct Badge -->
+    <div class="coc-badge-container">
+        <div class="coc-badge" onclick="openCodeOfConduct('sports')">
+            <span class="coc-icon">📜</span>
+            <div class="coc-info">
+                <h3>Code of Conduct</h3>
+                <p id="sports-coc-status">Loading guidelines...</p>
+            </div>
+        </div>
+        <div class="admin-only hidden" style="margin-top: 10px;">
+            <input type="file" id="sports-coc-file" accept=".pdf,.doc,.docx,image/*" class="hidden" onchange="uploadCodeOfConduct('sports', this)">
+            <button class="btn btn-secondary" onclick="document.getElementById('sports-coc-file').click()">Upload / Replace Sports Code of Conduct</button>
+        </div>
+    </div>
+
+    <!-- Register Now Badge -->
+    <div class="coc-badge-container">
+        <div class="coc-badge" onclick="openRegisterModal('Sports Fest')">
+            <span class="coc-icon">📝</span>
+            <div class="coc-info">
+                <h3>Register Now</h3>
+                <p>Click here to complete your Sports Fest event registration</p>
+            </div>
         </div>
     </div>
 
@@ -504,58 +613,53 @@
                 <button class="admin-only btn btn-secondary hidden" style="width:auto;" onclick="editRules('sports')">Edit Rules</button>
             </div>
             <p id="sports-rules-text">Loading rules...</p>
-            </div>
         </div>
-
-        <div class="coc-badge-container">
-    <div class="coc-badge" onclick="openCodeOfConduct('sports')">
-        <span class="coc-icon">📜</span>
-        <div class="coc-info">
-            <h3>Code of Conduct</h3>
-            <p id="sports-coc-status">Loading guidelines...</p>
-        </div>
-    </div>
-    <div class="admin-only hidden" style="margin-top: 10px;">
-        <input type="file" id="sports-coc-file" accept=".pdf,.doc,.docx,image/*" class="hidden" onchange="uploadCodeOfConduct('sports', this)">
-        <button class="btn btn-secondary" onclick="document.getElementById('sports-coc-file').click()">Upload / Replace Sports Code of Conduct</button>
     </div>
 </div>
 
-    </div>
 
 
-
-        <!-- ADMIN SUBMISSIONS PAGE -->
+    <!-- ADMIN SUBMISSIONS PAGE -->
 <div id="registrations" class="page">
     <h2>Registration Submissions</h2>
 
-    <!-- Level 1: Event Badges -->
+    <!-- Level 1: Select Event -->
     <div id="sub-main-tiles" class="grid-2" style="margin-top: 20px;">
         <div class="big-tile" onclick="openSubmissionsEvent('MUN')">
             <h2>JTC MUN</h2>
-            <p>View submissions organized by committee</p>
+            <p>View submissions for JTC MUN</p>
         </div>
         <div class="big-tile" onclick="openSubmissionsEvent('Sports Fest')">
             <h2>JTC Sports Fest</h2>
-            <p>View submissions organized by sports category</p>
+            <p>View submissions for Sports Fest</p>
         </div>
     </div>
 
-    <!-- Level 2: Grid of Committees / Categories -->
-    <div id="sub-category-select" class="hidden" style="margin-top: 20px;">
+    <!-- Level 2: Select Type (Delegations vs Committees/Categories) -->
+    <div id="sub-type-select" class="hidden" style="margin-top: 20px;">
         <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSubmissionsMain()">&larr; Back to Events</button>
-        <h3 id="sub-event-title">Select Category</h3>
-        <div id="sub-category-grid" class="grid-3" style="margin-top: 15px;"></div>
+        <h3 id="sub-type-title">Select Submission Type</h3>
+        <div class="grid-2" style="margin-top: 15px;">
+            <div class="big-tile" onclick="openSubmissionsList('Delegations')">
+                <h2>Delegations</h2>
+                <p>View all delegation registration submissions</p>
+            </div>
+            <div class="big-tile" onclick="openSubmissionsList('Categories')">
+                <h2 id="sub-categories-type-label">Committees</h2>
+                <p id="sub-categories-type-desc">View committee / category registration submissions</p>
+            </div>
+        </div>
     </div>
 
-    <!-- Level 3: Registration Submissions Table -->
+    <!-- Level 3: Sorted Submissions Table -->
     <div id="sub-table-view" class="hidden" style="margin-top: 20px;">
-        <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSubmissionsCategories()">&larr; Back to Categories</button>
+        <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSubmissionsType()">&larr; Back to Selection</button>
         <h3 id="sub-category-title">Submissions</h3>
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
+                        <th>Category / Committee</th>
                         <th>Submitted At</th>
                         <th>Form Details</th>
                         <th>Actions</th>
@@ -664,35 +768,42 @@
 
         // Real Authentication Listener
         auth.onAuthStateChanged(user => {
-    isAdmin = !!user;
-    document.getElementById('role-text').innerText = isAdmin ? `Admin: ${user.email}` : 'User Mode';
-    document.getElementById('auth-btn').innerText = isAdmin ? 'Logout' : 'Admin Login';
-    
-    document.querySelectorAll('.admin-only, #admin-mgmt-tools, #admin-sports-mgmt-tools, #admin-add-committee-btn, #admin-add-sport-btn, #admin-add-sport-btn-sub, #admin-form-builder')
-        .forEach(el => el.classList.toggle('hidden', !isAdmin));
+            isAdmin = !!user;
+            
+            const roleEl = document.getElementById('role-text');
+            if (roleEl) roleEl.innerText = isAdmin ? `Admin: ${user.email}` : 'User Mode';
+            
+            const authBtn = document.getElementById('auth-btn');
+            if (authBtn) authBtn.innerText = isAdmin ? 'Logout' : 'Admin Login';
+            
+            document.querySelectorAll('.admin-only, #admin-mgmt-tools, #admin-sports-mgmt-tools, #admin-add-committee-btn, #admin-add-sport-btn, #admin-add-sport-btn-sub, #admin-form-builder')
+                .forEach(el => el.classList.toggle('hidden', !isAdmin));
 
-    if (isAdmin) fetchRegistrations();
-});
+            if (isAdmin) fetchRegistrations();
+
+            // Re-sync listeners so Admin delete controls display immediately upon login/refresh
+            initFirestoreListeners();
+        });
 
         function toggleMediaInput() {
-    const type = document.getElementById('crud-media-type').value;
-    document.getElementById('crud-url-group').classList.toggle('hidden', type !== 'url');
-    document.getElementById('crud-file-group').classList.toggle('hidden', type !== 'upload');
-}
+            const type = document.getElementById('crud-media-type').value;
+            document.getElementById('crud-url-group').classList.toggle('hidden', type !== 'url');
+            document.getElementById('crud-file-group').classList.toggle('hidden', type !== 'upload');
+        }
 
         function renderMediaTag(mediaSrc, title) {
-    if (!mediaSrc) return `<img src="https://via.placeholder.com/300x150" alt="${title}">`;
-    
-    // Check for YouTube links or MP4 videos
-    if (mediaSrc.includes('youtube.com') || mediaSrc.includes('youtu.be')) {
-        let embedUrl = mediaSrc.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/');
-        return `<iframe width="100%" height="180" src="${embedUrl}" frameborder="0" allowfullscreen style="border:none;"></iframe>`;
-    } else if (mediaSrc.endsWith('.mp4') || mediaSrc.startsWith('data:video')) {
-        return `<video width="100%" height="180" controls><source src="${mediaSrc}" type="video/mp4"></video>`;
-    } else {
-        return `<img src="${mediaSrc}" alt="${title}">`;
-    }
-}
+            if (!mediaSrc) return `<img src="https://via.placeholder.com/300x150" alt="${title || 'Image'}">`;
+            
+            // Check for YouTube links or MP4 videos
+            if (mediaSrc.includes('youtube.com') || mediaSrc.includes('youtu.be')) {
+                let embedUrl = mediaSrc.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/');
+                return `<iframe width="100%" height="180" src="${embedUrl}" frameborder="0" allowfullscreen style="border:none;"></iframe>`;
+            } else if (mediaSrc.endsWith('.mp4') || mediaSrc.startsWith('data:video')) {
+                return `<video width="100%" height="180" controls><source src="${mediaSrc}" type="video/mp4"></video>`;
+            } else {
+                return `<img src="${mediaSrc}" alt="${title || 'Image'}">`;
+            }
+        }
 
         function handleAuthClick() {
             if (isAdmin) {
@@ -714,72 +825,55 @@
             }
         }
 
-        // Navigation Switcher Fix
+        // Navigation Switcher
         function switchPage(pageId, btnEl) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    
-    document.getElementById(pageId).classList.add('active');
-    if(btnEl) btnEl.classList.add('active');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            const pageNode = document.getElementById(pageId);
+            if (pageNode) pageNode.classList.add('active');
+            if (btnEl) btnEl.classList.add('active');
 
-    // Update body theme state
-    document.body.setAttribute('data-theme', pageId);
-}
+            // Update body theme state
+            document.body.setAttribute('data-theme', pageId);
+        }
 
         function openMunSubSection(sec) {
             document.getElementById('mun-main-tiles').classList.add('hidden');
             document.getElementById('mun-management').classList.add('hidden');
             document.getElementById('mun-committees').classList.add('hidden');
 
-            if(sec === 'management') document.getElementById('mun-management').classList.remove('hidden');
-            if(sec === 'committees') document.getElementById('mun-committees').classList.remove('hidden');
+            if (sec === 'management') document.getElementById('mun-management').classList.remove('hidden');
+            if (sec === 'committees') document.getElementById('mun-committees').classList.remove('hidden');
         }
 
         function backToMunMain() {
-                document.getElementById('mun-management').classList.add('hidden');
-                document.getElementById('mun-committees').classList.add('hidden');
-                document.getElementById('mun-main-tiles').classList.remove('hidden');
+            document.getElementById('mun-management').classList.add('hidden');
+            document.getElementById('mun-committees').classList.add('hidden');
+            document.getElementById('mun-main-tiles').classList.remove('hidden');
         }
 
-            function openSportsSubSection(sec) {
-        document.getElementById('sports-main-tiles').classList.add('hidden');
-        document.getElementById('sports-management').classList.add('hidden');
-        document.getElementById('sports-categories').classList.add('hidden');
+        function openSportsSubSection(sec) {
+            document.getElementById('sports-main-tiles').classList.add('hidden');
+            document.getElementById('sports-management').classList.add('hidden');
+            document.getElementById('sports-categories').classList.add('hidden');
 
-        if(sec === 'management') document.getElementById('sports-management').classList.remove('hidden');
-        if(sec === 'categories') document.getElementById('sports-categories').classList.remove('hidden');
+            if (sec === 'management') document.getElementById('sports-management').classList.remove('hidden');
+            if (sec === 'categories') document.getElementById('sports-categories').classList.remove('hidden');
         }
 
         function backToSportsMain() {
-        document.getElementById('sports-management').classList.add('hidden');
-        document.getElementById('sports-categories').classList.add('hidden');
-        document.getElementById('sports-main-tiles').classList.remove('hidden');
+            document.getElementById('sports-management').classList.add('hidden');
+            document.getElementById('sports-categories').classList.add('hidden');
+            document.getElementById('sports-main-tiles').classList.remove('hidden');
         }
 
-        // Firestore Data Sync
+        // Updated Firestore Data Sync (Card buttons removed)
         function initFirestoreListeners() {
-            // Committees
+            // 1. Committees Sync
             db.collection("committees").onSnapshot(snapshot => {
                 const list = document.getElementById('mun-committee-list');
-                list.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    list.innerHTML += `
-                        <div class="card">
-${renderMediaTag(item.img, item.title)}
-                            <div class="card-body">
-                                <h3 class="card-title">${item.title}</h3>
-                                <p class="card-desc">${item.desc}</p>
-                                <button class="btn" onclick="openRegisterModal('${item.title}')">Register Now</button>
-                                ${isAdmin ? `<div class="admin-controls"><button class="btn btn-danger" onclick="deleteDoc('committees','${doc.id}')">Delete</button></div>` : ''}
-                            </div>
-                        </div>`;
-                });
-            });
-
-            // Sports
-            db.collection("sports").onSnapshot(snapshot => {
-                const list = document.getElementById('sports-category-list');
+                if (!list) return;
                 list.innerHTML = '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
@@ -788,160 +882,190 @@ ${renderMediaTag(item.img, item.title)}
                             ${renderMediaTag(item.img, item.title)}
                             <div class="card-body">
                                 <h3 class="card-title">${item.title}</h3>
-                                <p class="card-desc">${item.desc}</p>
-                                <button class="btn" onclick="openRegisterModal('${item.title}')">Register Now</button>
-                                ${isAdmin ? `<div class="admin-controls"><button class="btn btn-danger" onclick="deleteDoc('sports','${doc.id}')">Delete</button></div>` : ''}
+                                <p class="card-desc">${item.desc || ''}</p>
+                                ${isAdmin ? `<div class="admin-controls" style="margin-top:10px;"><button class="btn btn-danger" onclick="deleteDoc('committees','${doc.id}')">Delete</button></div>` : ''}
                             </div>
                         </div>`;
                 });
             });
 
-            // Management
-            db.collection("management").onSnapshot(snapshot => {
-    ['Secretariat', 'Directorate', 'EC', 'Organizers', 'Coordinators', 'Referees'].forEach(cat => {
-        const el = document.getElementById(`container-${cat}`);
-        if (el) el.innerHTML = '';
-    });
-    snapshot.forEach(doc => {
-        const m = doc.data();
-        const container = document.getElementById(`container-${m.cat}`);
-        if (container) {
-            container.innerHTML += `
-                <div class="card">
-                    ${renderMediaTag(item.img, item.title)}
-                    <div class="card-body">
-                        <h4 class="card-title">${m.title}</h4>
-                        <p class="card-desc">${m.desc}</p>
-                        ${isAdmin ? `<button class="btn btn-danger" onclick="deleteDoc('management','${doc.id}')">Delete</button>` : ''}
-                    </div>
-                </div>`;
-        }
-    });
-});
-
-            // Rules
-            db.collection("rules").doc("mun").onSnapshot(doc => {
-                if (doc.exists) document.getElementById('mun-rules-text').innerText = doc.data().text;
-            });
-            db.collection("rules").doc("sports").onSnapshot(doc => {
-                if (doc.exists) document.getElementById('sports-rules-text').innerText = doc.data().text;
-            });
-        }
-
-        // Submissions Fetcher
-        let allRegistrations = [];
-        let currentSubEvent = '';
-        let currentSubCategory = '';
-
-        // Live listener to sync all submissions
-        function fetchRegistrations() {
-            db.collection("registrations").onSnapshot(snapshot => {
-                allRegistrations = [];
+            // 2. Sports Categories Sync
+            db.collection("sports").onSnapshot(snapshot => {
+                const list = document.getElementById('sports-category-list');
+                if (!list) return;
+                list.innerHTML = '';
                 snapshot.forEach(doc => {
-                    allRegistrations.push({ id: doc.id, ...doc.data() });
-                });
-            
-                // Re-render table dynamically if currently viewing submissions
-                if (!document.getElementById('sub-table-view').classList.contains('hidden')) {
-                    renderRegistrationsTable(currentSubEvent, currentSubCategory);
-                }
-            });
-        }
-
-        // Level 1 -> Level 2: Load categories for MUN or Sports Fest
-        function openSubmissionsEvent(eventType) {
-            currentSubEvent = eventType;
-            document.getElementById('sub-main-tiles').classList.add('hidden');
-            document.getElementById('sub-table-view').classList.add('hidden');
-            document.getElementById('sub-category-select').classList.remove('hidden');
-
-            document.getElementById('sub-event-title').innerText = `${eventType} - Select Category/Committee`;
-
-            const grid = document.getElementById('sub-category-grid');
-            grid.innerHTML = '<p style="color: #64748b;">Loading categories...</p>';
-        
-            const targetCollection = (eventType === 'MUN') ? 'committees' : 'sports';
-        
-            db.collection(targetCollection).get().then(snapshot => {
-                const categories = [];
-                snapshot.forEach(doc => categories.push(doc.data().title));
-            
-                // Include any submission categories that may not be in the active dynamic list
-                allRegistrations.forEach(r => {
-                    if (r.eventType === eventType && r.categoryOrCommittee && !categories.includes(r.categoryOrCommittee)) {
-                        categories.push(r.categoryOrCommittee);
-                    }
-                });
-            
-                if (categories.length === 0) {
-                    grid.innerHTML = '<p style="color: #64748b;">No categories or committees found.</p>';
-                    return;
-                }
-            
-                grid.innerHTML = '';
-                categories.forEach(catName => {
-                    const count = allRegistrations.filter(r => r.eventType === eventType && r.categoryOrCommittee === catName).length;
-                
-                    grid.innerHTML += `
-                        <div class="big-tile" style="padding: 20px;" onclick="openSubmissionsTable('${catName}')">
-                            <h3>${catName}</h3>
-                            <p style="margin-top: 8px; font-size: 0.9rem; color: #64748b;">${count} Submission(s)</p>
+                    const item = doc.data();
+                    list.innerHTML += `
+                        <div class="card">
+                            ${renderMediaTag(item.img, item.title)}
+                            <div class="card-body">
+                                <h3 class="card-title">${item.title}</h3>
+                                <p class="card-desc">${item.desc || ''}</p>
+                                ${isAdmin ? `<div class="admin-controls" style="margin-top:10px;"><button class="btn btn-danger" onclick="deleteDoc('sports','${doc.id}')">Delete</button></div>` : ''}
+                            </div>
                         </div>`;
                 });
             });
-        }
 
-        // Level 2 -> Level 3: Show table for selected category
-        function openSubmissionsTable(categoryName) {
-            currentSubCategory = categoryName;
-            document.getElementById('sub-category-select').classList.add('hidden');
-            document.getElementById('sub-table-view').classList.remove('hidden');
-            document.getElementById('sub-category-title').innerText = `${currentSubEvent} - ${categoryName} Submissions`;
-        
-            renderRegistrationsTable(currentSubEvent, categoryName);
-        }
-
-        // Render submissions for selected category
-        function renderRegistrationsTable(eventType, categoryName) {
-            const tbody = document.getElementById('registrations-table-body');
-            tbody.innerHTML = '';
-        
-            const filtered = allRegistrations.filter(r => r.eventType === eventType && r.categoryOrCommittee === categoryName);
-        
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#64748b;">No registrations submitted yet for this category.</td></tr>';
-                return;
-            }
-        
-            filtered.forEach(data => {
-                let fieldText = '';
-                if (data.formData) {
-                    for (const [key, val] of Object.entries(data.formData)) {
-                        fieldText += `<strong>${key}:</strong> ${val}<br>`;
+            // 3. Management Sync
+            db.collection("management").onSnapshot(snapshot => {
+                ['Secretariat', 'Directorate', 'EC', 'Organizers', 'Coordinators', 'Referees'].forEach(cat => {
+                    const el = document.getElementById(`container-${cat}`);
+                    if (el) el.innerHTML = '';
+                });
+                snapshot.forEach(doc => {
+                    const m = doc.data();
+                    const container = document.getElementById(`container-${m.cat}`);
+                    if (container) {
+                        container.innerHTML += `
+                            <div class="card">
+                                ${renderMediaTag(m.img, m.title)}
+                                <div class="card-body">
+                                    <h4 class="card-title">${m.title}</h4>
+                                    <p class="card-desc">${m.desc || ''}</p>
+                                    ${isAdmin ? `<button class="btn btn-danger" style="margin-top:10px;" onclick="deleteDoc('management','${doc.id}')">Delete</button>` : ''}
+                                </div>
+                            </div>`;
                     }
+                });
+            });
+
+            // 4. Rules Sync
+            db.collection("rules").doc("mun").onSnapshot(doc => {
+                const el = document.getElementById('mun-rules-text');
+                if (doc.exists && el) el.innerText = doc.data().text;
+            });
+            db.collection("rules").doc("sports").onSnapshot(doc => {
+                const el = document.getElementById('sports-rules-text');
+                if (doc.exists && el) el.innerText = doc.data().text;
+            });
+
+            // 5. Config / Form Fields Sync
+            db.collection("config").doc("form_fields").onSnapshot(doc => {
+                if (doc.exists && doc.data().fields) {
+                    customFormFields = doc.data().fields;
                 }
-                const dateStr = data.submittedAt && data.submittedAt.toDate ? data.submittedAt.toDate().toLocaleString() : 'N/A';
-            
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${dateStr}</td>
-                        <td>${fieldText}</td>
-                        <td><button class="btn btn-danger" onclick="deleteDoc('registrations','${data.id}')">Delete</button></td>
-                    </tr>`;
+                renderFormFields();
             });
         }
 
-        // Back Navigation Handlers
-        function backToSubmissionsMain() {
-            document.getElementById('sub-category-select').classList.add('hidden');
-            document.getElementById('sub-table-view').classList.add('hidden');
-            document.getElementById('sub-main-tiles').classList.remove('hidden');
+        // Updated Modal Launcher for Main Event Registration
+        function openRegisterModal(eventName) {
+            currentTargetCategory = eventName; // General MUN or Sports Fest context
+            document.getElementById('form-title').innerText = `Register for ${eventName}`;
+            renderFormFields();
+            document.getElementById('form-modal').style.display = 'flex';
         }
 
-        function backToSubmissionsCategories() {
-            document.getElementById('sub-table-view').classList.add('hidden');
-            document.getElementById('sub-category-select').classList.remove('hidden');
+        // Submissions Navigation & Sorting Logic
+let allRegistrations = [];
+let currentSubEvent = '';
+let currentSubType = '';
+
+function fetchRegistrations() {
+    db.collection("registrations").onSnapshot(snapshot => {
+        allRegistrations = [];
+        snapshot.forEach(doc => {
+            allRegistrations.push({ id: doc.id, ...doc.data() });
+        });
+
+        const tableView = document.getElementById('sub-table-view');
+        if (tableView && !tableView.classList.contains('hidden')) {
+            renderRegistrationsTable(currentSubEvent, currentSubType);
         }
+    });
+}
+
+// Level 1 -> Level 2: Select Event (JTC MUN or Sports Fest)
+function openSubmissionsEvent(eventType) {
+    currentSubEvent = eventType;
+    document.getElementById('sub-main-tiles').classList.add('hidden');
+    document.getElementById('sub-table-view').classList.add('hidden');
+    document.getElementById('sub-type-select').classList.remove('hidden');
+
+    document.getElementById('sub-type-title').innerText = `${eventType} Submissions`;
+
+    const catLabel = document.getElementById('sub-categories-type-label');
+    const catDesc = document.getElementById('sub-categories-type-desc');
+    if (catLabel) catLabel.innerText = (eventType === 'MUN') ? 'Committees' : 'Categories';
+    if (catDesc) catDesc.innerText = (eventType === 'MUN') ? 'View individual committee submissions' : 'View sport category submissions';
+}
+
+// Level 2 -> Level 3: Open Submissions Table Direct
+function openSubmissionsList(subType) {
+    currentSubType = subType;
+    document.getElementById('sub-type-select').classList.add('hidden');
+    document.getElementById('sub-table-view').classList.remove('hidden');
+
+    const typeLabel = (currentSubEvent === 'MUN' && subType === 'Categories') ? 'Committees' : subType;
+    document.getElementById('sub-category-title').innerText = `${currentSubEvent} > ${typeLabel} Submissions`;
+
+    renderRegistrationsTable(currentSubEvent, subType);
+}
+
+// Render Table Sorted by Committee/Category
+function renderRegistrationsTable(eventType, subType) {
+    const tbody = document.getElementById('registrations-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    let filtered = allRegistrations.filter(r => {
+        const matchesEvent = r.eventType === eventType;
+        let matchesType = true;
+        if (subType === 'Delegations') {
+            matchesType = r.subType === 'Delegations' || r.registrationType === 'Delegations';
+        } else {
+            matchesType = !r.subType || r.subType === 'Categories' || r.registrationType === 'Categories' || r.registrationType === 'Committees';
+        }
+        return matchesEvent && matchesType;
+    });
+
+    // Sort submissions alphabetically by Committee / Category name
+    filtered.sort((a, b) => {
+        const catA = (a.categoryOrCommittee || 'General').toLowerCase();
+        const catB = (b.categoryOrCommittee || 'General').toLowerCase();
+        if (catA < catB) return -1;
+        if (catA > catB) return 1;
+        return 0;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No registrations submitted yet for this section.</td></tr>';
+        return;
+    }
+
+    filtered.forEach(data => {
+        let fieldText = '';
+        if (data.formData) {
+            for (const [key, val] of Object.entries(data.formData)) {
+                fieldText += `<strong>${key}:</strong> ${val}<br>`;
+            }
+        }
+        const dateStr = data.submittedAt && data.submittedAt.toDate ? data.submittedAt.toDate().toLocaleString() : 'N/A';
+        const categoryDisplay = data.categoryOrCommittee || (subType === 'Delegations' ? 'Delegation' : 'General');
+
+        tbody.innerHTML += `
+            <tr>
+                <td><strong style="color: var(--secondary);">${categoryDisplay}</strong></td>
+                <td>${dateStr}</td>
+                <td>${fieldText}</td>
+                <td><button class="btn btn-danger" onclick="deleteDoc('registrations','${data.id}')">Delete</button></td>
+            </tr>`;
+    });
+}
+
+// Back Navigation Controls
+function backToSubmissionsMain() {
+    document.getElementById('sub-type-select').classList.add('hidden');
+    document.getElementById('sub-table-view').classList.add('hidden');
+    document.getElementById('sub-main-tiles').classList.remove('hidden');
+}
+
+function backToSubmissionsType() {
+    document.getElementById('sub-table-view').classList.add('hidden');
+    document.getElementById('sub-type-select').classList.remove('hidden');
+}
 
         // Firestore CRUD Operations
         async function addManagementCard() {
@@ -954,6 +1078,20 @@ ${renderMediaTag(item.img, item.title)}
             await db.collection("management").add({ cat, title, desc, img });
             document.getElementById('mgmt-title').value = '';
             document.getElementById('mgmt-desc').value = '';
+            document.getElementById('mgmt-img').value = '';
+        }
+
+        async function addSportsManagementCard() {
+            const cat = document.getElementById('sports-mgmt-cat').value;
+            const title = document.getElementById('sports-mgmt-title').value;
+            const desc = document.getElementById('sports-mgmt-desc').value;
+            const img = document.getElementById('sports-mgmt-img').value;
+
+            if (!title) return alert('Please enter a title');
+            await db.collection("management").add({ cat, title, desc, img });
+            document.getElementById('sports-mgmt-title').value = '';
+            document.getElementById('sports-mgmt-desc').value = '';
+            document.getElementById('sports-mgmt-img').value = '';
         }
 
         function openCommitteeModal() {
@@ -969,38 +1107,36 @@ ${renderMediaTag(item.img, item.title)}
         }
 
         document.getElementById('crud-save-btn').onclick = async function() {
-    const title = document.getElementById('crud-title').value;
-    const desc = document.getElementById('crud-desc').value;
-    const mediaType = document.getElementById('crud-media-type').value;
-    const fileInput = document.getElementById('crud-file');
-    let mediaUrl = document.getElementById('crud-img').value;
+            const title = document.getElementById('crud-title').value;
+            const desc = document.getElementById('crud-desc').value;
+            const mediaType = document.getElementById('crud-media-type').value;
+            const fileInput = document.getElementById('crud-file');
+            let mediaUrl = document.getElementById('crud-img').value;
 
-    if (!title) return alert('Title required');
+            if (!title) return alert('Title required');
 
-    // Handle File Upload via FileReader (Base64 conversion)
-    if (mediaType === 'upload' && fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        mediaUrl = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.readAsDataURL(file);
-        });
-    }
+            if (mediaType === 'upload' && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                mediaUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+            }
 
-    const targetCollection = activeEventContext === 'committee' ? 'committees' : 'sports';
-    await db.collection(targetCollection).add({ 
-        title, 
-        desc, 
-        img: mediaUrl 
-    });
+            const targetCollection = activeEventContext === 'committee' ? 'committees' : 'sports';
+            await db.collection(targetCollection).add({ 
+                title, 
+                desc, 
+                img: mediaUrl 
+            });
 
-    // Reset inputs & close modal
-    document.getElementById('crud-title').value = '';
-    document.getElementById('crud-desc').value = '';
-    document.getElementById('crud-img').value = '';
-    document.getElementById('crud-file').value = '';
-    closeModal('crud-modal');
-};
+            document.getElementById('crud-title').value = '';
+            document.getElementById('crud-desc').value = '';
+            document.getElementById('crud-img').value = '';
+            document.getElementById('crud-file').value = '';
+            closeModal('crud-modal');
+        };
 
         async function deleteDoc(collectionName, id) {
             if (confirm("Are you sure you want to delete this record?")) {
@@ -1010,97 +1146,80 @@ ${renderMediaTag(item.img, item.title)}
 
         async function editRules(type) {
             const targetEl = document.getElementById(`${type}-rules-text`);
-            const newRules = prompt('Update Rules & Regulations:', targetEl.innerText);
+            const currentVal = targetEl ? targetEl.innerText : '';
+            const newRules = prompt('Update Rules & Regulations:', currentVal);
             if (newRules !== null) {
                 await db.collection("rules").doc(type).set({ text: newRules });
             }
         }
 
-        async function addSportsManagementCard() {
-    const cat = document.getElementById('sports-mgmt-cat').value;
-    const title = document.getElementById('sports-mgmt-title').value;
-    const desc = document.getElementById('sports-mgmt-desc').value;
-    const img = document.getElementById('sports-mgmt-img').value;
-
-    if (!title) return alert('Please enter a title');
-    await db.collection("management").add({ cat, title, desc, img });
-    document.getElementById('sports-mgmt-title').value = '';
-    document.getElementById('sports-mgmt-desc').value = '';
-}
-
         let cocFiles = { mun: null, sports: null };
 
-// Sync documents from Firestore
-function initCocListeners() {
-    db.collection("documents").doc("mun_coc").onSnapshot(doc => {
-        if (doc.exists && doc.data().fileData) {
-            cocFiles.mun = doc.data();
-            document.getElementById('mun-coc-status').innerText = `Click to view official guidelines (${doc.data().fileName || 'Document'})`;
-        } else {
-            cocFiles.mun = null;
-            document.getElementById('mun-coc-status').innerText = "No document uploaded yet.";
+        function initCocListeners() {
+            db.collection("documents").doc("mun_coc").onSnapshot(doc => {
+                const statusEl = document.getElementById('mun-coc-status');
+                if (doc.exists && doc.data().fileData) {
+                    cocFiles.mun = doc.data();
+                    if (statusEl) statusEl.innerText = `Click to view official guidelines (${doc.data().fileName || 'Document'})`;
+                } else {
+                    cocFiles.mun = null;
+                    if (statusEl) statusEl.innerText = "No document uploaded yet.";
+                }
+            });
+
+            db.collection("documents").doc("sports_coc").onSnapshot(doc => {
+                const statusEl = document.getElementById('sports-coc-status');
+                if (doc.exists && doc.data().fileData) {
+                    cocFiles.sports = doc.data();
+                    if (statusEl) statusEl.innerText = `Click to view official guidelines (${doc.data().fileName || 'Document'})`;
+                } else {
+                    cocFiles.sports = null;
+                    if (statusEl) statusEl.innerText = "No document uploaded yet.";
+                }
+            });
         }
-    });
 
-    db.collection("documents").doc("sports_coc").onSnapshot(doc => {
-        if (doc.exists && doc.data().fileData) {
-            cocFiles.sports = doc.data();
-            document.getElementById('sports-coc-status').innerText = `Click to view official guidelines (${doc.data().fileName || 'Document'})`;
-        } else {
-            cocFiles.sports = null;
-            document.getElementById('sports-coc-status').innerText = "No document uploaded yet.";
+        async function uploadCodeOfConduct(type, inputEl) {
+            if (!inputEl.files || inputEl.files.length === 0) return;
+            const file = inputEl.files[0];
+
+            if (file.size > 1024 * 1024) {
+                alert("File size exceeds 1MB limit. Please upload a compressed document.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const fileData = e.target.result;
+                await db.collection("documents").doc(`${type}_coc`).set({
+                    fileData: fileData,
+                    fileName: file.name,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Code of Conduct uploaded successfully!");
+            };
+            reader.readAsDataURL(file);
         }
-    });
-}
 
-// Upload document (converts to Base64 and updates Firestore)
-async function uploadCodeOfConduct(type, inputEl) {
-    if (!inputEl.files || inputEl.files.length === 0) return;
-    const file = inputEl.files[0];
+        function openCodeOfConduct(type) {
+            const coc = cocFiles[type];
+            if (!coc || !coc.fileData) {
+                alert("No Code of Conduct document has been uploaded yet.");
+                return;
+            }
 
-    // Firestore document limit rule check (1MB max limit)
-    if (file.size > 1024 * 1024) {
-        alert("File size exceeds 1MB. Please upload a smaller document or compressed PDF.");
-        return;
-    }
+            const win = window.open();
+            if (win) {
+                win.document.write(`<iframe src="${coc.fileData}" frameborder="0" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100vh;" allowfullscreen></iframe>`);
+            } else {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = coc.fileData;
+                downloadLink.download = coc.fileName || 'Code_of_Conduct';
+                downloadLink.click();
+            }
+        }
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        const fileData = e.target.result;
-        await db.collection("documents").doc(`${type}_coc`).set({
-            fileData: fileData,
-            fileName: file.name,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        alert("Code of Conduct uploaded successfully!");
-    };
-    reader.readAsDataURL(file);
-}
-
-// Open or download document when user clicks the badge
-function openCodeOfConduct(type) {
-    const coc = cocFiles[type];
-    if (!coc || !coc.fileData) {
-        alert("No Code of Conduct document has been uploaded yet.");
-        return;
-    }
-
-    // Open file stream in a new browser tab
-    const win = window.open();
-    if (win) {
-        win.document.write(`<iframe src="${coc.fileData}" frameborder="0" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100vh;" allowfullscreen></iframe>`);
-    } else {
-        const downloadLink = document.createElement('a');
-        downloadLink.href = coc.fileData;
-        downloadLink.download = coc.fileName || 'Code_of_Conduct';
-        downloadLink.click();
-    }
-}
-
-// Call listener setup on initialization
-initCocListeners();
-
-        // Dynamic Registration Form
+        // Dynamic Registration Form & Field Management
         function openRegisterModal(eventTitle) {
             currentTargetCategory = eventTitle;
             document.getElementById('form-title').innerText = `Register for ${eventTitle}`;
@@ -1110,29 +1229,30 @@ initCocListeners();
 
         function renderFormFields() {
             const container = document.getElementById('form-fields');
+            if (!container) return;
             container.innerHTML = '';
             customFormFields.forEach((label, idx) => {
                 container.innerHTML += `
-                    <div class="form-group">
+                    <div class="form-group" style="margin-bottom:12px;">
                         <label>${label}</label>
-                        <input type="text" required>
-                        ${isAdmin ? `<button type="button" style="color:red; background:none; border:none; cursor:pointer; font-size: 0.8rem; margin-top:3px;" onclick="removeFormField(${idx})">Remove Field</button>` : ''}
+                        <input type="text" required style="width:100%; padding:8px; margin-top:4px;">
+                        ${isAdmin ? `<button type="button" style="color:#ef4444; background:none; border:none; cursor:pointer; font-size:0.8rem; margin-top:4px; display:block;" onclick="removeFormField(${idx})">Remove Field</button>` : ''}
                     </div>`;
             });
         }
 
-        function addFormField() {
+        async function addFormField() {
             const labelInput = document.getElementById('new-field-label');
-            if (labelInput.value) {
-                customFormFields.push(labelInput.value);
+            if (labelInput && labelInput.value) {
+                customFormFields.push(labelInput.value.trim());
                 labelInput.value = '';
-                renderFormFields();
+                await db.collection("config").doc("form_fields").set({ fields: customFormFields });
             }
         }
 
-        function removeFormField(idx) {
+        async function removeFormField(idx) {
             customFormFields.splice(idx, 1);
-            renderFormFields();
+            await db.collection("config").doc("form_fields").set({ fields: customFormFields });
         }
 
         async function submitRegistration(e) {
@@ -1159,7 +1279,7 @@ initCocListeners();
                 closeModal('form-modal');
                 document.getElementById('dynamic-form').reset();
             } catch (error) {
-                alert("Error saving registration. Ensure Firestore rules permit write access.");
+                alert("Error saving registration. Ensure Firestore security rules permit submissions.");
             }
         }
 
@@ -1167,8 +1287,9 @@ initCocListeners();
             document.getElementById(id).style.display = 'none';
         }
 
-        // Start Listeners
+        // Initialize Listeners immediately
         initFirestoreListeners();
-    </script>
+        initCocListeners();
+</script>
 </body>
 </html>
