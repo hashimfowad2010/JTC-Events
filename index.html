@@ -390,6 +390,7 @@ body[data-theme="mun"] .coc-badge:hover .coc-info p {
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 </head>
 <body data-theme="home"></body>
 
@@ -420,10 +421,17 @@ body[data-theme="mun"] .coc-badge:hover .coc-info p {
 
     <div class="rules-box" style="margin-bottom: 32px; line-height: 1.7; color: var(--text-muted); border-left-color: var(--primary);">
         <p style="margin-bottom: 16px;">
-            Beaconhouse Johar Town Campus (JTC) in Lahore is renowned not just for academic rigor, but for a vibrant student culture that comes alive through its flagship annual events. Among a bustling calendar, two spectacles stand as the pillars of JTC’s co-curricular identity: <strong style="color: #ef4444;">JTCMUN</strong> and <strong style="color: #f59e0b;">Sportsfest</strong>. Together, these events capture the dual spirit of the campus—where sharp intellect meets raw athletic drive.
+            Beaconhouse Johar Town Campus (JTC) in Lahore is renowned not just for academic rigor, but for a 
+            vibrant student culture that comes alive through its flagship annual events. Among a bustling calendar,
+             two spectacles stand as the pillars of JTC’s co-curricular identity: <strong style="color: #ef4444;">JTCMUN</strong> and <strong style="color: #f59e0b;">Sportsfest</strong>. Together, these events capture the dual spirit of the campus—where sharp intellect meets raw athletic drive.
         </p>
         <p style="margin-bottom: 16px;">
-            <strong style="color: #ef4444;">JTCMUN</strong> transforms the campus into a bustling arena of global diplomacy and high-stakes debate. For three intense days, students step into the shoes of international delegates, tackling pressing geopolitical crises, drafting complex resolutions, and mastering the art of diplomacy. The corridors buzz with unmoderated caucuses, passionate parliamentary debate, and strategic alliances forged over quick breaks. Beyond committee sessions, JTCMUN features social concert nights and formal dinners building connections across institutions.
+            <strong style="color: #ef4444;">JTCMUN</strong> transforms the campus into a bustling arena of global
+             diplomacy and high-stakes debate. For three intense days, students step into the shoes of international
+              delegates, tackling pressing geopolitical crises, drafting complex resolutions, and mastering the art
+               of diplomacy. The corridors buzz with unmoderated caucuses, passionate parliamentary debate, and
+                strategic alliances forged over quick breaks. Beyond committee sessions, JTCMUN features social 
+                concert nights and formal dinners building connections across institutions.
         </p>
         <p style="margin-bottom: 16px;">
             In sharp contrast, <strong style="color: #f59e0b;">Sportsfest</strong> unleashes pure adrenaline across the JTC grounds. The campus turns into a sea of vibrant house colors as student-athletes gear up for track and field events, high-stakes football matches, cricket showdowns, and fast-paced basketball games. Driven by house rivalries and intense school pride, it is a celebration of grit, sportsmanship, and endurance.
@@ -654,6 +662,7 @@ body[data-theme="mun"] .coc-badge:hover .coc-info p {
     <!-- Level 3: Sorted Submissions Table -->
     <div id="sub-table-view" class="hidden" style="margin-top: 20px;">
         <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSubmissionsType()">&larr; Back to Selection</button>
+        <button class="btn" style="width: auto; background: linear-gradient(135deg, #10b981, #047857);" onclick="exportSubmissionsToCSV()">📥 Export to CSV</button>
         <h3 id="sub-category-title">Submissions</h3>
         <div class="table-responsive">
             <table>
@@ -760,6 +769,7 @@ body[data-theme="mun"] .coc-badge:hover .coc-info p {
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
+        const storage = firebase.storage();
 
         let isAdmin = false;
         let activeEventContext = null;
@@ -1055,6 +1065,79 @@ function renderRegistrationsTable(eventType, subType) {
     });
 }
 
+function exportSubmissionsToCSV() {
+    // 1. Get filtered list matching current event & type view
+    let filtered = allRegistrations.filter(r => {
+        const matchesEvent = r.eventType === currentSubEvent;
+        let matchesType = true;
+        if (currentSubType === 'Delegations') {
+            matchesType = r.subType === 'Delegations' || r.registrationType === 'Delegations';
+        } else {
+            matchesType = !r.subType || r.subType === 'Categories' || r.registrationType === 'Categories' || r.registrationType === 'Committees';
+        }
+        return matchesEvent && matchesType;
+    });
+
+    if (filtered.length === 0) {
+        alert("No submissions available to export.");
+        return;
+    }
+
+    // 2. Discover all unique custom field labels dynamically
+    const dynamicHeaders = new Set();
+    filtered.forEach(r => {
+        if (r.formData) {
+            Object.keys(r.formData).forEach(key => dynamicHeaders.add(key));
+        }
+    });
+
+    const headersList = Array.from(dynamicHeaders);
+
+    // 3. Helper to properly sanitize and escape CSV values
+    const escapeCSV = (str) => {
+        if (str === null || str === undefined) return '""';
+        const stringified = String(str).replace(/"/g, '""');
+        return `"${stringified}"`;
+    };
+
+    // 4. Build CSV Rows (Header + Data)
+    const csvRows = [];
+    
+    // Header Row
+    const headerRow = ['Category / Committee', 'Submitted At', ...headersList];
+    csvRows.push(headerRow.map(escapeCSV).join(','));
+
+    // Data Rows
+    filtered.forEach(r => {
+        const category = r.categoryOrCommittee || (currentSubType === 'Delegations' ? 'Delegation' : 'General');
+        const dateStr = r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate().toLocaleString() : 'N/A';
+
+        const row = [category, dateStr];
+
+        headersList.forEach(header => {
+            const val = (r.formData && r.formData[header]) ? r.formData[header] : '';
+            row.push(val);
+        });
+
+        csvRows.push(row.map(escapeCSV).join(','));
+    });
+
+    // 5. Generate and Download CSV File
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const fileName = `${currentSubEvent}_${currentSubType}_Submissions_${new Date().toISOString().slice(0,10)}.csv`;
+    
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    downloadLink.setAttribute('download', fileName);
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(url);
+}
+
 // Back Navigation Controls
 function backToSubmissionsMain() {
     document.getElementById('sub-type-select').classList.add('hidden');
@@ -1179,45 +1262,80 @@ function backToSubmissionsType() {
             });
         }
 
-        async function uploadCodeOfConduct(type, inputEl) {
-            if (!inputEl.files || inputEl.files.length === 0) return;
-            const file = inputEl.files[0];
+        // 1. Updated Code of Conduct Upload (Supports up to 15MB files)
+async function uploadCodeOfConduct(type, inputEl) {
+    if (!inputEl.files || inputEl.files.length === 0) return;
+    const file = inputEl.files[0];
 
-            if (file.size > 1024 * 1024) {
-                alert("File size exceeds 1MB limit. Please upload a compressed document.");
-                return;
-            }
+    // Increased limit from 1MB to 15MB
+    if (file.size > 15 * 1024 * 1024) {
+        alert("File size exceeds 15MB limit. Please select a smaller file.");
+        return;
+    }
 
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const fileData = e.target.result;
-                await db.collection("documents").doc(`${type}_coc`).set({
-                    fileData: fileData,
-                    fileName: file.name,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                alert("Code of Conduct uploaded successfully!");
-            };
-            reader.readAsDataURL(file);
+    try {
+        const fileRef = storage.ref(`documents/${type}_coc_${Date.now()}_${file.name}`);
+        const snapshot = await fileRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+
+        await db.collection("documents").doc(`${type}_coc`).set({
+            fileData: downloadURL,
+            fileName: file.name,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert("Code of Conduct uploaded successfully to Firebase Storage!");
+    } catch (err) {
+        alert("Upload failed: " + err.message);
+    }
+}
+
+// 2. Updated Code of Conduct Viewer
+function openCodeOfConduct(type) {
+    const coc = cocFiles[type];
+    if (!coc || !coc.fileData) {
+        alert("No Code of Conduct document has been uploaded yet.");
+        return;
+    }
+
+    // Opens stored URL in new window
+    window.open(coc.fileData, '_blank');
+}
+
+// 3. Updated CRUD Save Handler for Uploading Images to Storage
+document.getElementById('crud-save-btn').onclick = async function() {
+    const title = document.getElementById('crud-title').value;
+    const desc = document.getElementById('crud-desc').value;
+    const mediaType = document.getElementById('crud-media-type').value;
+    const fileInput = document.getElementById('crud-file');
+    let mediaUrl = document.getElementById('crud-img').value;
+
+    if (!title) return alert('Title required');
+
+    if (mediaType === 'upload' && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        try {
+            const imageRef = storage.ref(`images/${Date.now()}_${file.name}`);
+            const snapshot = await imageRef.put(file);
+            mediaUrl = await snapshot.ref.getDownloadURL();
+        } catch (err) {
+            return alert("Image upload failed: " + err.message);
         }
+    }
 
-        function openCodeOfConduct(type) {
-            const coc = cocFiles[type];
-            if (!coc || !coc.fileData) {
-                alert("No Code of Conduct document has been uploaded yet.");
-                return;
-            }
+    const targetCollection = activeEventContext === 'committee' ? 'committees' : 'sports';
+    await db.collection(targetCollection).add({ 
+        title, 
+        desc, 
+        img: mediaUrl 
+    });
 
-            const win = window.open();
-            if (win) {
-                win.document.write(`<iframe src="${coc.fileData}" frameborder="0" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100vh;" allowfullscreen></iframe>`);
-            } else {
-                const downloadLink = document.createElement('a');
-                downloadLink.href = coc.fileData;
-                downloadLink.download = coc.fileName || 'Code_of_Conduct';
-                downloadLink.click();
-            }
-        }
+    document.getElementById('crud-title').value = '';
+    document.getElementById('crud-desc').value = '';
+    document.getElementById('crud-img').value = '';
+    document.getElementById('crud-file').value = '';
+    closeModal('crud-modal');
+};
 
         // Dynamic Registration Form & Field Management
         function openRegisterModal(eventTitle) {
