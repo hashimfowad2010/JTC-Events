@@ -383,6 +383,164 @@ body[data-theme="mun"] .coc-badge:hover .coc-info p {
     color: #ffffff;
 }
 
+    /* ==========================================================================
+   RESPONSIVE & TOUCH OPTIMIZATIONS
+   ========================================================================== */
+
+/* Touch screen interaction polish */
+button, .card, .big-tile, .coc-badge, input, select, textarea {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Ensure images and media don't break containers on smaller devices */
+.card img, .card video, .card iframe {
+    width: 100%;
+    max-width: 100%;
+    object-fit: cover;
+}
+
+/* Fix mobile height scaling on Home page banner cards */
+#home .card img {
+    height: 280px; /* Reduced from fixed 450px for mobile/tablet safety */
+}
+
+/* Modal vertical scrolling fix for small height screens / landscape phones */
+.modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+
+/* ==========================================================================
+   MEDIA QUERIES (SCREEN BREAKPOINTS)
+   ========================================================================== */
+
+/* 1. SMART TV & ULTRA-WIDE MONITORS (1400px and up) */
+@media screen and (min-width: 1400px) {
+    .container {
+        max-width: 1300px;
+    }
+    body {
+        font-size: 18px;
+    }
+    header h1 {
+        font-size: 2rem;
+    }
+    #home .card img {
+        height: 550px;
+    }
+}
+
+/* 2. TABLETS & IPADS (768px to 1024px) */
+@media screen and (max-width: 1024px) {
+    .container {
+        margin: 1.5rem auto;
+        padding: 1.5rem;
+        width: 94%;
+    }
+    
+    header {
+        padding: 1rem 1.5rem;
+    }
+
+    .grid-2, .grid-3 {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+    }
+}
+
+/* 3. MOBILE PHONES (Up to 767px) */
+@media screen and (max-width: 767px) {
+    /* Header layout changes from row to vertical stack */
+    header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 1rem;
+    }
+
+    header h1 {
+        text-align: center;
+        font-size: 1.4rem;
+    }
+
+    /* Wrap navigation buttons into a scrollable or multi-line row */
+    nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    nav button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        flex: 1 1 auto;
+        text-align: center;
+    }
+
+    .auth-status {
+        justify-content: space-between;
+        width: 100%;
+        padding-top: 6px;
+        border-top: 1px solid var(--glass-border);
+    }
+
+    .container {
+        margin: 1rem auto;
+        padding: 1.2rem;
+        width: 95%;
+        border-radius: 14px;
+    }
+
+    /* Force grids into single-column layout on small phones */
+    .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    #home .card img {
+        height: 220px;
+    }
+
+    .big-tile {
+        padding: 24px 16px;
+    }
+
+    .big-tile h2 {
+        font-size: 1.4rem;
+    }
+
+    .coc-badge {
+        padding: 14px;
+    }
+
+    .coc-icon {
+        font-size: 1.6rem;
+    }
+
+    /* Form Modal adjustment for thumb friendly tapping */
+    .modal-content {
+        padding: 20px 16px;
+        width: 95%;
+    }
+
+    .btn {
+        padding: 12px 16px; /* Larger tap area on mobile */
+        font-size: 0.95rem;
+    }
+}
+
+/* 4. SMALL MOBILE PHONES (380px and below) */
+@media screen and (max-width: 380px) {
+    nav button {
+        width: 100%; /* Stacks nav buttons full-width on tiny screens */
+    }
+
+    header h1 {
+        font-size: 1.2rem;
+    }
+}
     
     </style>
 
