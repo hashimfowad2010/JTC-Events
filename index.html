@@ -6,18 +6,19 @@
     <title>JTC Events</title>
     <style>
     :root {
-        --bg-gradient: radial-gradient(circle at top left, #4c0519 0%, #451a03 50%, #0d0d12 100%);
-        --primary: #ef4444;
-        --primary-hover: #dc2626;
-        --secondary: #f59e0b;
-        --glass-bg: rgba(255, 255, 255, 0.04);
-        --glass-card: rgba(255, 255, 255, 0.06);
-        --glass-border: rgba(255, 255, 255, 0.15);
-        --glass-blur: blur(16px);
-        --text-main: #f8fafc;
-        --text-muted: #a1a1aa;
-        --admin-color: #f43f5e;
+    --bg-gradient: radial-gradient(circle at 50% 30%, #5c4314 0%, #3a2a0b 40%, #1a1306 70%, #08070a 100%);
+    --primary: #c5a059;
+    --primary-hover: #a8843e;
+    --secondary: #e6ca85;
+    --glass-bg: rgba(255, 255, 255, 0.04);
+    --glass-card: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(197, 160, 89, 0.22);
+    --glass-blur: blur(16px);
+    --text-main: #f8fafc;
+    --text-muted: #a1a1aa;
+    --admin-color: #f43f5e;
     }
+
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', sans-serif; }
 
@@ -258,11 +259,11 @@
 
     /* Dynamic Theme Overrides */
     body[data-theme="home"], body:not([data-theme]) {
-        --bg-gradient: radial-gradient(circle at top left, #4c0519 0%, #451a03 50%, #0d0d12 100%);
-        --primary: #ef4444;
-        --primary-hover: #dc2626;
-        --secondary: #f59e0b;
-        --glass-border: rgba(255, 255, 255, 0.18);
+    --bg-gradient: radial-gradient(circle at 50% 30%, #5c4314 0%, #3a2a0b 40%, #1a1306 70%, #08070a 100%);
+    --primary: #875a07;
+    --primary-hover: #9f6c06;
+    --secondary: #bd8c10;
+    --glass-border: rgba(197, 160, 89, 0.22);
     }
 
     /* JTC MUN: Red & White Theme */
@@ -271,8 +272,8 @@
         --primary: #dc2626;
         --primary-hover: #b91c1c;
         --secondary: #ffffff;
-        --glass-border: rgba(239, 68, 68, 0.35);
-        --glass-card: rgba(220, 38, 38, 0.08);
+        --glass-border: rgba(20, 1, 1, 0.35);
+        --glass-card: rgba(0, 0, 0, 0.08);
     }
     body[data-theme="mun"] header h1 {
         background: linear-gradient(135deg, #ffffff, #fca5a5);
@@ -565,8 +566,8 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <h1>JTC Events</h1>
         <nav>
             <button class="nav-btn active" onclick="switchPage('home', this)">Home</button>
+            <button class="nav-btn" onclick="switchPage('sports', this)">JTC SPORTS FEST</button>
             <button class="nav-btn" onclick="switchPage('mun', this)">JTC MUN</button>
-            <button class="nav-btn" onclick="switchPage('sports', this)">JTC Sports Fest</button>
             <button class="nav-btn admin-only hidden" onclick="switchPage('registrations', this)">Submissions</button>
         </nav>
         <div class="auth-status">
@@ -1333,8 +1334,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                         }
 
 
-        container.innerH
-        TML = html;
+        container.innerHTML = html;
     }
 
 
