@@ -260,9 +260,9 @@
     /* Dynamic Theme Overrides */
     body[data-theme="home"], body:not([data-theme]) {
     --bg-gradient: radial-gradient(circle at 50% 30%, #5c4314 0%, #3a2a0b 40%, #1a1306 70%, #08070a 100%);
-    --primary: #875a07;
-    --primary-hover: #9f6c06;
-    --secondary: #bd8c10;
+    --primary: #8F6B18;
+    --primary-hover: 	#E2C15A;
+    --secondary: 	#C89B2C;
     --glass-border: rgba(197, 160, 89, 0.22);
     }
 
@@ -542,6 +542,92 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         font-size: 1.2rem;
     }
 }
+
+    /* Interactive Category Cards Styling */
+.category-card {
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.03);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-6px);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: var(--secondary);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.category-card:active {
+    transform: translateY(-2px);
+}
+
+.category-card .category-img-container img {
+    transition: transform 0.3s ease;
+}
+
+.category-card:hover .category-img-container img {
+    transform: scale(1.06);
+}
+
+    /* Screen-Centered Modal Setup */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 99999; /* Higher than all page elements */
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-content {
+    background: rgba(20, 20, 25, 0.98);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 28px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    margin: auto; /* Guarantees true center positioning */
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.8rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+#modal-title {
+    text-align: center;
+    color: var(--secondary);
+    margin-bottom: 16px;
+    font-size: 1.5rem;
+}
+
+#modal-rules {
+    color: var(--text-main);
+    line-height: 1.6;
+    font-size: 0.92rem;
+}
     
     </style>
 
@@ -710,7 +796,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     </div>
 </div>
 
-<!-- SPORTS PAGE -->
+    <!-- SPORTS PAGE -->
 <div id="sports" class="page">
     <div id="sports-main-tiles" class="grid-2">
         <div class="big-tile" onclick="openSportsSubSection('management')">
@@ -749,6 +835,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         </div>
     </div>
 
+    <!-- MANAGEMENT SUBSECTION -->
     <div id="sports-management" class="hidden">
         <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSportsMain()">&larr; Back to Main Sports Fest</button>
         <h2>Management</h2>
@@ -774,26 +861,68 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <h3 style="margin-top:20px;">Referees</h3><div id="container-Referees" class="grid-3"></div>
     </div>
 
-    <div id="sports-categories" class="hidden">
-        <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSportsMain()">&larr; Back to Main Sports Fest</button>
-        <div class="section-header">
-            <h2>JTC Sports Fest Categories</h2>
-            <button id="admin-add-sport-btn-sub" class="btn hidden" style="width:auto;" onclick="openSportsModal()">+ Add Category</button>
-        </div>
+    <!-- CATEGORIES SUBSECTION -->
+<div id="sports-categories" class="hidden">
+    <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSportsMain()">&larr; Back to Main Sports Fest</button>
+    
+    <!-- Categories Header -->
+    <div style="text-align: center; margin-bottom: 24px;">
+        <h3 style="color: var(--secondary); font-size: 1.6rem; margin-bottom: 8px;">Official Sports Categories</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Click on any category to view official rules, age divisions, and match regulations.</p>
+    </div>
 
-        <div id="sports-category-list" class="grid-3"></div>
+    <!-- Admin Add Category Tool -->
+    <div class="admin-only hidden" style="margin-bottom: 20px; text-align: right;">
+        <button id="admin-add-sport-btn-sub" class="btn" style="width: auto;" onclick="openSportsModal()">+ Add Sports Category</button>
+    </div>
 
-        <div class="rules-box">
-            <div class="section-header">
-                <h3>Rules & Regulations</h3>
-                <button class="admin-only btn btn-secondary hidden" style="width:auto;" onclick="editRules('sports')">Edit Rules</button>
-            </div>
-            <p id="sports-rules-text">Loading rules...</p>
-        </div>
+    <!-- 3-Column Dynamic Grid Container -->
+    <div id="sports-category-list" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px;">
+        <!-- Populated dynamically by JavaScript -->
     </div>
 </div>
 
+<!-- Category Rules Modal -->
+<div id="rules-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: rgba(20, 20, 25, 0.95); border: 1px solid var(--glass-border); border-radius: 16px; width: 100%; max-width: 600px; padding: 28px; position: relative; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <button onclick="closeRulesModal()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--text-muted); font-size: 1.8rem; cursor: pointer; line-height: 1;">&times;</button>
+        <h2 id="modal-title" style="text-align: center; color: var(--secondary); margin-bottom: 16px; font-size: 1.5rem;"></h2>
+        <div id="modal-rules" style="color: var(--text-main); line-height: 1.6; font-size: 0.92rem;"></div>
+    </div>
+</div>
 
+<!-- Modal for Adding/Editing Category (Includes Image URL & Upload Fields) -->
+<div id="add-sports-modal" class="modal hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #141419; border: 1px solid var(--glass-border); padding: 24px; border-radius: 12px; max-width: 500px; width: 100%;">
+        <h3>Add Sports Category</h3>
+        
+        <div class="form-group" style="margin-top: 12px;">
+            <label>Category Title</label>
+            <input type="text" id="sport-cat-title" placeholder="e.g. Basketball">
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+            <label>Picture URL</label>
+            <input type="text" id="sport-cat-img-url" placeholder="https://example.com/photo.jpg">
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+            <label>Or Upload Picture</label>
+            <input type="file" id="sport-cat-img-file" accept="image/*" onchange="handleCategoryImageUpload(this)">
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+            <label>Rules / Description</label>
+            <textarea id="sport-cat-rules" rows="4" placeholder="Enter category details..."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end;">
+            <button class="btn btn-secondary" onclick="closeSportsModal()">Cancel</button>
+            <button class="btn" onclick="saveSportsCategory()">Save Category</button>
+        </div>
+    </div>
+</div>
+</div>
 
     <!-- ADMIN SUBMISSIONS PAGE -->
 <div id="registrations" class="page">
@@ -1996,8 +2125,283 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     }
 
     // Init
-    initFirestoreListeners();
-    initCocListeners();
+initFirestoreListeners();
+initCocListeners();
+
+const sportsData = [
+    {
+        name: "Futsal",
+        img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>5 A-side + 3 rolling substitutes.</li>
+                <li>Match duration: 20 minutes (10 minutes each half). Semi-finals and Finals are 15 minutes per half.</li>
+                <li>Direct Red card results in immediate match expulsion. 2 Yellow cards equal 1 Red card.</li>
+                <li>Tied matches decided via 3 penalty kicks.</li>
+                <li>Direct free kicks are NOT allowed.</li>
+                <li>All rounds are knockout matches.</li>
+                <li>Referee's decision is final and non-negotiable.</li>
+                <li><strong>Footwear:</strong> Football studs are strictly prohibited.</li>
+            </ul>`
+    },
+    {
+        name: "Basketball",
+        img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>5 A-side with 3 substitutes.</li>
+                <li>Match duration: 4 quarters of 5 minutes each (Total 20 minutes).</li>
+                <li>All rounds are knockout matches.</li>
+                <li>Tied matches decided by two extra halves of 4 minutes each.</li>
+                <li>Referee's decision is final.</li>
+            </ul>`
+    },
+    {
+        name: "Padel Tennis",
+        img: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>5 A-side with 3 substitutes.</li>
+                <li>Match duration: 4 quarters of 5 minutes each (Total 20 minutes).</li>
+                <li>All rounds are knockout matches.</li>
+                <li>Tied matches decided by halves of 4 minutes each.</li>
+                <li>Referee's decision is final.</li>
+            </ul>`
+    },
+    {
+        name: "Cricket",
+        img: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Eligibility:</strong> Boys Only</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>Tape ball match format.</li>
+                <li>8 A-side with 3 substitutes.</li>
+                <li>3 overs per innings. Bowling limit: 1 over per player.</li>
+                <li>Standard international rules apply, excluding LBW.</li>
+                <li>All rounds are knockout matches.</li>
+                <li>Umpire's decision is final.</li>
+            </ul>`
+    },
+    {
+        name: "Table Tennis",
+        img: "https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Formats:</strong> Singles & Doubles</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>3 sets each of 10 points.</li>
+                <li>All rounds are knockout matches.</li>
+                <li>Referee's decision is final.</li>
+            </ul>`
+    },
+    {
+        name: "Badminton",
+        img: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>Singles and Doubles are separate competition categories.</li>
+                <li>3 sets of 7 points each.</li>
+                <li>Coin toss determines initial service.</li>
+                <li>Players remain in service courts until winning a point on their own serve.</li>
+                <li>All rounds are knockout matches.</li>
+            </ul>`
+    },
+    {
+        name: "Athletics",
+        img: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Divisions:</strong> Open For All Ages</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li><strong>50-Meter Race (2 Heats):</strong>
+                    <ul>
+                        <li>1st Heat: Middle School (Grade 6 to 8).</li>
+                        <li>2nd Heat: High School (Grade 9 to FSc 2nd Year / A2).</li>
+                    </ul>
+                </li>
+                <li><strong>Standing Broad Jump</strong></li>
+            </ul>`
+    },
+    {
+        name: "Dodgeball",
+        img: "https://images.unsplash.com/photo-1561532325-7d5231a2dede?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>6 A-side + 2 substitutes.</li>
+                <li>1 catch equals 1 life gained for the team.</li>
+                <li>Matches consist of 2 rounds (5 minutes each).</li>
+                <li><strong>Elimination triggers:</strong> Hit by ball, dropping a catch, stepping on boundary lines, or catching a non-airborne ball.</li>
+                <li>Team eliminating opponents in the shortest time wins.</li>
+            </ul>`
+    },
+    {
+        name: "Tug Of War",
+        img: "https://images.unsplash.com/photo-1526676037777-05a232554f77?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Divisions:</strong> Open For All Ages</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>8 A-side.</li>
+                <li>Best of three rounds format.</li>
+                <li>Football studs/cleats are strictly prohibited.</li>
+            </ul>`
+    },
+    {
+        name: "Strongman / Woman",
+        img: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li><strong>Push-ups & Squats:</strong> 100 seconds time limit for each exercise. Participant with highest valid reps wins.</li>
+                <li><strong>Arm Wrestling:</strong>
+                    <ul>
+                        <li>If grip cannot be established, referee applies "Referee's Grip". Movement after grip is a foul.</li>
+                        <li>Wrist bending permitted only after match starts. Shoulders must remain square before start.</li>
+                        <li>Pin requires forcing opponent's arm to touch the table.</li>
+                        <li>Touching body with hand incurs a foul & restart. 3 fouls result in match forfeiture.</li>
+                    </ul>
+                </li>
+            </ul>`
+    },
+    {
+        name: "Chess",
+        img: "https://images.unsplash.com/photo-1529699211952-734e80c4d42b?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Eligibility:</strong> Boys & Girls (Separate categories)</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>Game duration: 30 minutes total.</li>
+                <li>Undecided games resolved based on highest piece/board score.</li>
+            </ul>`
+    },
+    {
+        name: "E-Gaming",
+        img: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li><strong>FC 25/27 (FIFA):</strong> Classic controls, normal game speed. 4-minute halves (6 minutes for Semi-Finals & Finals). Personal controllers allowed.</li>
+                <li><strong>Tekken:</strong> Best of 3 (Semis) & Best of 5 (Finals). Randomized brackets. DLC characters and button assists prohibited. 4-minute call time before walkover.</li>
+            </ul>`
+    },
+    {
+        name: "Math Mystic",
+        img: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>Solve complex mathematical logic puzzles under strict time limits.</li>
+                <li>Calculators, mobile phones, and external aids are strictly prohibited.</li>
+            </ul>`
+    },
+    {
+        name: "Foosball",
+        img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>First to 10 points wins. Doubles (2 vs 2) played in group stages. Finals best of 3.</li>
+                <li>Coin toss decides initial server.</li>
+                <li>360° rod spinning prohibited. 1-minute possession limit per rod.</li>
+                <li>Goals count if ball enters box completely (even if it bounces out).</li>
+                <li>Interference (touching ball/table) awards an automatic point to opponent.</li>
+            </ul>`
+    },
+    {
+        name: "Ludo",
+        img: "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=600&q=80",
+        rules: `
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>Roll a 6 to release token.</li>
+                <li>Landing on an opponent's token grants an extra turn.</li>
+                <li>Exact roll required to enter Home. First to bring all 4 tokens Home wins.</li>
+            </ul>`
+    }
+];
+
+function renderCategoryCard(sport, index) {
+    const title = sport.name || "Sports Category";
+    const imageSrc = sport.img || 'https://via.placeholder.com/300x160?text=' + encodeURIComponent(title);
+
+    return `
+        <div class="category-card" onclick="openRulesModal(${index})">
+            <div class="category-img-container" style="width: 100%; height: 160px; overflow: hidden; border-radius: 8px; margin-bottom: 12px;">
+                <img src="${imageSrc}" alt="${title}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <h3 style="color: var(--secondary); margin-bottom: 8px;">${title}</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">View regulations & details</p>
+        </div>
+    `;
+}
+
+function renderSportsGrid() {
+    const container = document.getElementById('sports-category-list');
+    if (!container) return;
+
+    let htmlContent = '';
+    sportsData.forEach((sport, index) => {
+        htmlContent += renderCategoryCard(sport, index);
+    });
+
+    container.innerHTML = htmlContent;
+}
+
+function openRulesModal(index) {
+    const sport = sportsData[index];
+    if (!sport) return;
+
+    const modal = document.getElementById('rules-modal');
+
+    // Automatically move modal out of nested page containers to top-level body
+    if (modal && modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+    }
+
+    document.getElementById('modal-title').innerText = sport.name;
+    document.getElementById('modal-rules').innerHTML = sport.rules;
+    modal.style.display = 'flex';
+}
+
+function closeRulesModal() {
+    document.getElementById('rules-modal').style.display = 'none';
+}
+
+// Sub-section navigation handlers
+function openSportsSubSection(sectionId) {
+    document.getElementById('sports-main-tiles').classList.add('hidden');
+    if (sectionId === 'categories') {
+        document.getElementById('sports-categories').classList.remove('hidden');
+        renderSportsGrid(); // Ensure grid renders on section open
+    } else if (sectionId === 'management') {
+        document.getElementById('sports-management').classList.remove('hidden');
+    }
+}
+
+function backToSportsMain() {
+    document.getElementById('sports-categories').classList.add('hidden');
+    document.getElementById('sports-management').classList.add('hidden');
+    document.getElementById('sports-main-tiles').classList.remove('hidden');
+}
+
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('rules-modal');
+    if (e.target === modal) closeRulesModal();
+});
+
+// Run initial render on DOM load
+document.addEventListener('DOMContentLoaded', renderSportsGrid);
+
 </script>
 </body>
 </html>
