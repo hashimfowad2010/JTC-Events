@@ -628,6 +628,46 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     line-height: 1.6;
     font-size: 0.92rem;
 }
+
+/* ==========================================
+   MOBILE RESPONSIVE FLEX & GRID ADJUSTMENTS
+   ========================================== */
+@media screen and (max-width: 768px) {
+    /* 1. Main Page Sports Category Grid */
+    .sports-grid, 
+    #sports-grid, 
+    .categories-container {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 16px !important;
+    }
+
+    .category-card {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 2. Registration Modal Checkbox Grid (renderCategoryCheckboxes) */
+    #category-checkboxes-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* 3. Registration Modal Dynamic Category Forms (updateDynamicCategoryForms) */
+    .category-form-card > div {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* 4. Delegation Info Field Stacking */
+    #sports-registration-form .form-group {
+        grid-column: span 1 !important;
+    }
+
+    #reg-step-form div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+}
     
     </style>
 
@@ -2859,11 +2899,12 @@ async function handleSportsRegistrationSubmit(e) {
 
                                                 name: "Tug Of War",
 
-                                                img: "https://images.unsplash.com/photo-1526676037777-05a232554f77?auto=format&fit=crop&w=600&q=80",
+                                                img: "https://upload.wikimedia.org/wikipedia/commons/5/5c/Tug_of_war.jpg?auto=format&fit=crop&w=600&q=80",
 
                                                rules: `
+                                               
+                                               <p><strong>Divisions:</strong> Open For All Ages</p>
 
-                                                <p><strong>Divisions:</strong> Open For All Ages</p>
         <p><strong>Eligibility:</strong> Boys & Girls</p>
         <ul style="margin-top: 8px; padding-left: 20px;">
             <li>8 A-side.</li>
