@@ -20,7 +20,7 @@
     }
 
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Times New Roman', Times, serif; }
 
     body { 
         background: var(--bg-gradient);
@@ -701,8 +701,8 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 </head>
-<body data-theme="home"></body>
-
+</head>
+<body data-theme="home">
     <header>
         <h1>JTC Events</h1>
         <nav>
@@ -923,15 +923,22 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                 
                 <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 10px 0;">
                 
-                <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
-                    <p><strong>📌 Registration Guidelines & Fee Structure:</strong></p>
-                    <ul style="padding-left: 20px; margin-top: 6px;">
-                        <li><strong>Delegation Fee:</strong> PKR 3,000 per school delegation</li>
-                        <li><strong>Category Fee:</strong> PKR 1,500 per team category | PKR 800 per individual category</li>
-                        <li><strong>Player Limit:</strong> A single student can participate in a maximum of <strong>3 categories</strong>.</li>
-                        <li>Head Delegate designation does <em>not</em> count towards the 3-category limit unless registered as a player.</li>
-                    </ul>
-                </div>
+                <!-- Fee Structure & Guidelines -->
+            <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
+                <p><strong>📌 Registration Guidelines & Fee Structure:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 6px;">
+                    <li><strong>Delegation Fee:</strong> PKR 3,000 per school delegation</li>
+                    <li><strong>Category Fee (per person):</strong>
+                        <ul style="padding-left: 20px; margin-top: 4px;">
+                            <li>1 Category: PKR 1,500</li>
+                            <li>2 Categories: PKR 2,000</li>
+                            <li>3 Categories: PKR 2,500</li>
+                        </ul>
+                    </li>
+                    <li><strong>Player Limit:</strong> A single student can participate in a maximum of <strong>3 categories</strong>.</li>
+                    <li>Head Delegate designation does <em>not</em> count towards the 3-category limit unless registered as a player.</li>
+                </ul>
+            </div>
             </div>
 
             <form id="sports-registration-form" onsubmit="handleSportsRegistrationSubmit(event)">
@@ -1642,6 +1649,79 @@ function validateMaxThreeCategoriesPerPlayer() {
     return true;
 }
 
+// Close Sports Registration / Creation Modal
+function closeSportsModal() {
+    const modal = document.getElementById('sports-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Close Sports Rules Modal
+function closeRulesModal() {
+    const modal = document.getElementById('rules-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Open Rules Modal by Category Name
+function openCategoryRulesModal(categoryName) {
+    const sport = sportsData.find(s => s.name === categoryName || s.title === categoryName);
+    if (!sport) return;
+
+    const modalTitle = document.getElementById('modal-title');
+    const modalRules = document.getElementById('modal-rules');
+    const modal = document.getElementById('rules-modal');
+
+    if (modalTitle) modalTitle.innerText = sport.name || sport.title;
+    if (modalRules) modalRules.innerHTML = sport.rules;
+    if (modal) modal.style.display = 'flex';
+}
+
+// Convert uploaded image file to Data URL for Firestore storage
+async function handleCategoryImageUpload(inputEl) {
+    if (!inputEl || !inputEl.files || !inputEl.files[0]) return null;
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(inputEl.files[0]);
+    });
+}
+
+// Save Category via Admin Modal
+async function saveSportsCategory() {
+    if (!firebase.auth().currentUser) {
+        alert("Unauthorized access.");
+        return;
+    }
+
+    const name = document.getElementById('admin-sport-name')?.value;
+    const rules = document.getElementById('admin-sport-rules')?.value;
+    const imageInput = document.getElementById('admin-sport-img');
+
+    if (!name || !rules) {
+        alert("Please fill in both Category Name and Rules.");
+        return;
+    }
+
+    let imgUrl = '';
+    if (imageInput && imageInput.files.length > 0) {
+        imgUrl = await handleCategoryImageUpload(imageInput);
+    }
+
+    try {
+        await db.collection("sports_categories").add({
+            name: name,
+            rules: rules,
+            img: imgUrl,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert("Sports Category saved successfully!");
+        closeSportsModal();
+    } catch (error) {
+        console.error("Error saving category:", error);
+        alert("Failed to save category.");
+    }
+}
+
 // 6. FORM SUBMISSION & EMAILJS AUTOMATION
 async function handleSportsRegistrationSubmit(e) {
     e.preventDefault();
@@ -1707,7 +1787,7 @@ async function handleSportsRegistrationSubmit(e) {
             };
 
             // Replace YOUR_SERVICE_ID and YOUR_TEMPLATE_ID with your EmailJS identifiers
-            await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', emailParams);
+            await emailjs.send('service_coqknxb', 'template_tgaquv9', emailParams);
         }
 
         alert(`Success! Delegation registration submitted for ${regData.delegationName} (${regData.division}). A confirmation email has been sent to ${regData.headDelegate.email}.`);
@@ -1999,7 +2079,7 @@ async function handleSportsRegistrationSubmit(e) {
             
                 };
             
-                emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', emailParams).catch(err => console.warn(err));
+                emailjs.send('service_coqknxb', 'template_tgaquv9', emailParams).catch(err => console.warn(err));
             
             }
 
@@ -2563,58 +2643,43 @@ async function handleSportsRegistrationSubmit(e) {
     
     }
 
+    
     async function uploadCodeOfConduct(type, inputEl) {
+    if (!inputEl.files || inputEl.files.length === 0) return;
     
-        if (!inputEl.files || inputEl.files.length === 0) return;
-    
-        const file = inputEl.files[0];
+    const file = inputEl.files[0];
 
-
-        
-        if (file.size > 50 * 1024 * 1024) {
-        
-            alert("File size exceeds 50MB limit.");
-        
-        
-            return;
-        
-        }
-
-
-        
-        try {
-        
-            const fileRef = storage.ref(`documents/${type}_coc_${Date.now()}_${file.name}`);
-        
-            const snapshot = await fileRef.put(file);
-        
-            const downloadURL = await snapshot.ref.getDownloadURL();
-
-
-            
-            await db.collection("documents").doc(`${type}_coc`).set({
-            
-                fileData: downloadURL,
-            
-                fileName: file.name,
-            
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            
-            });
-
-
-            
-            alert("Code of Conduct uploaded successfully!");
-
-        } catch (err) {
-            
-            alert("Upload failed: " + err.message);
-
-        }
-
+    // 1. Verify admin session exists before attempting upload
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        alert("Upload failed: You must be logged in as an admin.");
+        return;
     }
 
+    // 2. Validate file size (50 MB limit)
+    const MAX_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+        alert("File size exceeds the 50MB limit.");
+        return;
+    }
 
+    try {
+        const fileRef = storage.ref(`documents/${type}_coc_${Date.now()}_${file.name}`);
+        const snapshot = await fileRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+
+        await db.collection("documents").doc(`${type}_coc`).set({
+            fileData: downloadURL,
+            fileName: file.name,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert("Code of Conduct uploaded successfully!");
+    } catch (err) {
+        console.error("Full Upload Error Details:", err);
+        alert("Upload failed: " + err.message);
+    }
+}
     
     function openCodeOfConduct(type) {
     
@@ -2751,22 +2816,18 @@ async function handleSportsRegistrationSubmit(e) {
                 rules: `
 
                 <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
-
-                <p><strong>Eligibility:</strong> Boys & Girls</p>
-
-                <ul style="margin-top: 8px; padding-left: 20px;">
-
-                    <li>5 A-side with 3 substitutes.</li>
-
-                    <li>Match duration: 4 quarters of 5 minutes each (Total 20 minutes).</li>
-
-                    <li>All rounds are knockout matches.</li>
-
-                    <li>Tied matches decided by halves of 4 minutes each.</li>
-
-                    <li>Referee's decision is final.</li>
-
-                    </ul>`
+            <p><strong>Format:</strong> Doubles (2 players per team)</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li><strong>Match Format:</strong> 1 set (best of 5 games; first to win 3 games wins the set).</li>
+                <li><strong>Semifinals & Finals:</strong> Best of 3 sets (first team to win 2 sets wins).</li>
+                <li><strong>Scoring System:</strong> Played to 40 points (0, 15, 30, 40, game). At 40–40 (deuce), normal matches use a golden point, while Semifinals and Finals use advantage rules.</li>
+                <li><strong>Service Rules:</strong> Underarm serve after bouncing the ball, served diagonally into the opponent's service box from behind the service line. 2 serve attempts per point; change sides after each point.</li>
+                <li><strong>Service Rotation:</strong> Serve changes to the opposing team after every game.</li>
+                <li><strong>In-Play Rules:</strong> Ball may bounce only once before being returned. Players may hit off the walls after the ball has bounced in the court.</li>
+                <li><strong>Point Loss:</strong> Ball bounces twice, goes out of bounds, or a player touches the net during play.</li>
+                <li><strong>Tournament Structure:</strong> All rounds are knockout format.</li>
+                <li><strong>Conduct & Officiating:</strong> Players must maintain proper sportsmanship and follow referee instructions. The referee's decision is final and non-negotiable.</li>
+            </ul>`
 
                 },
 
@@ -2796,129 +2857,130 @@ async function handleSportsRegistrationSubmit(e) {
 
                         </ul>`
 
-                    },
+        },
 
-                    {
+        {
 
-                        name: "Table Tennis",
+        name: "Table Tennis",
 
-                        img: "https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?auto=format&fit=crop&w=600&q=80",
+        img: "https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?auto=format&fit=crop&w=600&q=80",
 
-                        rules: `
+        rules: `
 
-                        <p><strong>Formats:</strong> Singles & Doubles</p>
+        <p><strong>Formats:</strong> Singles & Doubles</p>
 
-                        <p><strong>Eligibility:</strong> Boys & Girls</p>
+        <p><strong>Eligibility:</strong> Boys & Girls</p>
 
-                        <ul style="margin-top: 8px; padding-left: 20px;">
+        <ul style="margin-top: 8px; padding-left: 20px;">
 
-                            <li>3 sets each of 10 points.</li>
+        <li>3 sets each of 10 points.</li>
 
-                            <li>All rounds are knockout matches.</li>
+        <li>All rounds are knockout matches.</li>
 
-                            <li>Referee's decision is final.</li>
+        <li>Referee's decision is final.</li>
 
-                            </ul>`
+        </ul>`
 
-                        },
+        },
 
-                        {
+        {
 
-                            name: "Badminton",
+        name: "Badminton",
 
-                            img: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=600&q=80",
+        img: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=600&q=80",
 
-                            rules: `
+        rules: `
 
-                            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+        <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
 
-                            <p><strong>Eligibility:</strong> Boys & Girls</p>
+        <p><strong>Eligibility:</strong> Boys & Girls</p>
 
-                            <ul style="margin-top: 8px; padding-left: 20px;">
+        <ul style="margin-top: 8px; padding-left: 20px;">
 
-                                <li>Singles and Doubles are separate competition categories.</li>
+        <li>Singles and Doubles are separate competition categories.</li>
 
-                                <li>3 sets of 7 points each.</li>
+        <li>3 sets of 7 points each.</li>
 
-                                <li>Coin toss determines initial service.</li>
+        <li>Coin toss determines initial service.</li>
 
-                                <li>Players remain in service courts until winning a point on their own serve.</li>
+        <li>Players remain in service courts until winning a point on their own serve.</li>
 
-                                <li>All rounds are knockout matches.</li>
+        <li>All rounds are knockout matches.</li>
 
-                                </ul>`
+        </ul>`
 
-                            },
+       },
 
-                            {
+       {
 
-                                name: "Athletics",
+        name: "Athletics",
 
-                                img: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=80",
+        img: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=80",
 
-                                rules: `
+        rules: `
 
-                                <p><strong>Divisions:</strong> Open For All Ages</p>
+        <p><strong>Divisions:</strong> Open For All Ages</p>
 
-                                <p><strong>Eligibility:</strong> Boys & Girls</p>
+        <p><strong>Eligibility:</strong> Boys & Girls</p>
 
-                                <ul style="margin-top: 8px; padding-left: 20px;">
+        <ul style="margin-top: 8px; padding-left: 20px;">
 
-                                    <li><strong>50-Meter Race (2 Heats):</strong>
+        <li><strong>50-Meter Race (2 Heats):</strong>
 
-                                        <ul>
+        <ul>
 
-                                            <li>1st Heat: Middle School (Grade 6 to 8).</li>
+        <li>1st Heat: Middle School (Grade 6 to 8).</li>
 
-                                            <li>2nd Heat: High School (Grade 9 to FSc 2nd Year / A2).</li>
+        <li>2nd Heat: High School (Grade 9 to FSc 2nd Year / A2).</li>
 
-                                            </ul>
+        </ul>
 
-                                            </li>
+        </li>
 
-                                            <li><strong>Standing Broad Jump</strong></li>
+        <li><strong>Standing Broad Jump</strong></li>
 
-                                            </ul>`
+        </ul>`
 
-                                        },
+    },
 
-                                        {
+    {
 
-                                            name: "Dodgeball",
+        name: "Dodgeball",
 
-                                            img: "https://images.unsplash.com/photo-1561532325-7d5231a2dede?auto=format&fit=crop&w=600&q=80",
+        img: "https://images.unsplash.com/photo-1561532325-7d5231a2dede?auto=format&fit=crop&w=600&q=80",
 
-                                            rules: `
+        rules: `
 
-                                            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+        <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
 
-                                            <p><strong>Eligibility:</strong> Boys & Girls</p>
+        <p><strong>Eligibility:</strong> Boys & Girls</p>
 
-                                            <ul style="margin-top: 8px; padding-left: 20px;">
+        <ul style="margin-top: 8px; padding-left: 20px;">
 
-                                                <li>6 A-side + 2 substitutes.</li>
+        <li>6 A-side + 2 substitutes.</li>
 
-                                                <li>1 catch equals 1 life gained for the team.</li>
+        <li>1 catch equals 1 life gained for the team.</li>
 
-                                                <li>Matches consist of 2 rounds (5 minutes each).</li>
+        <li>Matches consist of 2 rounds (5 minutes each).</li>
 
-                                                <li><strong>Elimination triggers:</strong> Hit by ball, dropping a catch, stepping on boundary lines, or catching a non-airborne ball.</li>
+        <li><strong>Elimination triggers:</strong> Hit by ball, dropping a catch, stepping on boundary lines, or catching a non-airborne ball.</li>
 
-                                                <li>Team eliminating opponents in the shortest time wins.</li>
+        <li>Team eliminating opponents in the shortest time wins.</li>
 
-                                                </ul>`
+        </ul>`
 
-                                            },
+    },
 
-                                            {
+    {
 
-                                                name: "Tug Of War",
+        name: "Tug Of War",
+                                                 
+                                                
+        img: "https://upload.wikimedia.org/wikipedia/commons/5/5c/Tug_of_war.jpg?auto=format&fit=crop&w=600&q=80",
 
-                                                img: "https://upload.wikimedia.org/wikipedia/commons/5/5c/Tug_of_war.jpg?auto=format&fit=crop&w=600&q=80",
-
-                                               rules: `
+       rules: `
                                                
-                                               <p><strong>Divisions:</strong> Open For All Ages</p>
+       <p><strong>Divisions:</strong> Open For All Ages</p>
 
         <p><strong>Eligibility:</strong> Boys & Girls</p>
         <ul style="margin-top: 8px; padding-left: 20px;">
@@ -3071,9 +3133,11 @@ function backToSportsMain() {
 }
 
 window.addEventListener('click', (e) => {
-    const modal = document.getElementById('rules-modal');
-    if (e.target === modal) closeRulesModal();
-});
+        const rulesModal = document.getElementById('rules-modal');
+        const sportsModal = document.getElementById('sports-modal');
+        if (e.target === rulesModal) closeRulesModal();
+        if (e.target === sportsModal) closeSportsModal();
+    });
 
 // Run initial render on DOM load
 document.addEventListener('DOMContentLoaded', renderSportsGrid);
