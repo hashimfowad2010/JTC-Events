@@ -691,7 +691,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <script type="text/javascript">
    (function(){
       // Replace with your EmailJS Public Key when ready
-      emailjs.init("hX6f7i8ddPluGJZU7");
+      emailjs.init("RF_hwJ-WWpXX4IRBR");
    })();
     </script>
 
@@ -732,7 +732,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <p style="margin-bottom: 16px;">
             Beaconhouse Johar Town Campus (JTC) in Lahore is renowned not just for academic rigor, but for a 
             vibrant student culture that comes alive through its flagship annual events. Among a bustling calendar,
-             two spectacles stand as the pillars of JTC’s co-curricular identity: <strong style="color: #ef4444;">JTCMUN</strong> and <strong style="color: #f59e0b;">Sportsfest</strong>. Together, these events capture the dual spirit of the campus—where sharp intellect meets raw athletic drive.
+             two spectacles stand as the pillars of JTC’s co-curricular identity: <strong style="color: #f59e0b;">JTCSPORTSFEST</strong> and <strong style="color: #ef4444;">JTCMUN</strong> . Together, these events capture the dual spirit of the campus—where sharp intellect meets raw athletic drive.
         </p>
         <p style="margin-bottom: 16px;">
             <strong style="color: #ef4444;">JTCMUN</strong> transforms the campus into a bustling arena of global
@@ -743,10 +743,10 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                 concert nights and formal dinners building connections across institutions.
         </p>
         <p style="margin-bottom: 16px;">
-            In sharp contrast, <strong style="color: #f59e0b;">Sportsfest</strong> unleashes pure adrenaline across the JTC grounds. The campus turns into a sea of vibrant house colors as student-athletes gear up for track and field events, high-stakes football matches, cricket showdowns, and fast-paced basketball games. Driven by house rivalries and intense school pride, it is a celebration of grit, sportsmanship, and endurance.
+            In sharp contrast, <strong style="color: #f59e0b;">JTCSPORTSFEST</strong> unleashes pure adrenaline across the JTC grounds. The campus turns into a sea of vibrant house colors as student-athletes gear up for track and field events, high-stakes football matches, cricket showdowns, and fast-paced basketball games. Driven by house rivalries and intense school pride, it is a celebration of grit, sportsmanship, and endurance.
         </p>
         <p>
-            Ultimately, these twin traditions define the essence of student life at JTC. While <strong style="color: #ef4444;">JTCMUN</strong> sharpens the mind and nurtures future leaders, <strong style="color: #f59e0b;">Sportsfest</strong> builds character and team spirit—creating a balanced, high-energy environment long after the final committee adjourns and stadium lights fade.
+            Ultimately, these twin traditions define the essence of student life at JTC. While <strong style="color: #ef4444;">JTCMUN</strong> sharpens the mind and nurtures future leaders, <strong style="color: #f59e0b;">JTCSPORTSFEST</strong> builds character and team spirit—creating a balanced, high-energy environment long after the final committee adjourns and stadium lights fade.
         </p>
     </div>
 
@@ -927,7 +927,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
             <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
                 <p><strong>📌 Registration Guidelines & Fee Structure:</strong></p>
                 <ul style="padding-left: 20px; margin-top: 6px;">
-                    <li><strong>Delegation Fee:</strong> PKR 3,000 per school delegation</li>
+                    <li><strong>Delegation Fee:</strong> PKR 3,500 per school delegation</li>
                     <li><strong>Category Fee (per person):</strong>
                         <ul style="padding-left: 20px; margin-top: 4px;">
                             <li>1 Category: PKR 1,500</li>
@@ -936,7 +936,6 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                         </ul>
                     </li>
                     <li><strong>Player Limit:</strong> A single student can participate in a maximum of <strong>3 categories</strong>.</li>
-                    <li>Head Delegate designation does <em>not</em> count towards the 3-category limit unless registered as a player.</li>
                 </ul>
             </div>
             </div>
@@ -964,6 +963,17 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                     <div class="form-group" style="grid-column: span 2;">
                         <label>Head Delegate Contact Number (WhatsApp) *</label>
                         <input type="tel" id="reg-hd-phone" required placeholder="e.g. +92 300 1234567">
+                    </div>
+                </div>
+                <!-- Chaperone Info (Placed Directly Beside/Below Head Delegate) -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 10px; background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px;">
+                    <div class="form-group">
+                        <label style="color: var(--primary);">Chaperone / Faculty Advisor Name *</label>
+                        <input type="text" id="sf-chaperone-name" required placeholder="Teacher / Advisor Name">
+                    </div>
+                    <div class="form-group">
+                        <label style="color: var(--primary);">Chaperone Contact Number *</label>
+                        <input type="tel" id="sf-chaperone-contact" required placeholder="03xx-xxxxxxx">
                     </div>
                 </div>
 
@@ -1484,16 +1494,19 @@ let selectedDivision = "";
 const sportsCategoryConfigs = {
     "Futsal": { isTeam: true, mainPlayers: 5, substitutes: 3 },
     "Basketball": { isTeam: true, mainPlayers: 5, substitutes: 3 },
-    "Padel Tennis": { isTeam: true, mainPlayers: 2, substitutes: 1 },
+    "Padel Tennis": { isTeam: true, mainPlayers: 2, substitutes: 0 }, // Strict 2 players, 0 substitutes
     "Cricket": { isTeam: true, mainPlayers: 8, substitutes: 3 },
-    "Table Tennis": { isTeam: false, count: 2 }, // Up to 2 players (Singles/Doubles)
-    "Badminton": { isTeam: false, count: 2 },
-    "Athletics": { isTeam: false, count: 4 }, // Individual entries for 50m / Broad Jump
+    "Table Tennis - Singles": { isTeam: false, count: 1 },
+    "Table Tennis - Doubles": { isTeam: true, mainPlayers: 2, substitutes: 0 },
+    "Badminton - Singles": { isTeam: false, count: 1 },
+    "Badminton - Doubles": { isTeam: true, mainPlayers: 2, substitutes: 0 },
+    "Athletics - 50 Meters": { isTeam: false, count: 1 },
+    "Athletics - Vertical Jump": { isTeam: false, count: 1 },
     "Dodgeball": { isTeam: true, mainPlayers: 6, substitutes: 2 },
     "Tug Of War": { isTeam: true, mainPlayers: 8, substitutes: 0 },
-    "Strongman / Woman": { isTeam: false, count: 2 },
-    "Chess": { isTeam: false, count: 2 },
-    "E-Gaming": { isTeam: false, count: 2 },
+    "Strongman / Woman": { isTeam: false, count: 1 }, // Single person category
+    "Chess": { isTeam: false, count: 1 },             // Single person category
+    "E-Gaming": { isTeam: false, count: 1 },          // Single person category
     "Math Mystic": { isTeam: false, count: 2 },
     "Foosball": { isTeam: true, mainPlayers: 2, substitutes: 0 },
     "Ludo": { isTeam: false, count: 2 }
@@ -1750,6 +1763,8 @@ async function handleSportsRegistrationSubmit(e) {
             email: document.getElementById('reg-hd-email').value.trim(),
             phone: document.getElementById('reg-hd-phone').value.trim()
         },
+        "Chaperone Name": document.getElementById('sf-chaperone-name').value,
+        "Chaperone Contact": document.getElementById('sf-chaperone-contact').value,
         selectedCategories: {},
         submittedAt: new Date().toISOString()
     };
@@ -2783,7 +2798,7 @@ async function handleSportsRegistrationSubmit(e) {
 
             name: "Basketball",
 
-            img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=600&q=80",
+            img: "basketball.jpg",
 
             rules: `
 
@@ -2808,34 +2823,26 @@ async function handleSportsRegistrationSubmit(e) {
             },
 
             {
-
-                name: "Padel Tennis",
-
-                img: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=600&q=80",
-
-                rules: `
-
-                <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
-            <p><strong>Format:</strong> Doubles (2 players per team)</p>
+        name: "Padel Tennis",
+        type: "team",
+        minPlayers: 2,
+        maxPlayers: 2, // No substitutes for Padel
+        img: "padeltennis.jpg",
+        rules: `
+            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
-                <li><strong>Match Format:</strong> 1 set (best of 5 games; first to win 3 games wins the set).</li>
-                <li><strong>Semifinals & Finals:</strong> Best of 3 sets (first team to win 2 sets wins).</li>
-                <li><strong>Scoring System:</strong> Played to 40 points (0, 15, 30, 40, game). At 40–40 (deuce), normal matches use a golden point, while Semifinals and Finals use advantage rules.</li>
-                <li><strong>Service Rules:</strong> Underarm serve after bouncing the ball, served diagonally into the opponent's service box from behind the service line. 2 serve attempts per point; change sides after each point.</li>
-                <li><strong>Service Rotation:</strong> Serve changes to the opposing team after every game.</li>
-                <li><strong>In-Play Rules:</strong> Ball may bounce only once before being returned. Players may hit off the walls after the ball has bounced in the court.</li>
-                <li><strong>Point Loss:</strong> Ball bounces twice, goes out of bounds, or a player touches the net during play.</li>
-                <li><strong>Tournament Structure:</strong> All rounds are knockout format.</li>
-                <li><strong>Conduct & Officiating:</strong> Players must maintain proper sportsmanship and follow referee instructions. The referee's decision is final and non-negotiable.</li>
+                <li>2 Players per team (Strictly NO substitutes permitted).</li>
+                <li>Best of 3 sets format.</li>
+                <li>Standard Padel tennis rules apply.</li>
             </ul>`
-
-                },
+    },
 
                 {
 
                     name: "Cricket",
 
-                    img: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=600&q=80",
+                    img: "cricket.jpg",
 
                     rules: `
 
@@ -2860,94 +2867,54 @@ async function handleSportsRegistrationSubmit(e) {
         },
 
         {
-
         name: "Table Tennis",
-
-        img: "https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?auto=format&fit=crop&w=600&q=80",
-
+        subCategories: ["Table Tennis - Singles", "Table Tennis - Doubles"],
+        img: "tabletennis.jpg",
         rules: `
-
-        <p><strong>Formats:</strong> Singles & Doubles</p>
-
-        <p><strong>Eligibility:</strong> Boys & Girls</p>
-
-        <ul style="margin-top: 8px; padding-left: 20px;">
-
-        <li>3 sets each of 10 points.</li>
-
-        <li>All rounds are knockout matches.</li>
-
-        <li>Referee's decision is final.</li>
-
-        </ul>`
-
-        },
+            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li><strong>Singles:</strong> 1 Player per entry.</li>
+                <li><strong>Doubles:</strong> 2 Players per entry.</li>
+                <li>Delegations may register players in both Singles and Doubles categories.</li>
+                <li>3 sets of 11 points each.</li>
+            </ul>`
+    },
 
         {
-
         name: "Badminton",
-
-        img: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=600&q=80",
-
+        subCategories: ["Badminton - Singles", "Badminton - Doubles"],
+        img: "badminton.jpg",
         rules: `
+            <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li><strong>Singles:</strong> 1 Player per entry.</li>
+                <li><strong>Doubles:</strong> 2 Players per entry.</li>
+                <li>Delegations may register players in both Singles and Doubles categories.</li>
+                <li>All matches follow standard knockout rules (3 sets of 21 points).</li>
+            </ul>`
+    },
 
-        <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
-
-        <p><strong>Eligibility:</strong> Boys & Girls</p>
-
-        <ul style="margin-top: 8px; padding-left: 20px;">
-
-        <li>Singles and Doubles are separate competition categories.</li>
-
-        <li>3 sets of 7 points each.</li>
-
-        <li>Coin toss determines initial service.</li>
-
-        <li>Players remain in service courts until winning a point on their own serve.</li>
-
-        <li>All rounds are knockout matches.</li>
-
-        </ul>`
-
-       },
-
-       {
-
+    {
         name: "Athletics",
-
-        img: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=80",
-
+        subCategories: ["Athletics - 50 Meters", "Athletics - Vertical Jump"],
+        img: "athletics.jpg",
         rules: `
-
-        <p><strong>Divisions:</strong> Open For All Ages</p>
-
-        <p><strong>Eligibility:</strong> Boys & Girls</p>
-
-        <ul style="margin-top: 8px; padding-left: 20px;">
-
-        <li><strong>50-Meter Race (2 Heats):</strong>
-
-        <ul>
-
-        <li>1st Heat: Middle School (Grade 6 to 8).</li>
-
-        <li>2nd Heat: High School (Grade 9 to FSc 2nd Year / A2).</li>
-
-        </ul>
-
-        </li>
-
-        <li><strong>Standing Broad Jump</strong></li>
-
-        </ul>`
-
+            <p><strong>Divisions:</strong> Open For All Ages</p>
+            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li><strong>50 Meters Sprint:</strong> Timed sprint heats.</li>
+                <li><strong>Vertical Jump:</strong> Standing vertical jump test.</li>
+                <li>Delegations may enter participants in one or both sub-categories.</li>
+            </ul>`
     },
 
     {
 
         name: "Dodgeball",
 
-        img: "https://images.unsplash.com/photo-1561532325-7d5231a2dede?auto=format&fit=crop&w=600&q=80",
+        img: "dodgeball.jpg",
 
         rules: `
 
@@ -2976,7 +2943,7 @@ async function handleSportsRegistrationSubmit(e) {
         name: "Tug Of War",
                                                  
                                                 
-        img: "https://upload.wikimedia.org/wikipedia/commons/5/5c/Tug_of_war.jpg?auto=format&fit=crop&w=600&q=80",
+        img: "tugofwar.jpg",
 
        rules: `
                                                
@@ -2991,45 +2958,49 @@ async function handleSportsRegistrationSubmit(e) {
     },
     {
         name: "Strongman / Woman",
-        img: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80",
+        type: "individual",
+        minPlayers: 1,
+        maxPlayers: 1,
+        img: "strongman.jpg",
         rules: `
             <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
-                <li><strong>Push-ups & Squats:</strong> 100 seconds time limit for each exercise. Participant with highest valid reps wins.</li>
-                <li><strong>Arm Wrestling:</strong>
-                    <ul>
-                        <li>If grip cannot be established, referee applies "Referee's Grip". Movement after grip is a foul.</li>
-                        <li>Wrist bending permitted only after match starts. Shoulders must remain square before start.</li>
-                        <li>Pin requires forcing opponent's arm to touch the table.</li>
-                        <li>Touching body with hand incurs a foul & restart. 3 fouls result in match forfeiture.</li>
-                    </ul>
-                </li>
+                <li>Single-person individual category.</li>
+                <li>Push-ups & Squats: 100 seconds time limit each.</li>
+                <li>Arm Wrestling: Knockout arm-wrestling tournament format.</li>
             </ul>`
     },
     {
         name: "Chess",
-        img: "https://images.unsplash.com/photo-1529699211952-734e80c4d42b?auto=format&fit=crop&w=600&q=80",
+        type: "individual",
+        minPlayers: 1,
+        maxPlayers: 1,
+        img: "chess.jpg",
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls (Separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
-                <li>Game duration: 30 minutes total.</li>
-                <li>Undecided games resolved based on highest piece/board score.</li>
+                <li>Single-person individual category.</li>
+                <li>Game duration: 30 minutes total (Timed clock).</li>
             </ul>`
     },
     {
         name: "E-Gaming",
-        img: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=600&q=80",
+        type: "individual",
+        minPlayers: 1,
+        maxPlayers: 1,
+        img: "egaming.jpg",
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
-                <li><strong>FC 25/27 (FIFA):</strong> Classic controls, normal game speed. 4-minute halves (6 minutes for Semi-Finals & Finals). Personal controllers allowed.</li>
-                <li><strong>Tekken:</strong> Best of 3 (Semis) & Best of 5 (Finals). Randomized brackets. DLC characters and button assists prohibited. 4-minute call time before walkover.</li>
+                <li>Single-person individual category.</li>
+                <li><strong>FC 25/27 (FIFA):</strong> 4-minute halves. Personal controllers allowed.</li>
+                <li><strong>Tekken:</strong> Best of 3 / Best of 5 format.</li>
             </ul>`
     },
     {
         name: "Math Mystic",
-        img: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=600&q=80",
+        img: "math.jpg",
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
@@ -3039,7 +3010,7 @@ async function handleSportsRegistrationSubmit(e) {
     },
     {
         name: "Foosball",
-        img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=600&q=80",
+        img: "foosball.jpg",
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
@@ -3052,7 +3023,7 @@ async function handleSportsRegistrationSubmit(e) {
     },
     {
         name: "Ludo",
-        img: "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=600&q=80",
+        img: "ludo.jpg",
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
@@ -3065,7 +3036,8 @@ async function handleSportsRegistrationSubmit(e) {
 
 function renderCategoryCard(sport, index) {
     const title = sport.name || "Sports Category";
-    const fallbackSrc = 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80';
+    // Local fallback image (e.g., sf.png or images/default-placeholder.jpg)
+    const fallbackSrc = 'SF.png'; 
     const imageSrc = sport.img || fallbackSrc;
 
     return `
@@ -3073,7 +3045,6 @@ function renderCategoryCard(sport, index) {
             <div class="category-img-container" style="width: 100%; height: 160px; overflow: hidden; border-radius: 8px; margin-bottom: 12px;">
                 <img src="${imageSrc}" 
                      alt="${title}" 
-                     referrerpolicy="no-referrer"
                      onerror="this.onerror=null; this.src='${fallbackSrc}';" 
                      style="width: 100%; height: 100%; object-fit: cover;">
             </div>
