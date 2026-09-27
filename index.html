@@ -1452,7 +1452,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         });
 
         db.collection("management").onSnapshot(snapshot => {
-            ['Evvent Coordinator', 'Heads',].forEach(cat => {
+            ['Event Coordinator', 'Heads',].forEach(cat => {
                 const el = document.getElementById(`container-${cat}`);
                 if (el) el.innerHTML = '';
             });
@@ -1506,12 +1506,13 @@ const sportsCategoryConfigs = {
     "Athletics - Vertical Jump": { isTeam: false, count: 1 },
     "Dodgeball": { isTeam: true, mainPlayers: 6, substitutes: 2 },
     "Tug Of War": { isTeam: true, mainPlayers: 8, substitutes: 0 },
-    "Strongman / Woman": { isTeam: false, count: 1 }, // Single person category
+    "Strongman": { isTeam: false, count: 1 }, // Single person category
+    "Strong Woman": { isTeam: false, count: 1 },
     "Chess": { isTeam: false, count: 1 },             // Single person category
     "E-Gaming": { isTeam: false, count: 1 },          // Single person category
     "Math Mystic": { isTeam: false, count: 2 },
     "Foosball": { isTeam: true, mainPlayers: 2, substitutes: 0 },
-    "Ludo": { isTeam: false, count: 2 }
+    "Ludo": { isTeam: false, count: 1 }
 };
 
 function openSportsRegisterModal() {
