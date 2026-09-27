@@ -1971,136 +1971,83 @@ async function handleSportsRegistrationSubmit(e) {
 
 
     async function submitRegistration(e) {
-    
-        e.preventDefault();
-    
-        const submitBtn = document.getElementById('submit-reg-btn');
-    
-        submitBtn.innerText = "Submitting...";
-    
-        submitBtn.disabled = true;
+    if (e) e.preventDefault();
 
-        const isMunPage = document.getElementById('mun').classList.contains('active');
-    
-        const eventType = isMunPage ? 'MUN' : 'Sports Fest';
+    const formElement = e.target; // The submitted form
+    const formData = {};
 
+    // Select all inputs, selects, and textareas inside the submitted form
+    const inputs = formElement.querySelectorAll('input, select, textarea');
 
-        
-        let formData = {};
-        
-        
-        let headDelegateEmail = "";
+    inputs.forEach(input => {
+        if (!input.value) return; // Skip empty fields
 
-
-        
-        if (isMunPage) {
-        
-            headDelegateEmail = document.getElementById('mun-hd-email').value.trim();
-        
-            formData = {
-        
-                "School Name": document.getElementById('mun-school-name').value,
-        
-                "Delegation Name": document.getElementById('mun-delegation-name').value,
-        
-                "Head Delegate Name": document.getElementById('mun-hd-name').value,
-        
-                "Head Delegate Email": headDelegateEmail,
-        
-                "Head Delegate Contact": document.getElementById('mun-hd-contact').value,
-        
-                "Head Delegate Committee": document.getElementById('mun-hd-committee').value,
-        
-                "Delegate 2": `${document.getElementById('mun-d2-name').value} (${document.getElementById('mun-d2-committee').value})`,
-        
-                "Delegate 3": `${document.getElementById('mun-d3-name').value} (${document.getElementById('mun-d3-committee').value})`,
-        
-                "Delegate 4": `${document.getElementById('mun-d4-name').value} (${document.getElementById('mun-d4-committee').value})`,
-        
-                "Delegate 5": `${document.getElementById('mun-d5-name').value} (${document.getElementById('mun-d5-committee').value})`,
-        
-                "Delegate 6": `${document.getElementById('mun-d6-name').value} (${document.getElementById('mun-d6-committee').value})`,
-        
-                "Delegate 7": `${document.getElementById('mun-d7-name').value} (${document.getElementById('mun-d7-committee').value})`
-        
-            };
-        
+        // Find associated label or fallback to name/placeholder/id
+        let labelText = '';
+        const label = formElement.querySelector(`label[for="${input.id}"]`);
+        if (label) {
+            labelText = label.innerText.replace('*', '').trim();
+        } else if (input.previousElementSibling && input.previousElementSibling.tagName === 'LABEL') {
+            labelText = input.previousElementSibling.innerText.replace('*', '').trim();
         } else {
-        
-            const inputs = document.querySelectorAll('#form-fields input');
-        
-            inputs.forEach(input => {
-        
-                const labelText = input.previousElementSibling ? input.previousElementSibling.innerText : 'Field';
-        
-                formData[labelText] = input.value;
-        
-            });
-        
+            labelText = input.name || input.placeholder || input.id;
         }
 
+        formData[labelText] = input.value;
+    });
 
-        
-        try {
-        
-            await db.collection("registrations").add({
-        
-                eventType: eventType,
-        
-                categoryOrCommittee: currentTargetCategory,
-        
-                subType: currentTargetCategory.includes('Delegation') ? currentTargetCategory : 'General',
-        
-                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        
-                formData: formData
-        
-            });
+    // Extract Head Delegate email specifically for EmailJS
+    const headDelegateEmail = formData['Head Delegate Email'] || 
+                              formData['Head Delegate Gmail'] || 
+                              formData['Email'] || 
+                              formData['Email Address'] || '';
 
+    const isMunPage = document.getElementById('mun') && document.getElementById('mun').classList.contains('active');
+    const eventType = isMunPage ? 'MUN' : 'Sports Fest';
 
-            
-            if (isMunPage && typeof emailjs !== 'undefined' && emailjs.send) {
-            
+    try {
+        // 1. Save to Firestore with explicit subType and formData
+        await db.collection("registrations").add({
+            eventType: eventType,
+            subType: "Delegations",
+            registrationType: "Delegations",
+            categoryOrCommittee: formData['Delegation Name'] || "General Delegation",
+            paymentStatus: "unpaid",
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            formData: formData
+        });
+
+        // 2. Send email via EmailJS only if email is present
+        if (headDelegateEmail) {
+            try {
                 const emailParams = {
-            
                     to_email: headDelegateEmail,
-            
-                    head_delegate: formData["Head Delegate Name"],
-            
-                    delegation_name: formData["Delegation Name"],
-            
-                    school_name: formData["School Name"],
-            
-                    delegation_tier: currentTargetCategory
-            
+                    to_name: formData['Head Delegate Name'] || formData['Full Name'] || 'Delegate',
+                    school_name: formData['Institution / School Name'] || formData['School Name'] || 'N/A',
+                    delegation_name: formData['Delegation Name'] || 'N/A',
+                    submission_date: new Date().toLocaleDateString()
                 };
-            
-                emailjs.send('service_coqknxb', 'template_tgaquv9', emailParams).catch(err => console.warn(err));
-            
+
+                await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', emailParams);
+            } catch (emailErr) {
+                console.warn("EmailJS failed:", emailErr);
             }
-
-
-            
-            closeModal('form-modal');
-            
-            document.getElementById('dynamic-form').reset();
-            
-            document.getElementById('thank-you-modal').style.display = 'flex';
-
-
-        } catch (error) {
-        
-            alert("Error saving registration: " + error.message);
-        
-        } finally {
-        
-            submitBtn.innerText = "Submit Registration";
-        
-            submitBtn.disabled = false;
-        
-        
+        } else {
+            console.warn("No Head Delegate Email found in formData:", formData);
         }
+
+        // 3. UI Feedback
+        closeModal('form-modal');
+        if (document.getElementById('sports-register-modal')) closeModal('sports-register-modal');
+
+        const thankYouModal = document.getElementById('thank-you-modal');
+        if (thankYouModal) thankYouModal.style.display = 'flex';
+
+    } catch (error) {
+        console.error("Submission error:", error);
+        alert("An error occurred during submission: " + error.message);
     }
+}
 
 
 
