@@ -1759,6 +1759,8 @@ async function handleSportsRegistrationSubmit(e) {
         // 2. Save Registration to Firestore FIRST
         await db.collection("registrations").add({
             eventType: "Sports Fest",
+            subType: "Delegations",
+            registrationType: "Delegations",
             categoryOrCommittee: typeof currentTargetCategory !== 'undefined' ? currentTargetCategory : 'General',
             paymentStatus: 'unpaid',
             submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
