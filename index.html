@@ -1144,6 +1144,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                     <tr>
                         <th>Category / Committee</th>
                         <th>Submitted At</th>
+                        <th>Payment Status</th>
                         <th>Form Details</th>
                         <th>Actions</th>
                     </tr>
@@ -1792,7 +1793,7 @@ async function handleSportsRegistrationSubmit(e) {
     try {
         // Save to Firestore (sorted under 'sports_registrations' collection)
         if (typeof db !== 'undefined') {
-            await db.collection("sports_registrations").add(regData);
+            await db.collection("registrations").add(regData);
         }
 
         // Send Confirmation Email via EmailJS
@@ -1815,6 +1816,12 @@ async function handleSportsRegistrationSubmit(e) {
         
         document.getElementById('sports-registration-form').reset();
         closeRegisterModal();
+
+        const thankYouModal = document.getElementById('thank-you-modal');
+        if (thankYouModal) {
+        thankYouModal.style.display = 'flex';
+        }
+
     } catch (error) {
         console.error("Registration error:", error);
         alert("An error occurred while submitting registration. Please try again.");
@@ -2248,95 +2255,106 @@ async function handleSportsRegistrationSubmit(e) {
 
 
     
-    function renderRegistrationsTable(eventType, subType) {
-    
-        const tbody = document.getElementById('registrations-table-body');
-    
-        if (!tbody) return;
-    
-        tbody.innerHTML = '';
-
-
-        
-        let filtered = allRegistrations.filter(r => {
-        
-            const matchesEvent = r.eventType === eventType;
-        
-            let matchesType = true;
-        
-            
-            
-            if (subType === 'Junior Delegation') {
-            
-                matchesType = r.categoryOrCommittee === 'Junior Delegation' || r.subType === 'Junior Delegation';
-            
-            } else if (subType === 'Senior Delegation') {
-            
-                matchesType = r.categoryOrCommittee === 'Senior Delegation' || r.subType === 'Senior Delegation';
-            
-            } else if (subType === 'Delegations') {
-            
-                matchesType = r.subType === 'Delegations' || r.registrationType === 'Delegations';
-            
-            } else {
-            
-                matchesType = !r.subType || r.subType === 'Categories' || r.registrationType === 'Categories' || r.registrationType === 'Committees';
-            
-            }
-            
-            return matchesEvent && matchesType;
+    // Function to toggle Payment Status in Firestore
+async function togglePaymentStatus(docId, currentStatus) {
+    const newStatus = (currentStatus === 'paid') ? 'unpaid' : 'paid';
+    try {
+        await db.collection("registrations").doc(docId).update({
+            paymentStatus: newStatus
         });
-
-
-
-        
-        if (filtered.length === 0) {
-        
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No registrations submitted yet for this section.</td></tr>';
-        
-            return;
-        
-        }
-
-
-        
-        filtered.forEach(data => {
-        
-            let fieldText = '';
-        
-            if (data.formData) {
-        
-                for (const [key, val] of Object.entries(data.formData)) {
-        
-                    fieldText += `<strong>${key}:</strong> ${val}<br>`;
-        
-                }
-        
-            }
-        
-            const dateStr = data.submittedAt && data.submittedAt.toDate ? data.submittedAt.toDate().toLocaleString() : 'N/A';
-        
-            const categoryDisplay = data.categoryOrCommittee || 'General';
-
-
-            
-            tbody.innerHTML += `
-            
-            <tr>
-            
-                <td><strong style="color: var(--secondary);">${categoryDisplay}</strong></td>
-            
-                <td>${dateStr}</td>
-            
-                <td>${fieldText}</td>
-            
-                <td><button class="btn btn-danger" onclick="deleteDoc('registrations','${data.id}')">Delete</button></td>
-            
-                </tr>`;
-        
-            });
-
+    } catch (error) {
+        alert("Error updating payment status: " + error.message);
     }
+}
+
+// Updated Render Registrations Table Function
+function renderRegistrationsTable(eventType, subType) {
+    const tbody = document.getElementById('registrations-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    let filtered = allRegistrations.filter(r => {
+        const matchesEvent = r.eventType === eventType;
+        let matchesType = true;
+        
+        if (subType === 'Junior Delegation') {
+            matchesType = r.categoryOrCommittee === 'Junior Delegation' || r.subType === 'Junior Delegation';
+        } else if (subType === 'Senior Delegation') {
+            matchesType = r.categoryOrCommittee === 'Senior Delegation' || r.subType === 'Senior Delegation';
+        } else if (subType === 'Delegations') {
+            matchesType = r.subType === 'Delegations' || r.registrationType === 'Delegations';
+        } else {
+            matchesType = !r.subType || r.subType === 'Categories' || r.registrationType === 'Categories' || r.registrationType === 'Committees';
+        }
+        return matchesEvent && matchesType;
+    });
+
+    filtered.sort((a, b) => {
+        const catA = (a.categoryOrCommittee || 'General').toLowerCase();
+        const catB = (b.categoryOrCommittee || 'General').toLowerCase();
+        if (catA < catB) return -1;
+        if (catA > catB) return 1;
+        return 0;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No registrations submitted yet for this section.</td></tr>';
+        return;
+    }
+
+    filtered.forEach(data => {
+        let fieldText = '';
+        if (data.formData) {
+            for (const [key, val] of Object.entries(data.formData)) {
+                fieldText += `<strong>${key}:</strong> ${val}<br>`;
+            }
+        }
+        const dateStr = data.submittedAt && data.submittedAt.toDate ? data.submittedAt.toDate().toLocaleString() : 'N/A';
+        const categoryDisplay = data.categoryOrCommittee || 'General';
+
+        // Payment status badge and toggle button logic
+        const paymentStatus = data.paymentStatus || 'unpaid';
+        const isPaid = paymentStatus === 'paid';
+        
+        const statusBadge = `
+            <span style="
+                padding: 4px 10px; 
+                border-radius: 12px; 
+                font-weight: bold; 
+                font-size: 0.8rem; 
+                display: inline-block;
+                background: ${isPaid ? '#10b98122' : '#ef444422'}; 
+                color: ${isPaid ? '#10b981' : '#ef4444'}; 
+                border: 1px solid ${isPaid ? '#10b981' : '#ef4444'};">
+                ${isPaid ? 'PAID' : 'UNPAID'}
+            </span>
+        `;
+
+        const toggleBtn = `
+            <button class="btn" style="
+                padding: 4px 8px; 
+                font-size: 0.75rem; 
+                margin-top: 6px; 
+                background: ${isPaid ? '#6b7280' : '#10b981'}; 
+                width: auto;" 
+                onclick="togglePaymentStatus('${data.id}', '${paymentStatus}')">
+                Mark as ${isPaid ? 'Unpaid' : 'Paid'}
+            </button>
+        `;
+
+        tbody.innerHTML += `
+            <tr>
+                <td><strong style="color: var(--secondary);">${categoryDisplay}</strong></td>
+                <td>${dateStr}</td>
+                <td>${fieldText}</td>
+                <td style="text-align: center;">
+                    ${statusBadge}<br>
+                    ${toggleBtn}
+                </td>
+                <td><button class="btn btn-danger" onclick="deleteDoc('registrations','${data.id}')">Delete</button></td>
+            </tr>`;
+    });
+}
 
 
 
