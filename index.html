@@ -3150,46 +3150,6 @@ function renderCategoryCard(sport, index) {
     `;
 }
 
-// Render an individual card
-    function renderManagementCard(member) {
-        const fallbackSrc = 'SF.png';
-        const imageSrc = getDirectDriveUrl(member.img) || fallbackSrc;
-        return `
-            <div class="card">
-                <img src="${imageSrc}" alt="${member.desc}" onerror="this.src='${fallbackSrc}'" style="width:100%; height:200px; object-fit:cover;">
-                <div class="card-body">
-                    <h4 class="card-title">${member.title}</h4>
-                    <p class="card-desc">${member.desc}</p>
-                </div>
-            </div>
-        `;
-    }
-
-    // Render all sports management categories
-    function renderManagement() {
-        const container = document.getElementById('management-container');
-        if (!container) return;
-
-        // Group team members by category
-        const categories = {};
-        managementMembers.forEach(member => {
-            if (!categories[member.cat]) categories[member.cat] = [];
-            categories[member.cat].push(member);
-        });
-
-        let html = '';
-        for (const [catName, members] of Object.entries(categories)) {
-            html += `<h3 style="margin-top:24px; margin-bottom:12px; color: var(--secondary);">${catName}</h3>`;
-            html += `<div class="grid-3">`;
-            members.forEach(member => {
-                html += renderManagementCard(member);
-            });
-            html += `</div>`;
-        }
-
-        container.innerHTML = html;
-    }
-
 function renderSportsGrid() {
     const container = document.getElementById('sports-category-list');
     if (!container) return;
@@ -3230,6 +3190,7 @@ function openSportsSubSection(sectionId) {
         renderSportsGrid(); // Ensure grid renders on section open
     } else if (sectionId === 'management') {
         document.getElementById('sports-management').classList.remove('hidden');
+        renderManagement(); // <-- ADD THIS: Calls your existing management render function
     }
 }
 
@@ -3247,7 +3208,10 @@ window.addEventListener('click', (e) => {
     });
 
 // Run initial render on DOM load
-document.addEventListener('DOMContentLoaded', renderSportsGrid);
+document.addEventListener('DOMContentLoaded', () => {
+    renderSportsGrid();
+    renderManagement(); // <-- ADD THIS: Ensures management renders on page load
+});
 
 </script>
 </body>
