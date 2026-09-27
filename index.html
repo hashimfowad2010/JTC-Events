@@ -998,30 +998,29 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 </div>
 
     <!-- MANAGEMENT SUBSECTION -->
-    <div id="sports-management" class="hidden">
-        <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSportsMain()">&larr; Back to Main Sports Fest</button>
-        <h2>Management</h2>
-        
-        <div id="admin-sports-mgmt-tools" class="admin-panel hidden">
-            <h3>[Admin] Add New Management Member</h3>
-            <div class="form-group">
-                <label>Category</label>
-                <select id="sports-mgmt-cat">
-                    <option>Organizers</option>
-                    <option>Coordinators</option>
-                    <option>Referees</option>
-                </select>
-            </div>
-            <div class="form-group"><label>Name/Title</label><input type="text" id="sports-mgmt-title"></div>
-            <div class="form-group"><label>Description</label><input type="text" id="sports-mgmt-desc"></div>
-            <div class="form-group"><label>Photo URL</label><input type="text" id="sports-mgmt-img" value="https://via.placeholder.com/150"></div>
-            <button class="btn" onclick="addSportsManagementCard()">Add Member</button>
+    <!-- MANAGEMENT SUBSECTION -->
+<div id="sports-management" class="hidden">
+    <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSportsMain()">&larr; Back to Main Sports Fest</button>
+    <h2>Management</h2>
+    
+    <div id="admin-sports-mgmt-tools" class="admin-panel hidden">
+        <h3>[Admin] Add New Management Member</h3>
+        <div class="form-group">
+            <label>Category</label>
+            <select id="sports-mgmt-cat">
+                <option>Event Coordinator</option>
+                <option>Event Heads</option>
+            </select>
         </div>
-
-        <h3>Organizers</h3><div id="container-Organizers" class="grid-3"></div>
-        <h3 style="margin-top:20px;">Coordinators</h3><div id="container-Coordinators" class="grid-3"></div>
-        <h3 style="margin-top:20px;">Referees</h3><div id="container-Referees" class="grid-3"></div>
+        <div class="form-group"><label>Post / Title</label><input type="text" id="sports-mgmt-title" placeholder="e.g., Event Coordinator or Event Head"></div>
+        <div class="form-group"><label>Name</label><input type="text" id="sports-mgmt-desc" placeholder="e.g., Yousaf"></div>
+        <div class="form-group"><label>Photo URL</label><input type="text" id="sports-mgmt-img" placeholder="https://lh3.googleusercontent.com/d/YOUR_FILE_ID"></div>
+        <button class="btn" onclick="addSportsManagementCard()">Add Member</button>
     </div>
+
+    <!-- Main dynamic container targeted by renderManagement() -->
+    <div id="management-container"></div>
+</div>
 
     <!-- CATEGORIES SUBSECTION -->
 <div id="sports-categories" class="hidden">
@@ -1398,12 +1397,15 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     }
 
     function openSportsSubSection(sec) {
-        document.getElementById('sports-main-tiles').classList.add('hidden');
-        document.getElementById('sports-management').classList.add('hidden');
-        document.getElementById('sports-categories').classList.add('hidden');
+    document.getElementById('sports-main-tiles').classList.add('hidden');
+    document.getElementById('sports-management').classList.add('hidden');
+    document.getElementById('sports-categories').classList.add('hidden');
 
-        if (sec === 'management') document.getElementById('sports-management').classList.remove('hidden');
-        if (sec === 'categories') document.getElementById('sports-categories').classList.remove('hidden');
+    if (sec === 'management') {
+        document.getElementById('sports-management').classList.remove('hidden');
+        renderManagement(); // Add this line
+    }
+    if (sec === 'categories') document.getElementById('sports-categories').classList.remove('hidden');
     }
 
     function backToSportsMain() {
@@ -1450,7 +1452,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         });
 
         db.collection("management").onSnapshot(snapshot => {
-            ['Secretariat', 'Directorate', 'EC', 'Organizers', 'Coordinators', 'Referees'].forEach(cat => {
+            ['Evvent Coordinator', 'Heads',].forEach(cat => {
                 const el = document.getElementById(`container-${cat}`);
                 if (el) el.innerHTML = '';
             });
@@ -2650,7 +2652,7 @@ async function handleSportsRegistrationSubmit(e) {
     
                 cocFiles.sports = null;
     
-                if (statusEl) statusEl.innerText = "No document uploaded yet.";
+                if (statusEl) statusEl.innerText = "Click to view code of conduct and invite.";
     
             }
     
@@ -2695,23 +2697,23 @@ async function handleSportsRegistrationSubmit(e) {
         alert("Upload failed: " + err.message);
     }
 }
-    
-    function openCodeOfConduct(type) {
-    
-        const coc = cocFiles[type];
-    
-        if (!coc || !coc.fileData) {
-    
-            alert("No Code of Conduct document uploaded yet.");
-    
-            return;
-    
-        }
-    
-        window.open(coc.fileData, '_blank');
-    
-    }
 
+// Store your Google Drive links for MUN and Sports Code of Conduct
+const cocDriveLinks = {
+    mun: "https://drive.google.com/file/d/YOUR_MUN_FILE_ID/view?usp=sharing",
+    sports: "https://drive.google.com/file/d/17tATQrgABGwcNlOteUqyIRQ1FVskkaVe/view?usp=drive_link"
+};
+
+function openCodeOfConduct(type) {
+    const link = cocDriveLinks[type];
+    if (link && link !== "") {
+        // Opens the Google Drive preview directly in a new browser tab
+        window.open(link, '_blank');
+    } else {
+        alert("No Code of Conduct document has been linked yet.");
+    }
+    
+}
 
     
     async function addFormField() {
@@ -2748,7 +2750,87 @@ async function handleSportsRegistrationSubmit(e) {
     
     }
 
+    //management sf
+    const managementMembers = [
+    {
+        cat: "Event Coordinator",
+        title: "Event Coordinator",
+        desc: "Yousaf Khan",
+        img: "https://drive.google.com/file/d/1P5zEZumadtFobv9HEgf3FDON80eQFz7K/view?usp=drive_link"
+    },
+    {
+        cat: "Event Heads",
+        title: "Event Head",
+        desc: "Umair Mazhar",
+        img: "https://drive.google.com/file/d/1tkRBXQZea0IPhXsGlQO1q3hZycFG4ThA/view?usp=drive_link"
+    },
+    {
+        cat: "Event Heads",
+        title: "Event Head",
+        desc: "Naqi Ali",
+        img: "https://drive.google.com/file/d/16o9lxrcUMqytrLN6GEUCt3Bb6KfK-bNB/view?usp=drive_link"
+    }
+    ];
 
+    function renderManagementCard(member) {
+    const fallbackSrc = 'SF.png';
+    // Automatically handles direct Google Drive URLs if helper is present
+    const imageSrc = (typeof getDirectDriveUrl === 'function') 
+        ? getDirectDriveUrl(member.img) 
+        : (member.img || fallbackSrc);
+
+    return `
+        <div class="management-card" style="display: flex; flex-direction: column; align-items: center; padding: 20px; text-align: center; background: rgba(255, 255, 255, 0.05); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            
+            <!-- 1. Post/Title on Top -->
+            <div style="font-size: 0.95rem; font-weight: 600; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">
+                ${member.title}
+            </div>
+
+            <!-- 2. 1:1 Square Image in Middle -->
+            <div style="width: 100%; max-width: 180px; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 12px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);">
+                <img src="${imageSrc}" 
+                     alt="${member.desc}" 
+                     referrerpolicy="no-referrer"
+                     onerror="this.onerror=null; this.src='${fallbackSrc}';" 
+                     style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            </div>
+
+            <!-- 3. Name at the Bottom -->
+            <h3 style="color: var(--text); font-size: 1.25rem; font-weight: 700; margin: 0;">
+                ${member.desc}
+            </h3>
+
+        </div>
+    `;
+    }
+
+    function renderManagement() {
+    const container = document.getElementById('management-container');
+    if (!container) return;
+
+    // Defines only the two active management categories
+    const categories = ["Event Coordinator", "Event Heads"];
+    
+    let html = '';
+    categories.forEach(category => {
+        const members = managementMembers.filter(m => m.cat === category);
+        if (members.length === 0) return;
+
+        html += `
+            <div class="management-category-section" style="margin-bottom: 40px;">
+                <h2 style="color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 8px; margin-bottom: 24px; font-size: 1.6rem;">
+                    ${category}
+                </h2>
+                <div class="management-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; justify-content: center;">
+                    ${members.map(member => renderManagementCard(member)).join('')}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+    }
     
     // Init
 
@@ -2764,7 +2846,7 @@ async function handleSportsRegistrationSubmit(e) {
 
         name: "Futsal",
 
-        img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600&q=80",
+        img: "https://drive.google.com/file/d/1oSytfR7SONKOlDa7n3irbeKb4zXDlkgj/view?usp=drive_link",
 
         rules: `
 
@@ -2798,7 +2880,7 @@ async function handleSportsRegistrationSubmit(e) {
 
             name: "Basketball",
 
-            img: "basketball.jpg",
+            img: "https://drive.google.com/file/d/1m31CvDsFKcAJ1Gp5AmCt3-4MTvoAUz5I/view?usp=drive_link",
 
             rules: `
 
@@ -2827,7 +2909,7 @@ async function handleSportsRegistrationSubmit(e) {
         type: "team",
         minPlayers: 2,
         maxPlayers: 2, // No substitutes for Padel
-        img: "padeltennis.jpg",
+        img: "https://drive.google.com/file/d/1Q7dFEmC8NyGPtXQpHhh2B4cF_YqEeBAw/view?usp=drive_link",
         rules: `
             <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
             <p><strong>Eligibility:</strong> Boys & Girls</p>
@@ -2842,7 +2924,7 @@ async function handleSportsRegistrationSubmit(e) {
 
                     name: "Cricket",
 
-                    img: "cricket.jpg",
+                    img: "https://drive.google.com/file/d/1ZBQ6mxqkPg6DjYMUdq879cqKa547DEOt/view?usp=drive_link",
 
                     rules: `
 
@@ -2869,7 +2951,7 @@ async function handleSportsRegistrationSubmit(e) {
         {
         name: "Table Tennis",
         subCategories: ["Table Tennis - Singles", "Table Tennis - Doubles"],
-        img: "tabletennis.jpg",
+        img: "https://drive.google.com/file/d/1LnNlmnlLOYOGgTUdfPzOF-K_7zAwVv6M/view?usp=drive_link",
         rules: `
             <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
             <p><strong>Eligibility:</strong> Boys & Girls</p>
@@ -2884,7 +2966,7 @@ async function handleSportsRegistrationSubmit(e) {
         {
         name: "Badminton",
         subCategories: ["Badminton - Singles", "Badminton - Doubles"],
-        img: "badminton.jpg",
+        img: "https://drive.google.com/file/d/1vL4ue5YERlS-IFPrJWAM8igBZUWanho2/view?usp=drive_link",
         rules: `
             <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
             <p><strong>Eligibility:</strong> Boys & Girls</p>
@@ -2899,7 +2981,7 @@ async function handleSportsRegistrationSubmit(e) {
     {
         name: "Athletics",
         subCategories: ["Athletics - 50 Meters", "Athletics - Vertical Jump"],
-        img: "athletics.jpg",
+        img: "https://drive.google.com/file/d/1VIg-eGL4V9vViXvkCVYaxhmieMa2OpBQ/view?usp=drive_link",
         rules: `
             <p><strong>Divisions:</strong> Open For All Ages</p>
             <p><strong>Eligibility:</strong> Boys & Girls</p>
@@ -2914,7 +2996,7 @@ async function handleSportsRegistrationSubmit(e) {
 
         name: "Dodgeball",
 
-        img: "dodgeball.jpg",
+        img: "https://drive.google.com/file/d/1E7MquRkOvi1DjCdl6FYXYE8nxhwd2ubY/view?usp=drive_link",
 
         rules: `
 
@@ -2943,7 +3025,7 @@ async function handleSportsRegistrationSubmit(e) {
         name: "Tug Of War",
                                                  
                                                 
-        img: "tugofwar.jpg",
+        img: "https://drive.google.com/file/d/1bUL-38qScicG7DQ79EZkZS6HXiqrCSf7/view?usp=sharing",
 
        rules: `
                                                
@@ -2961,7 +3043,7 @@ async function handleSportsRegistrationSubmit(e) {
         type: "individual",
         minPlayers: 1,
         maxPlayers: 1,
-        img: "strongman.jpg",
+        img: "https://drive.google.com/file/d/1_96wZ0Wan5HChrhnEBzH27EErxZqbkJJ/view?usp=drive_link",
         rules: `
             <p><strong>Divisions:</strong> Under 15 & Under 19 (Separate)</p>
             <p><strong>Eligibility:</strong> Boys & Girls</p>
@@ -2976,7 +3058,7 @@ async function handleSportsRegistrationSubmit(e) {
         type: "individual",
         minPlayers: 1,
         maxPlayers: 1,
-        img: "chess.jpg",
+        img: "https://drive.google.com/file/d/1LQ_mVR8krwBLd3zxyi39UO_jTl45TmDV/view?usp=drive_link",
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls (Separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
@@ -2989,7 +3071,7 @@ async function handleSportsRegistrationSubmit(e) {
         type: "individual",
         minPlayers: 1,
         maxPlayers: 1,
-        img: "egaming.jpg",
+        img: "https://drive.google.com/file/d/1wCoIsnB8xb39ZMjJXgLgeh-jNH1Ep5CX/view?usp=drive_link",
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
@@ -3000,7 +3082,7 @@ async function handleSportsRegistrationSubmit(e) {
     },
     {
         name: "Math Mystic",
-        img: "math.jpg",
+        img: "https://drive.google.com/file/d/1km7CT2mLxST4FFrs7j30TH16JOc1_K_N/view?usp=drive_link",
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
@@ -3010,7 +3092,7 @@ async function handleSportsRegistrationSubmit(e) {
     },
     {
         name: "Foosball",
-        img: "foosball.jpg",
+        img: "https://drive.google.com/file/d/1IM3zGBfTKhBb6yRlGw_ZndzTHL_MOwC0/view?usp=drive_link",
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
@@ -3023,7 +3105,7 @@ async function handleSportsRegistrationSubmit(e) {
     },
     {
         name: "Ludo",
-        img: "ludo.jpg",
+        img: "https://drive.google.com/file/d/1hYdnclom7dhYvkcDRWmJ1Td80tKb11A6/view?usp=drive_link",
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
@@ -3034,17 +3116,31 @@ async function handleSportsRegistrationSubmit(e) {
     }
 ];
 
+function getDirectDriveUrl(url) {
+    if (!url) return 'sf.png';
+    
+    // Check if it's a Google Drive share link
+    if (url.includes('drive.google.com')) {
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+            return `https://lh3.googleusercontent.com/d/${match[1]}`;
+        }
+    }
+    return url; // Returns original URL if not Google Drive
+}
+
 function renderCategoryCard(sport, index) {
     const title = sport.name || "Sports Category";
-    // Local fallback image (e.g., sf.png or images/default-placeholder.jpg)
-    const fallbackSrc = 'SF.png'; 
-    const imageSrc = sport.img || fallbackSrc;
+    const fallbackSrc = 'SF.png';
+    // Automatically converts standard Drive link to direct image URL
+    const imageSrc = getDirectDriveUrl(sport.img) || fallbackSrc;
 
     return `
         <div class="category-card" onclick="openRulesModal(${index})">
             <div class="category-img-container" style="width: 100%; height: 160px; overflow: hidden; border-radius: 8px; margin-bottom: 12px;">
                 <img src="${imageSrc}" 
                      alt="${title}" 
+                     referrerpolicy="no-referrer"
                      onerror="this.onerror=null; this.src='${fallbackSrc}';" 
                      style="width: 100%; height: 100%; object-fit: cover;">
             </div>
@@ -3053,6 +3149,46 @@ function renderCategoryCard(sport, index) {
         </div>
     `;
 }
+
+// Render an individual card
+    function renderManagementCard(member) {
+        const fallbackSrc = 'SF.png';
+        const imageSrc = getDirectDriveUrl(member.img) || fallbackSrc;
+        return `
+            <div class="card">
+                <img src="${imageSrc}" alt="${member.desc}" onerror="this.src='${fallbackSrc}'" style="width:100%; height:200px; object-fit:cover;">
+                <div class="card-body">
+                    <h4 class="card-title">${member.title}</h4>
+                    <p class="card-desc">${member.desc}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    // Render all sports management categories
+    function renderManagement() {
+        const container = document.getElementById('management-container');
+        if (!container) return;
+
+        // Group team members by category
+        const categories = {};
+        managementMembers.forEach(member => {
+            if (!categories[member.cat]) categories[member.cat] = [];
+            categories[member.cat].push(member);
+        });
+
+        let html = '';
+        for (const [catName, members] of Object.entries(categories)) {
+            html += `<h3 style="margin-top:24px; margin-bottom:12px; color: var(--secondary);">${catName}</h3>`;
+            html += `<div class="grid-3">`;
+            members.forEach(member => {
+                html += renderManagementCard(member);
+            });
+            html += `</div>`;
+        }
+
+        container.innerHTML = html;
+    }
 
 function renderSportsGrid() {
     const container = document.getElementById('sports-category-list');
