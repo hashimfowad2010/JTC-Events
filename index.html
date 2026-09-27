@@ -1744,90 +1744,56 @@ async function saveSportsCategory() {
 
 // 6. FORM SUBMISSION & EMAILJS AUTOMATION
 async function handleSportsRegistrationSubmit(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
-    // Check category selection
-    const checkedBoxes = Array.from(document.querySelectorAll('.cat-select-cb:checked'));
-    if (checkedBoxes.length === 0) {
-        alert('Please select at least one category to register.');
-        return;
-    }
-
-    // Validate 3 categories limit
-    if (!validateMaxThreeCategoriesPerPlayer()) return;
-
-    const submitBtn = document.getElementById('reg-submit-btn');
-    submitBtn.disabled = true;
-    submitBtn.innerText = "Submitting Registration...";
-
-    // Collect Registration Data
-    const regData = {
-        division: selectedDivision,
-        schoolName: document.getElementById('reg-school-name').value.trim(),
-        delegationName: document.getElementById('reg-delegation-name').value.trim(),
-        headDelegate: {
-            name: document.getElementById('reg-hd-name').value.trim(),
-            email: document.getElementById('reg-hd-email').value.trim(),
-            phone: document.getElementById('reg-hd-phone').value.trim()
-        },
-        "Chaperone Name": document.getElementById('sf-chaperone-name').value,
-        "Chaperone Contact": document.getElementById('sf-chaperone-contact').value,
-        selectedCategories: {},
-        submittedAt: new Date().toISOString()
-    };
-
-    // Extract categories & player entries
-    document.querySelectorAll('.category-form-card').forEach(card => {
-        const catName = card.getAttribute('data-category');
-        const teamInput = card.querySelector('.team-name-input');
-        const players = Array.from(card.querySelectorAll('.player-name-input'))
-                            .map(inp => inp.value.trim())
-                            .filter(val => val !== '');
-
-        regData.selectedCategories[catName] = {
-            teamName: teamInput ? teamInput.value.trim() : 'N/A',
-            players: players
-        };
+    // 1. Gather form inputs safely
+    const formData = {};
+    const inputs = document.querySelectorAll('#sports-form-fields input, #sports-form-fields select, #sports-form-fields textarea');
+    
+    inputs.forEach(input => {
+        const labelText = input.previousElementSibling ? input.previousElementSibling.innerText : input.id;
+        formData[labelText] = input.value;
     });
 
     try {
-        // Save to Firestore (sorted under 'sports_registrations' collection)
-        if (typeof db !== 'undefined') {
-            await db.collection("registrations").add(regData);
-        }
+        // 2. Save Registration to Firestore FIRST
+        await db.collection("registrations").add({
+            eventType: "Sports Fest",
+            categoryOrCommittee: typeof currentTargetCategory !== 'undefined' ? currentTargetCategory : 'General',
+            paymentStatus: 'unpaid',
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            formData: formData
+        });
 
-        // Send Confirmation Email via EmailJS
-        if (typeof emailjs !== 'undefined') {
+        // 3. Attempt to send EmailJS automated email safely (Inner try...catch)
+        try {
+            const headDelegateEmail = formData['Head Delegate Email'] || formData['Head Delegate Gmail'] || formData['Email'] || '';
+            
             const emailParams = {
-                to_name: regData.headDelegate.name,
-                to_email: regData.headDelegate.email,
-                school_name: regData.schoolName,
-                delegation_name: regData.delegationName,
-                division: regData.division,
-                categories_list: Object.keys(regData.selectedCategories).join(', '),
+                to_email: headDelegateEmail,
+                to_name: formData['Head Delegate Name'] || formData['Full Name'] || 'Delegate',
+                school_name: formData['Institution / School Name'] || formData['School Name'] || 'N/A',
+                delegation_name: formData['Delegation Name'] || 'N/A',
                 submission_date: new Date().toLocaleDateString()
             };
 
-            // Replace YOUR_SERVICE_ID and YOUR_TEMPLATE_ID with your EmailJS identifiers
             await emailjs.send('service_coqknxb', 'template_tgaquv9', emailParams);
+            console.log("Email sent successfully!");
+        } catch (emailErr) {
+            // Log EmailJS 422 error without stopping registration completion
+            console.warn("Registration saved to database, but confirmation email failed:", emailErr);
         }
 
-        alert(`Success! Delegation registration submitted for ${regData.delegationName} (${regData.division}). A confirmation email has been sent to ${regData.headDelegate.email}.`);
-        
-        document.getElementById('sports-registration-form').reset();
-        closeRegisterModal();
-
+        // 4. Close registration modal & open Thank You modal
+        closeModal('sports-register-modal');
         const thankYouModal = document.getElementById('thank-you-modal');
         if (thankYouModal) {
-        thankYouModal.style.display = 'flex';
+            thankYouModal.style.display = 'flex';
         }
 
-    } catch (error) {
-        console.error("Registration error:", error);
-        alert("An error occurred while submitting registration. Please try again.");
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Submit Delegation Registration";
+    } catch (dbError) {
+        console.error("Registration error:", dbError);
+        alert("An error occurred while registering. Please try again.");
     }
 }
 
