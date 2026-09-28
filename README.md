@@ -15,13 +15,10 @@ A single-page web app where schools register delegations, head delegates get an 
 ![EmailJS](https://img.shields.io/badge/EmailJS-FF6B35?style=for-the-badge&logo=maildotru&logoColor=white)
 
 ![Status](https://img.shields.io/badge/status-active-success?style=flat-square)
-![Build](https://img.shields.io/badge/build-no%20build%20step-brightgreen?style=flat-square)
 ![Responsive](https://img.shields.io/badge/responsive-mobile%20ready-blueviolet?style=flat-square)
 ![Firestore](https://img.shields.io/badge/database-Cloud%20Firestore-orange?style=flat-square&logo=firebase)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff69b4?style=flat-square)
-![Last Commit](https://img.shields.io/github/last-commit/YOUR_USERNAME/YOUR_REPO?style=flat-square)
-![Repo Size](https://img.shields.io/github/repo-size/YOUR_USERNAME/YOUR_REPO?style=flat-square)
 
 [Live Demo](https://YOUR_USERNAME.github.io/YOUR_REPO/) · [Report a Bug](https://github.com/YOUR_USERNAME/YOUR_REPO/issues) · [Request a Feature](https://github.com/YOUR_USERNAME/YOUR_REPO/issues)
 
