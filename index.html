@@ -736,13 +736,14 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 </head>
+
 <body data-theme="home">
     <header>
         <h1>JTC Events</h1>
         <nav>
             <button class="nav-btn active" onclick="switchPage('home', this)">Home</button>
             <button class="nav-btn" onclick="switchPage('sports', this)">JTC SPORTS FEST</button>
-            <button class="nav-btn" onclick="switchPage('mun', this)">JTC MUN</button>
+            <button class="nav-btn" onclick="witchPage('mun', this)">JTC MUN</button>
             <button class="nav-btn admin-only hidden" onclick="switchPage('registrations', this)">Submissions</button>
         </nav>
         <div class="auth-status">
@@ -796,9 +797,9 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                 <button class="btn" style="background: linear-gradient(135deg, #f59e0b, #b45309);">Explore Sportsfest &rarr;</button>
             </div>
         </div>
-
+        
         <!-- Interactive MUN Card -->
-        <div class="card big-tile" onclick="switchPage('mun', document.querySelectorAll('nav button')[2])" style="text-align: left; padding: 0; cursor: pointer;">
+        <div class="card big-tile" onclick="witchPage('mun', document.querySelectorAll('nav button')[2])" style="text-align: left; padding: 0; cursor: pointer;">
             <img src="JTCMUN.png">
             <div class="card-body">
                 <span style="background: rgba(220, 38, 38, 0.2); color: #fca5a5; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.3);">Diplomacy & Debate</span>
