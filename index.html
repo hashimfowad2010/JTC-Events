@@ -743,7 +743,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <nav>
             <button class="nav-btn active" onclick="switchPage('home', this)">Home</button>
             <button class="nav-btn" onclick="switchPage('sports', this)">JTC SPORTS FEST</button>
-            <button class="nav-btn" onclick="witchPage('mun', this)">JTC MUN</button>
+            <button class="nav-btn" onclick="witchPage('mun', this)">JTC MUN (Coming soon)</button>
             <button class="nav-btn admin-only hidden" onclick="switchPage('registrations', this)">Submissions</button>
         </nav>
         <div class="auth-status">
@@ -805,7 +805,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                 <span style="background: rgba(220, 38, 38, 0.2); color: #fca5a5; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.3);">Diplomacy & Debate</span>
                 <h3 class="card-title" style="margin-top: 12px; font-size: 1.4rem;">Model United Nations</h3>
                 <p class="card-desc" style="margin-bottom: 20px;">Engage in high-level diplomacy, solve global issues, and debate with passionate delegates.</p>
-                <button class="btn" style="background: linear-gradient(135deg, #dc2626, #991b1b);">Explore JTCMUN &rarr;</button>
+                <button class="btn" style="background: linear-gradient(135deg, #dc2626, #991b1b);">Coming Soon! &rarr;</button>
             </div>
         </div>
 
@@ -3057,9 +3057,19 @@ function openCodeOfConduct(type) {
             <p><strong>Divisions:</strong> Under 15 & Under 17 & Under 19 (Separate)</p>
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
-                <li>2 Players per team (Strictly NO substitutes permitted).</li>
-                <li>Best of 3 sets format.</li>
-                <li>Standard Padel tennis rules apply.</li>
+                <li>Under 15 & Under 17 & Under 19 will be separate.</li>
+                <li>Doubles format: 2 players per team.</li>
+                <li>Each match will consist of 1 set, with best of 5 games. First team to win 3 games wins the set.</li>
+                <li>Semifinal and Final will consist of 3 sets, with the first team to win 2 sets declared the winner.</li>
+                <li>Each game will be played to 40 points: 0 (game start), 15 (first point), 30 (second point), 40 (third point), & game point. If both teams make it to 40 points, it’ll be a deuce, which will be decided by a golden point in normal matches, while with advantage rules in Semifinals and Finals.</li>
+                <li>Serve must be underarm, after bouncing the ball, and must be made diagonally into the opponent’s service box.</li>
+                <li>Each player gets 2 serve attempts. The server must serve from behind the service line and change sides after each point.</li>
+                <li>The serve changes to the opposing team after every game.</li>
+                <li>The ball may bounce only once before it is returned. Players may use the walls after the ball has bounced on the court.</li>
+                <li>A point is lost if the ball bounces twice, goes out, or a player touches the net while the ball is in play.</li>
+                <li>Players must follow the referee’s instructions and maintain proper sportsmanship.</li>
+                <li>All rounds will be knockout rounds.</li>
+                <li>The referee’s decision will be final and not be questioned at all.</li>
             </ul>`
     },
 
@@ -3102,7 +3112,7 @@ function openCodeOfConduct(type) {
                 <li><strong>Singles:</strong> 1 Player per entry.</li>
                 <li><strong>Doubles:</strong> 2 Players per entry.</li>
                 <li>Delegations may register players in both Singles and Doubles categories.</li>
-                <li>3 sets of 11 points each.</li>
+                <li>3 sets of 10 points each.</li>
             </ul>`
     },
 
@@ -3129,7 +3139,7 @@ function openCodeOfConduct(type) {
             <p><strong>Divisions:</strong> Open For All Ages</p>
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
-                <li><strong>50 Meters Sprint:</strong> Timed sprint heats.</li>
+                <li><strong>50 Meters Sprint:</strong> In 50 meter race there will be 2 HEATS. 1st heat will be for middle school (grade 6 to 8), and 2nd heat will be for highschool (grade 9 to fsc 2nd year/A2)</li>
                 <li><strong>Vertical Jump:</strong> Standing vertical jump test.</li>
                 <li>Delegations may enter participants in one or both sub-categories.</li>
             </ul>`
@@ -3149,15 +3159,19 @@ function openCodeOfConduct(type) {
 
         <ul style="margin-top: 8px; padding-left: 20px;">
 
+        
+        <li>Under 15 & Under 17 & Under 19 will be separate</li>
         <li>6 A-side + 2 substitutes.</li>
-
-        <li>1 catch equals 1 life gained for the team.</li>
-
-        <li>Matches consist of 2 rounds (5 minutes each).</li>
-
-        <li><strong>Elimination triggers:</strong> Hit by ball, dropping a catch, stepping on boundary lines, or catching a non-airborne ball.</li>
-
-        <li>Team eliminating opponents in the shortest time wins.</li>
+        <li>One catch equals to one life.</li>
+        <li>Teams may choose the team members who are to make use of the life gained.</li>
+        <li>Match will comprise of 2 rounds, of 5 minutes each.</li>
+        <li>An out/elimination of a participant will be under the following reasons:</li> 
+        <li>1.Being hit by a ball.</li> 
+        <li>2.Dropping an attempted catch.</li>
+        <li>3.Setting foot on any of the four boundary lines.</li> 
+        <li>4. Catching a ball</li>
+        <li>which is not airborne throughout its whole i.e. if it is caught after it touches the ground.</li>
+        <li>The team that takes the least amount of time to eliminate the members of the other team will win.</li>
 
         </ul>`
 
@@ -3192,8 +3206,18 @@ function openCodeOfConduct(type) {
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li>Single-person individual category.</li>
-                <li>Push-ups & Squats: 100 seconds time limit each.</li>
-                <li>Arm Wrestling: Knockout arm-wrestling tournament format.</li>
+                <li>push-ups & squats:</li>
+                <li>Each player will be given duration of 100 seconds for push-ups and squats.</li>
+                <li>The one doing maximum number of push-ups and squats will be declared winner of that category.</li>
+                <li>The winning in most of the categories with the best score/time will become the winner of the competition.</li>
+                <li>Arm wrestling: If any player can't experience a grip then the referee gives them a grip as "referee's grip”</li>
+                <li>Any movement after that grip is a foul.</li>
+                <li>Bending your wrist is allowed only after the match starts.</li>
+                <li>The shoulders of both players should be in a square position before the match starts,</li>
+                <li>fists should not be very close to the shoulder.</li>
+                <li>To make a pin, you must force your opponent's arm to touch the table.</li>
+                <li>If a player touches his hand to his body, a foul is declared and match is restarted.</li>
+                <li>In case of three violations, the match will be awarded to the other opponent.</li>
             </ul>`
     },
     {
@@ -3219,8 +3243,17 @@ function openCodeOfConduct(type) {
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li>Single-person individual category.</li>
-                <li><strong>FC 25/27 (FIFA):</strong> 4-minute halves. Personal controllers allowed.</li>
-                <li><strong>Tekken:</strong> Best of 3 / Best of 5 format.</li>
+                <li>FC 27 (FIFA):</li>
+                <li>Control Setting: Classic</li>
+                <li>Game speed: Normal</li>
+                <li>Half lengh: 4-minute match duration (6 minutes for finals and semi-finals)</li>
+                <li>Players can bring their controllers.</li>
+                <li>TEKKEN:</li>
+                <li>Semi finals would be best of three and Final will be best of five.
+                <li>Randomized tournament brackets will be made and registered</li>
+                <li>delegates will play according to their turn.</li>
+                <li>DLC Characters and assists are not allowed.</li>
+                <li>If a person is not present within 4 minutes of waiting time, a walkover will be given.</li>
             </ul>`
     },
     {
@@ -3239,11 +3272,20 @@ function openCodeOfConduct(type) {
         rules: `
             <p><strong>Eligibility:</strong> Boys & Girls</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
-                <li>First to 10 points wins. Doubles (2 vs 2) played in group stages. Finals best of 3.</li>
-                <li>Coin toss decides initial server.</li>
-                <li>360° rod spinning prohibited. 1-minute possession limit per rod.</li>
-                <li>Goals count if ball enters box completely (even if it bounces out).</li>
-                <li>Interference (touching ball/table) awards an automatic point to opponent.</li>
+                <li>1. GENERAL RULES</li>
+                <li>Game Format: Matches are played to 10 points (first to reach 10 wins).</li>
+                <li>Doubles (2 vs 2) will be played in group stages.</li>
+                <li>Coin Toss: Decides which team serves first.</li>
+                <li>Fair Play: No spinning rods (complete 360° turns are notallowed).</li>
+                <li>Time Limit: If no goal is scored within 1 minute of possession, ball must be passed forward.</li>
+                <li>2:Scoring</li>
+                <li>A ball is considered a goal when it enters the goal completely.</li>
+                <li>If the ball bounces out after entering, the goal still counts.</li>
+                <li>3:Doubles Rules Positions:</li>
+                <li>One player controls defense & goal rods; the other controls midfield & forwards.</li>
+                <li>Switching: Players may only switch positions during a time-out or between goals.</li>
+                <li>Final rules there will be best of 3 each of 10 points.interference (touching ball with hands, blocking table) = automatic goal for opponent.</li>
+                <li>In case of disputes, organizer/referee’s decision is final.</li>
             </ul>`
     },
     {
