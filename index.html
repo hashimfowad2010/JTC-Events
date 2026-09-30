@@ -6,7 +6,7 @@
     <title>JTC Events</title>
     <style>
     :root {
-    --bg-gradient: radial-gradient(circle at 50% 30%, #5c4314 0%, #3a2a0b 40%, #1a1306 70%, #08070a 100%);
+    --bg-gradient: radial-gradient(circle at top left, rgba(69,26,3,.90) 0%, rgba(30,14,3,.90) 60%, rgba(10,6,2,.90) 100%);
     --primary: #c5a059;
     --primary-hover: #a8843e;
     --secondary: #e6ca85;
@@ -20,11 +20,10 @@
     }
 
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Times New Roman', Times, serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }
 
     body { 
-        background: var(--bg-gradient);
-        background-attachment: fixed;
+        background: var(--bg-gradient) fixed, url('bg.jpeg') center / cover no-repeat fixed, #1e0e03;
         color: var(--text-main);
         min-height: 100vh;
         padding-bottom: 50px;
@@ -32,7 +31,7 @@
 
     /* Glass Header */
     header { 
-        background: rgba(18, 16, 16, 0.75);
+        background: rgba(18, 16, 16, 0.90);
         backdrop-filter: var(--glass-blur);
         -webkit-backdrop-filter: var(--glass-blur);
         border-bottom: 1px solid var(--glass-border);
@@ -170,7 +169,7 @@
         position: fixed; 
         top: 0; left: 0; 
         width: 100%; height: 100%; 
-        background: rgba(5, 5, 8, 0.82); 
+        background: rgba(5, 5, 8, 0.90); 
         backdrop-filter: blur(8px);
         justify-content: center; 
         align-items: center; 
@@ -258,17 +257,10 @@
     }
 
     /* Dynamic Theme Overrides */
-    body[data-theme="home"], body:not([data-theme]) {
-    --bg-gradient: radial-gradient(circle at 50% 30%, #5c4314 0%, #3a2a0b 40%, #1a1306 70%, #08070a 100%);
-    --primary: #8F6B18;
-    --primary-hover: 	#E2C15A;
-    --secondary: 	#C89B2C;
-    --glass-border: rgba(197, 160, 89, 0.22);
-    }
 
     /* JTC MUN: Red & White Theme */
     body[data-theme="mun"] {
-        --bg-gradient: radial-gradient(circle at top left, #450a0a 0%, #180404 60%, #080202 100%);
+        --bg-gradient: radial-gradient(circle at top left, rgba(69,10,10,.90) 0%, rgba(24,4,4,.90) 60%, rgba(8,2,2,.90) 100%);
         --primary: #dc2626;
         --primary-hover: #b91c1c;
         --secondary: #ffffff;
@@ -286,22 +278,31 @@
         color: #ffffff;
     }
 
-    /* JTC Sports Fest: Golden Theme */
+    /* JTC Sports Fest: original Gold & Black theme */
     body[data-theme="sports"] {
-        --bg-gradient: radial-gradient(circle at top left, #451a03 0%, #1e0e03 60%, #0a0602 100%);
+        --bg-gradient: radial-gradient(circle at 50% 30%, rgba(92,67,20,.90) 0%, rgba(58,42,11,.90) 40%, rgba(26,19,6,.90) 70%, rgba(8,7,10,.84) 100%);
+        --primary: #8F6B18;
+        --primary-hover: #E2C15A;
+        --secondary: #C89B2C;
+        --glass-border: rgba(197, 160, 89, 0.22);
+    }
+
+    /* JTC Sports Fest (amber, now used by Home & Submissions) */
+    body[data-theme="home"], body[data-theme="registrations"], body:not([data-theme]) {
+        --bg-gradient: radial-gradient(circle at top left, rgba(69,26,3,.90) 0%, rgba(30,14,3,.90) 60%, rgba(10,6,2,.90) 100%);
         --primary: #f59e0b;
         --primary-hover: #d97706;
         --secondary: #fbbf24;
         --glass-border: rgba(245, 158, 11, 0.35);
         --glass-card: rgba(245, 158, 11, 0.08);
     }
-    body[data-theme="sports"] header h1 {
+    body[data-theme="home"] header h1, body[data-theme="registrations"] header h1, body:not([data-theme]) header h1 {
         background: linear-gradient(135deg, #fef08a, #f59e0b);
         background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
-    body[data-theme="sports"] .btn {
+    body[data-theme="home"] .btn, body[data-theme="registrations"] .btn, body:not([data-theme]) .btn {
         background: linear-gradient(135deg, #f59e0b, #b45309);
         color: #ffffff;
     }
@@ -719,7 +720,107 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         #sports-registration-form .form-group { grid-column: span 1 !important; }
         #reg-step-form div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
     }
-    </style>
+    
+    /* ===== Polish, home layout, transitions, cursor glow ===== */
+    ::selection { background: rgba(245,158,11,.35); }
+    html { scroll-behavior: smooth; }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #120a04; }
+    ::-webkit-scrollbar-thumb { background: rgba(245,158,11,.35); border-radius: 10px; }
+    :focus-visible { outline: 2px solid var(--secondary); outline-offset: 2px; }
+    h1, h2, h3, header h1, .big-tile h2 { font-family: 'Playfair Display', Georgia, serif; letter-spacing: .3px; }
+    header { border-bottom: none; box-shadow: 0 1px 0 color-mix(in srgb, var(--secondary) 35%, transparent), 0 10px 30px rgba(0,0,0,.35); }
+    header h1 { letter-spacing: 1px; }
+    nav button { font-weight: 500; letter-spacing: .3px; }
+    nav button.active { background: linear-gradient(135deg, color-mix(in srgb, var(--secondary) 28%, transparent), color-mix(in srgb, var(--secondary) 8%, transparent)); color: #fff; border-color: color-mix(in srgb, var(--secondary) 50%, transparent); }
+    .container { box-shadow: 0 30px 70px rgba(0,0,0,.90), inset 0 1px 0 rgba(255,255,255,.06); }
+    .btn:hover { box-shadow: 0 8px 22px rgba(245,158,11,.25); }
+    .page.active { animation: pageIn .90s ease both; }
+    @keyframes pageIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .back-home-btn { width: auto; margin-bottom: 20px; }
+    #sports:has(#sports-main-tiles.hidden) .back-home-btn, #mun:has(#mun-main-tiles.hidden) .back-home-btn { display: none; }
+
+    /* Hero */
+    .hero-section { text-align: center; margin-bottom: 34px; }
+    .eyebrow { color: var(--secondary); font-weight: 600; letter-spacing: 3px; text-transform: uppercase; font-size: .78rem; }
+    .hero-title { font-size: clamp(2rem, 5vw, 3.4rem); margin: 10px 0 26px; background: linear-gradient(135deg, #fff, #fbbf24 70%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+    /* Countdown */
+    .countdown-label { color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; font-size: .78rem; margin-bottom: 12px; }
+    .countdown-row { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+    .cd-box { min-width: 88px; padding: 14px 10px; border-radius: 14px; background: rgba(255,255,255,.05); border: 1px solid var(--glass-border); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+    .cd-box span { display: block; font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--secondary); font-variant-numeric: tabular-nums; }
+    .cd-box small { color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-size: .90rem; }
+    .countdown-note { margin-top: 10px; color: var(--text-muted); font-size: .85rem; min-height: 1em; }
+
+    /* Big image tiles */
+    .hero-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+    .hero-tile { position: relative; height: 380px; border-radius: 20px; overflow: hidden; cursor: pointer; background: rgba(0,0,0,.90); border: 1px solid var(--glass-border); transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease; }
+    .hero-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .5; transition: opacity .4s ease, transform .6s ease; }
+    .hero-tile::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to top, rgba(0,0,0,.65), transparent 60%); }
+    .hero-tile:hover { transform: translateY(-6px); border-color: var(--primary); box-shadow: 0 18px 40px rgba(0,0,0,.5); }
+    .hero-tile:hover img { opacity: .7; transform: scale(1.06); }
+    .hero-tile-label { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 20px; }
+    .hero-tile-label h3 { font-size: clamp(1.6rem, 3vw, 2.2rem); text-shadow: 0 2px 14px rgba(0,0,0,.7); }
+    .hero-cta { padding: 10px 24px; border-radius: 40px; font-weight: 600; letter-spacing: .5px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.35); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: background .3s ease; }
+    .hero-tile:hover .hero-cta { background: linear-gradient(135deg, var(--primary), var(--primary-hover)); border-color: transparent; }
+    .hero-tile.disabled { cursor: default; }
+    .hero-tile.disabled:hover { transform: none; border-color: var(--glass-border); box-shadow: none; }
+    .hero-tile.disabled:hover img { opacity: .5; transform: none; }
+    .hero-tile.disabled:hover .hero-cta { background: rgba(0,0,0,.45); border-color: rgba(255,255,255,.35); }
+
+    #sports-main-tiles .big-tile { display: flex; flex-direction: column; justify-content: center; }
+    #sports-main-tiles .hero-tile { height: auto; min-height: 320px; }
+
+    .cat-tile { height: 230px; }
+    .cat-tile .hero-tile-label { gap: 12px; }
+    .cat-tile .hero-tile-label h3 { font-size: 1.4rem; }
+    .cat-tile .hero-cta { padding: 8px 18px; font-size: .85rem; }
+    #rules-modal > div { animation: modalPop .35s ease both; }
+    @keyframes modalPop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
+
+    .wide-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 24px; }
+    .wide-tile { height: 200px; }
+    .wide-tile .hero-tile-label { gap: 8px; }
+    .wide-tile .hero-tile-label h3 { font-size: 1.5rem; }
+    .tile-sub { color: rgba(255,255,255,.90); font-size: .88rem; text-shadow: 0 1px 8px rgba(0,0,0,.85); margin: 0; }
+    #category-checkboxes-grid { scroll-margin-top: 16px; }
+    .category-form-card { scroll-margin-top: 12px; }
+
+    /* Home: three separate glass boxes */
+    body[data-theme="home"] .container { background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0; }
+    .home-box { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 30px 70px rgba(0,0,0,.90), inset 0 1px 0 rgba(255,255,255,.06); padding: 2.5rem; margin-bottom: 28px; }
+    @media (max-width: 768px) { .home-box { padding: 1.2rem; border-radius: 14px; } }
+
+    /* Contacts & map */
+    .home-section { margin-top: 48px; }
+    .section-title { font-size: 1.6rem; text-align: center; margin-bottom: 22px; }
+    .section-title::after { content: ""; display: block; width: 56px; height: 3px; margin: 10px auto 0; border-radius: 3px; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .contact-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; }
+    .contact-card { flex: 0 1 320px; min-width: 240px; overflow: hidden; text-align: center; border-radius: 18px; background: var(--glass-card); border: 1px solid var(--glass-border); transition: transform .3s ease, border-color .3s ease; }
+    .contact-card:hover { transform: translateY(-6px); border-color: var(--primary); }
+    .contact-photo { position: relative; height: 230px; display: grid; place-items: center; background: rgba(0,0,0,.4); }
+    .contact-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .contact-photo svg { width: 44px; height: 44px; fill: var(--secondary); opacity: .7; }
+    .contact-body { padding: 18px 16px 22px; }
+    .contact-name { font-family: 'Playfair Display', serif; font-size: 1.25rem; margin-bottom: 8px; }
+    .contact-phone { display: inline-flex; align-items: center; gap: 8px; color: var(--secondary); text-decoration: none; font-size: 1rem; font-variant-numeric: tabular-nums; }
+    .contact-phone svg { width: 16px; height: 16px; fill: currentColor; }
+    .map-wrap { height: 420px; border-radius: 18px; overflow: hidden; border: 1px solid var(--glass-border); background: rgba(0,0,0,.35); display: grid; place-items: center; color: var(--text-muted); }
+    .map-wrap iframe { width: 100%; height: 100%; border: 0; filter: grayscale(.25) contrast(1.05); }
+
+    /* Page transition curtain */
+    .page-curtain { position: fixed; z-index: 500; overflow: hidden; pointer-events: all; transition: top .65s, left .65s, width .65s, height .65s, border-radius .65s, opacity .4s; transition-timing-function: cubic-bezier(.90, 0, .2, 1); }
+    .curtain-img { position: absolute; inset: 0; background-size: cover; background-position: center; transition: opacity .65s; }
+
+    /* Cursor glow */
+    .cursor-glow { position: fixed; left: 0; top: 0; width: 520px; height: 520px; pointer-events: none; z-index: 2; opacity: 0; mix-blend-mode: screen; background: radial-gradient(circle, color-mix(in srgb, var(--secondary) 18%, transparent), transparent 62%); transition: opacity .3s ease; }
+    :is(.card, .big-tile, .category-card, .contact-card, .coc-badge, .hero-tile:not(.disabled)) { position: relative; }
+    :is(.card, .big-tile, .category-card, .contact-card, .coc-badge, .hero-tile:not(.disabled))::after { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s ease; background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--secondary) 28%, transparent), transparent 70%); }
+    :is(.card, .big-tile, .category-card, .contact-card, .coc-badge, .hero-tile:not(.disabled)):hover::after { opacity: 1; }
+    @media (hover: none) { .cursor-glow { display: none; } }
+    @media (prefers-reduced-motion: reduce) { .page.active { animation: none; } }
+</style>
 
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -735,9 +836,13 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
 </head>
 
 <body data-theme="home">
+    <div class="cursor-glow"></div>
     <header>
         <h1>JTC Events</h1>
         <nav>
@@ -756,65 +861,54 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 
         <!-- HOME PAGE -->
     <div id="home" class="page active">
-    <div class="hero-section" style="text-align: center; margin-bottom: 30px;">
-        <h2 style="font-size: 2.2rem; margin-bottom: 8px;">Welcome to JTC Events</h2>
-        <p style="color: var(--secondary); font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; font-size: 0.8rem;">
-            Beaconhouse Johar Town Campus • Lahore
-        </p>
+    <section class="home-box">
+    <div class="hero-section">
+        <p class="eyebrow">Beaconhouse Johar Town Campus &bull; Lahore</p>
+        <h2 class="hero-title">Welcome to JTC Events</h2>
+        <div class="countdown" id="countdown">
+            <p class="countdown-label" id="countdown-label">Sports Fest begins in</p>
+            <div class="countdown-row">
+                <div class="cd-box"><span data-u="d">--</span><small>Days</small></div>
+                <div class="cd-box"><span data-u="h">--</span><small>Hours</small></div>
+                <div class="cd-box"><span data-u="m">--</span><small>Minutes</small></div>
+                <div class="cd-box"><span data-u="s">--</span><small>Seconds</small></div>
+            </div>
+            <p class="countdown-note" id="countdown-note"></p>
+        </div>
     </div>
 
-    <div class="rules-box" style="margin-bottom: 32px; line-height: 1.7; color: var(--text-muted); border-left-color: var(--primary);">
-        <p style="margin-bottom: 16px;">
-            Beaconhouse Johar Town Campus (JTC) in Lahore is renowned not just for academic rigor, but for a 
-            vibrant student culture that comes alive through its flagship annual events. Among a bustling calendar,
-             two spectacles stand as the pillars of JTC’s co-curricular identity: <strong style="color: #f59e0b;">JTCSPORTSFEST</strong> and <strong style="color: #ef4444;">JTCMUN</strong> . Together, these events capture the dual spirit of the campus—where sharp intellect meets raw athletic drive.
-        </p>
-        <p style="margin-bottom: 16px;">
-            <strong style="color: #ef4444;">JTCMUN</strong> transforms the campus into a bustling arena of global
-             diplomacy and high-stakes debate. For three intense days, students step into the shoes of international
-              delegates, tackling pressing geopolitical crises, drafting complex resolutions, and mastering the art
-               of diplomacy. The corridors buzz with unmoderated caucuses, passionate parliamentary debate, and
-                strategic alliances forged over quick breaks. Beyond committee sessions, JTCMUN features social 
-                concert nights and formal dinners building connections across institutions.
-        </p>
-        <p style="margin-bottom: 16px;">
-            In sharp contrast, <strong style="color: #f59e0b;">JTCSPORTSFEST</strong> unleashes pure adrenaline across the JTC grounds. The campus turns into a sea of vibrant house colors as student-athletes gear up for track and field events, high-stakes football matches, cricket showdowns, and fast-paced basketball games. Driven by house rivalries and intense school pride, it is a celebration of grit, sportsmanship, and endurance.
-        </p>
-        <p>
-            Ultimately, these twin traditions define the essence of student life at JTC. While <strong style="color: #ef4444;">JTCMUN</strong> sharpens the mind and nurtures future leaders, <strong style="color: #f59e0b;">JTCSPORTSFEST</strong> builds character and team spirit—creating a balanced, high-energy environment long after the final committee adjourns and stadium lights fade.
-        </p>
-    </div>
-
-    <div class="grid-2">
-        
-        <!-- Interactive Sportsfest Card -->
-        <div class="card big-tile" onclick="switchPage('sports', document.querySelectorAll('nav button')[1])" style="text-align: left; padding: 0; cursor: pointer;">
-            <img src="SF.png">
-            <div class="card-body">
-                <span style="background: rgba(245, 158, 11, 0.2); color: #fef08a; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.3);">Athletics & House Spirit</span>
-                <h3 class="card-title" style="margin-top: 12px; font-size: 1.4rem;">Sports Fest</h3>
-                <p class="card-desc" style="margin-bottom: 20px;">Compete across multiple athletic categories and lead your house team to victory.</p>
-                <button class="btn" style="background: linear-gradient(135deg, #f59e0b, #b45309);">Explore Sportsfest &rarr;</button>
+    <div class="hero-tiles">
+        <div class="hero-tile" data-target="sports" onclick="switchPage('sports', navBtnFor('sports'), this)">
+            <img src="SF.png" alt="JTC Sports Fest">
+            <div class="hero-tile-label">
+                <h3>JTC Sports Fest</h3>
+                <span class="hero-cta">Explore Sports Fest &rarr;</span>
             </div>
         </div>
-        
-        <!-- Interactive MUN Card -->
-        <div class="card big-tile" onclick="witchPage('mun', document.querySelectorAll('nav button')[2])" style="text-align: left; padding: 0; cursor: pointer;">
-            <img src="JTCMUN.png">
-            <div class="card-body">
-                <span style="background: rgba(220, 38, 38, 0.2); color: #fca5a5; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.3);">Diplomacy & Debate</span>
-                <h3 class="card-title" style="margin-top: 12px; font-size: 1.4rem;">Model United Nations</h3>
-                <p class="card-desc" style="margin-bottom: 20px;">Engage in high-level diplomacy, solve global issues, and debate with passionate delegates.</p>
-                <button class="btn" style="background: linear-gradient(135deg, #dc2626, #991b1b);">Coming Soon! &rarr;</button>
+        <div class="hero-tile" data-target="mun" onclick="witchPage('mun', navBtnFor('mun'), this)">
+            <img src="JTCMUN.png" alt="JTC MUN">
+            <div class="hero-tile-label">
+                <h3>JTC MUN</h3>
+                <span class="hero-cta">Coming Soon</span>
             </div>
         </div>
-
-        
     </div>
+    </section>
+
+    <section class="home-box">
+        <h3 class="section-title">Contact Us</h3>
+        <div class="contact-grid" id="contact-grid"></div>
+    </section>
+
+    <section class="home-box">
+        <h3 class="section-title">Find Us</h3>
+        <div class="map-wrap" id="map-wrap"></div>
+    </section>
     </div>
 
     <!-- MUN PAGE -->
 <div id="mun" class="page">
+    <button class="btn btn-secondary back-home-btn" onclick="switchPage('home', navBtnFor('home'))">&larr; Back to Home</button>
     <div id="mun-main-tiles" class="grid-2">
         <div class="big-tile" onclick="openMunSubSection('management')">
             <h2>Management</h2>
@@ -891,42 +985,46 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 
     <!-- SPORTS PAGE -->
 <div id="sports" class="page">
+    <button class="btn btn-secondary back-home-btn" onclick="switchPage('home', navBtnFor('home'))">&larr; Back to Home</button>
     <div id="sports-main-tiles" class="grid-2">
-        <div class="big-tile" onclick="openSportsSubSection('management')">
-            <h2>Management</h2>
-            <p>Meet the Sports Executive Board, Organizers, and Referees.</p>
-        </div>
-        <div class="big-tile" onclick="openSportsSubSection('categories')">
-            <h2>Categories</h2>
-            <p>Explore sports categories, rules, and registration forms.</p>
-        </div>
-    </div>
-
-    <!-- Code of Conduct Badge -->
-    <div class="coc-badge-container">
-        <div class="coc-badge" onclick="openCodeOfConduct('sports')">
-            <span class="coc-icon">📜</span>
-            <div class="coc-info">
-                <h3>Invite & Code of Conduct</h3>
-                <p id="sports-coc-status">Loading guidelines...</p>
+        <div class="hero-tile" data-sub="management" onclick="openSportsSubSection('management')">
+            <img src="management.jpg" alt="Sports Fest management" onerror="this.onerror=null;this.src='SF.png'">
+            <div class="hero-tile-label">
+                <h3>Management</h3>
+                <span class="hero-cta">Meet the Team &rarr;</span>
             </div>
         </div>
-        <div class="admin-only hidden" style="margin-top: 10px;">
-            <input type="file" id="sports-coc-file" accept=".pdf,.doc,.docx,image/*" class="hidden" onchange="uploadCodeOfConduct('sports', this)">
-            <button class="btn btn-secondary" onclick="document.getElementById('sports-coc-file').click()">Upload / Replace Sports Code of Conduct</button>
+        <div class="hero-tile" data-sub="categories" onclick="openSportsSubSection('categories')">
+            <img src="categories.jpg" alt="Sports categories" onerror="this.onerror=null;this.src='SF.png'">
+            <div class="hero-tile-label">
+                <h3>Categories</h3>
+                <span class="hero-cta">Explore Categories &rarr;</span>
+            </div>
         </div>
     </div>
 
-    <!-- Register Now Badge -->
-<div class="coc-badge-container">
-    <div class="coc-badge" onclick="openSportsRegisterModal()">
-        <span class="coc-icon">📝</span>
-        <div class="coc-info">
-            <h3>Register Now</h3>
-            <p>Click here to complete your Sports Fest event registration</p>
+    <div class="wide-tiles">
+        <div class="hero-tile wide-tile" data-cta="coc" onclick="openCodeOfConduct('sports')">
+            <img src="conduct.jpg" alt="Invite & Code of Conduct" onerror="this.onerror=null;this.src='SF.png'">
+            <div class="hero-tile-label">
+                <h3>Invite & Code of Conduct</h3>
+                <p id="sports-coc-status" class="tile-sub">Loading guidelines...</p>
+                <span class="hero-cta">View Document &rarr;</span>
+            </div>
+        </div>
+        <div class="hero-tile wide-tile" data-cta="register" onclick="openSportsRegisterModal()">
+            <img src="register.jpg" alt="Register Now" onerror="this.onerror=null;this.src='SF.png'">
+            <div class="hero-tile-label">
+                <h3>Register Now</h3>
+                <p class="tile-sub">Complete your Sports Fest event registration</p>
+                <span class="hero-cta">Start Registration &rarr;</span>
+            </div>
         </div>
     </div>
-</div>
+    <div class="admin-only hidden" style="margin: 12px 0 20px;">
+        <input type="file" id="sports-coc-file" accept=".pdf,.doc,.docx,image/*" class="hidden" onchange="uploadCodeOfConduct('sports', this)">
+        <button class="btn btn-secondary" onclick="document.getElementById('sports-coc-file').click()">Upload / Replace Sports Code of Conduct</button>
+    </div>
 
     <!-- SPORTS FEST REGISTRATION MODAL (Hidden by default) -->
 <div id="sports-register-modal" class="modal-overlay" style="display: none !important; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); z-index: 99999; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
@@ -1042,7 +1140,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <!-- MANAGEMENT SUBSECTION -->
     <!-- MANAGEMENT SUBSECTION -->
 <div id="sports-management" class="hidden">
-    <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSportsMain()">&larr; Back to Main Sports Fest</button>
+    <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px" onclick="backToSportsMain()">&larr; Back to Main Sports Fest</button>
     <h2>Management</h2>
     
     <div id="admin-sports-mgmt-tools" class="admin-panel hidden">
@@ -1066,7 +1164,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 
     <!-- CATEGORIES SUBSECTION -->
 <div id="sports-categories" class="hidden">
-    <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToSportsMain()">&larr; Back to Main Sports Fest</button>
+    <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px" onclick="backToSportsMain()">&larr; Back to Main Sports Fest</button>
     
     <!-- Categories Header -->
     <div style="text-align: center; margin-bottom: 24px;">
@@ -1420,7 +1518,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         }
     }
 
-    function switchPage(pageId, btnEl) {
+    function applyPage(pageId, btnEl) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         
@@ -1653,8 +1751,18 @@ function toggleCategoryCard(card, catName) {
             el => order.indexOf(el.getAttribute('data-category')) > order.indexOf(catName)
         );
         forms.insertBefore(formCard, next || null);
+        requestAnimationFrame(() => {
+            formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const first = formCard.querySelector('input');
+            if (first) setTimeout(() => first.focus({ preventScroll: true }), 500);
+        });
     }
     updateCategoryEmptyMessage();
+}
+
+function scrollToCategoryPicker() {
+    const g = document.getElementById('category-checkboxes-grid');
+    if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function updateCategoryEmptyMessage() {
@@ -1695,7 +1803,7 @@ function buildCategoryFormCard(catName) {
         html += `</div></div>`;
     } else {
         html += `
-            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px;">Enter participant names for ${catName}:</p>
+            <p style="font-size: 0.90rem; color: var(--text-muted); margin-bottom: 10px;">Enter participant names for ${catName}:</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         `;
         for (let i = 1; i <= config.count; i++) {
@@ -1704,6 +1812,7 @@ function buildCategoryFormCard(catName) {
         html += `</div>`;
     }
 
+    html += `<button type="button" class="btn btn-secondary" style="width:auto; margin-top:8px; padding:6px 14px; font-size:.90rem;" onclick="scrollToCategoryPicker()">&uarr; Select another category</button>`;
     return html + `</div>`;
 }
 
@@ -2448,7 +2557,7 @@ function renderRegistrationsTable(eventType, subType) {
         const toggleBtn = `
             <button class="btn" style="
                 padding: 4px 8px; 
-                font-size: 0.75rem; 
+                font-size: 0.90rem; 
                 margin-top: 6px; 
                 background: ${isPaid ? '#6b7280' : '#10b981'}; 
                 width: auto;" 
@@ -3321,16 +3430,13 @@ function renderCategoryCard(sport, index) {
     const imageSrc = getDirectDriveUrl(sport.img) || fallbackSrc;
 
     return `
-        <div class="category-card" onclick="openRulesModal(${index})">
-            <div class="category-img-container" style="width: 100%; height: 160px; overflow: hidden; border-radius: 8px; margin-bottom: 12px;">
-                <img src="${imageSrc}" 
-                     alt="${title}" 
-                     referrerpolicy="no-referrer"
-                     onerror="this.onerror=null; this.src='${fallbackSrc}';" 
-                     style="width: 100%; height: 100%; object-fit: cover;">
+        <div class="hero-tile cat-tile" data-cat="${index}" onclick="openRulesModal(${index})">
+            <img src="${imageSrc}" alt="${title}" referrerpolicy="no-referrer"
+                 onerror="this.onerror=null; this.src='${fallbackSrc}';">
+            <div class="hero-tile-label">
+                <h3>${title}</h3>
+                <span class="hero-cta">View Rules &rarr;</span>
             </div>
-            <h3 style="color: var(--secondary); margin-bottom: 8px;">${title}</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">View regulations & details</p>
         </div>
     `;
 }
@@ -3398,6 +3504,168 @@ document.addEventListener('DOMContentLoaded', () => {
     renderManagement(); // <-- ADD THIS: Ensures management renders on page load
 });
 
+</script>
+
+<script>
+/* ============ EDIT ME ============ */
+const EVENT_DATE  = '2026-10-15T09:00:00+14:00';   // e.g. '2026-11-20T09:00:00+05:00'  (null = "date to be announced")
+const EVENT_LABEL = 'Sports Fest begins in';
+const MAP_EMBED_URL = '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3403.603933447607!2d74.27443191185881!3d31.452568974137467!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919016fdb873cd1%3A0x815f40a50155a88f!2sBeaconhouse%20Johar%20Town%20(Boys)%20Campus%20Senior%2FMiddle!5e0!3m2!1sen!2s!4v1790775537768!5m2!1sen!2s" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>';   // paste the Google Maps "Embed a map" src URL here
+const CONTACTS = [
+    { name: 'Umair Mazhar', phone: '0323-3679408', img: 'umair.jpeg' },
+    { name: 'Naqi Ali', phone: '0336-8674125', img: 'naqiali.jpeg' },
+    { name: 'Hashim Fowad', phone: '0325-6921615', img: 'hashim.jpeg' },
+    { name: 'Yousaf Khan', phone: '0321-4638661', img: 'yousaf.jpeg' },
+    { name: 'Salman Latif', phone: '0332-4584477', img: 'salman.jpeg' }
+];
+/* ================================== */
+
+(function () {
+    // ---- Contacts & map
+    const PHONE_SVG = '<svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.6 3.6a1 1 0 0 1-.25 1z"/></svg>';
+    document.getElementById('contact-grid').innerHTML = CONTACTS.map(c =>
+        `<div class="contact-card">
+            <div class="contact-photo">${PHONE_SVG}<img src="${escapeHtml(c.img || '')}" alt="${escapeHtml(c.name)}" onerror="this.remove()"></div>
+            <div class="contact-body">
+                <div class="contact-name">${escapeHtml(c.name)}</div>
+                <a class="contact-phone" href="tel:${escapeHtml(c.phone.replace(/[^0-9+]/g, ''))}">${PHONE_SVG}${escapeHtml(c.phone)}</a>
+            </div>
+        </div>`).join('');
+    const mapWrap = document.getElementById('map-wrap');
+    const mapSrc = ((MAP_EMBED_URL || '').match(/src="([^"]+)"/) || [null, (MAP_EMBED_URL || '').trim()])[1];
+    mapWrap.innerHTML = mapSrc
+        ? `<iframe src="${escapeHtml(mapSrc)}" title="JTC location map" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>`
+        : '<span>Map location coming soon</span>';
+
+    // ---- Countdown
+    document.getElementById('countdown-label').textContent = EVENT_LABEL;
+    const cd = document.getElementById('countdown'), note = document.getElementById('countdown-note');
+    const setU = (k, v) => { cd.querySelector(`[data-u="${k}"]`).textContent = v; };
+    function tick() {
+        if (!EVENT_DATE) { ['d','h','m','s'].forEach(k => setU(k, '--')); note.textContent = 'Event date to be announced'; return; }
+        const diff = new Date(EVENT_DATE) - Date.now();
+        if (isNaN(diff) || diff <= 0) { ['d','h','m','s'].forEach(k => setU(k, '00')); note.textContent = isNaN(diff) ? '' : 'The event has begun!'; return; }
+        const t = Math.floor(diff / 1000), p = n => String(n).padStart(2, '0');
+        setU('d', p(Math.floor(t / 86400))); setU('h', p(Math.floor(t % 86400 / 3600)));
+        setU('m', p(Math.floor(t % 3600 / 60))); setU('s', p(t % 60)); note.textContent = '';
+    }
+    tick(); setInterval(tick, 1000);
+
+    // ---- Page transitions (expand from tile / shrink back into it)
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const BASE = { sports: '#1a1306', home: '#1a0d03', registrations: '#1a0d03', mun: '#160404' };
+    let busy = false;
+    const current = () => (document.querySelector('.page.active') || {}).id;
+    const tileFor = id => document.querySelector(`.hero-tile[data-target="${id}"]:not(.disabled)`);
+    window.navBtnFor = id => [...document.querySelectorAll('.nav-btn')].find(b => (b.getAttribute('onclick') || '').includes(`'${id}'`));
+
+    function curtain(box, base, src, imgOpacity) {
+        const c = document.createElement('div');
+        c.className = 'page-curtain';
+        Object.assign(c.style, { top: box.top, left: box.left, width: box.width, height: box.height, background: base, borderRadius: box.radius });
+        c.innerHTML = `<div class="curtain-img" style="opacity:${imgOpacity}${src ? `;background-image:url('${src}')` : ''}"></div>`;
+        document.body.appendChild(c); c.getBoundingClientRect();
+        return c;
+    }
+    const px = r => ({ top: r.top + 'px', left: r.left + 'px', width: r.width + 'px', height: r.height + 'px', radius: '20px' });
+    const FULL = { top: '0px', left: '0px', width: '100vw', height: '100vh', radius: '0px' };
+
+    function expand(action, base, origin, keepScroll) {
+        busy = true;
+        const img = origin.querySelector('img');
+        const c = curtain(px(origin.getBoundingClientRect()), base, img ? img.src : '', img ? .5 : 0);
+        Object.assign(c.style, { top: FULL.top, left: FULL.left, width: FULL.width, height: FULL.height, borderRadius: '0px' });
+        c.firstChild.style.opacity = 0;
+        setTimeout(() => {
+            try { action(); } catch (err) { console.error(err); }
+            if (!keepScroll) window.scrollTo(0, 0);
+            c.style.opacity = 0;
+            setTimeout(() => { c.remove(); busy = false; }, 420);
+        }, 680);
+    }
+    function collapse(action, base, tile, keepScroll) {
+        busy = true;
+        const img = tile.querySelector('img');
+        const c = curtain(FULL, base, img.src, 0);
+        try { action(); } catch (err) { console.error(err); }
+        if (!keepScroll) window.scrollTo(0, 0);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            const b = px(tile.getBoundingClientRect());
+            Object.assign(c.style, { top: b.top, left: b.left, width: b.width, height: b.height, borderRadius: '20px' });
+            c.firstChild.style.opacity = .5;
+            setTimeout(() => { c.style.opacity = 0; setTimeout(() => { c.remove(); busy = false; }, 320); }, 680);
+        }));
+    }
+
+    window.switchPage = function (pageId, btnEl, originEl) {
+        if (busy) return;
+        const from = current();
+        btnEl = btnEl || window.navBtnFor(pageId);
+        if (reduce || !from || from === pageId) return applyPage(pageId, btnEl);
+        if (pageId === 'home' && tileFor(from)) return collapse(() => applyPage('home', btnEl), BASE[from] || '#1a0d03', tileFor(from));
+        const origin = originEl || (from === 'home' && tileFor(pageId)) || btnEl;
+        if (origin && pageId !== 'home') return expand(() => applyPage(pageId, btnEl), BASE[pageId] || '#1a0d03', origin);
+        applyPage(pageId, btnEl);
+    };
+
+    // Sports Fest: Categories tile expands into the section, back shrinks into the tile
+    const subTile = sec => document.querySelector(`.hero-tile[data-sub="${sec}"]`);
+    const openSub = () => ['categories', 'management'].find(x => !document.getElementById('sports-' + x).classList.contains('hidden'));
+    const _openSub = window.openSportsSubSection, _backSub = window.backToSportsMain;
+    window.openSportsSubSection = function (sec) {
+        const t = subTile(sec);
+        if (reduce || busy || !t) return _openSub(sec);
+        expand(() => _openSub(sec), BASE.sports, t);
+    };
+    window.backToSportsMain = function () {
+        const cur = openSub(), t = cur && subTile(cur);
+        if (reduce || busy || !t) return _backSub();
+        collapse(_backSub, BASE.sports, t);
+    };
+
+    // Category tiles expand into the rules & regulations, and shrink back into the tile on close
+    let openTile = null;
+    const _openRules = window.openRulesModal, _closeRules = window.closeRulesModal;
+    window.openRulesModal = function (index) {
+        const t = document.querySelector(`.cat-tile[data-cat="${index}"]`);
+        if (reduce || busy || !t) return _openRules(index);
+        openTile = t;
+        expand(() => _openRules(index), BASE.sports, t, true);
+    };
+    window.closeRulesModal = function () {
+        const m = document.getElementById('rules-modal'), t = openTile;
+        openTile = null;
+        if (reduce || busy || !t || !document.body.contains(t) || !m || m.style.display !== 'flex') return _closeRules();
+        collapse(_closeRules, BASE.sports, t, true);
+    };
+
+    // Register Now: form expands from the tile and shrinks back into it
+    let regTile = null;
+    const _openReg = window.openSportsRegisterModal, _closeReg = window.closeRegisterModal;
+    window.openSportsRegisterModal = function () {
+        const t = document.querySelector('.hero-tile[data-cta="register"]');
+        if (reduce || busy || !t) return _openReg();
+        regTile = t;
+        expand(() => _openReg(), BASE.sports, t, true);
+    };
+    window.closeRegisterModal = function () {
+        const m = document.getElementById('sports-register-modal'), t = regTile;
+        regTile = null;
+        if (reduce || busy || !t || !document.body.contains(t) || !m || m.style.display !== 'flex') return _closeReg();
+        collapse(_closeReg, BASE.sports, t, true);
+    };
+
+    // ---- Cursor highlight
+    const glow = document.querySelector('.cursor-glow');
+    const SPOT = '.card, .big-tile, .category-card, .contact-card, .coc-badge, .hero-tile';
+    addEventListener('pointermove', e => {
+        glow.style.opacity = 1;
+        glow.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
+        const t = e.target.closest && e.target.closest(SPOT);
+        if (t) { const r = t.getBoundingClientRect(); t.style.setProperty('--mx', (e.clientX - r.left) + 'px'); t.style.setProperty('--my', (e.clientY - r.top) + 'px'); }
+    }, { passive: true });
+    document.documentElement.addEventListener('pointerleave', () => { glow.style.opacity = 0; });
+})();
 </script>
 </body>
 </html>
