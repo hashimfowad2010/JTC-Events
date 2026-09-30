@@ -20,7 +20,7 @@ A single-page web app where schools register delegations, head delegates get an 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff69b4?style=flat-square)
 
-[Live Demo](https://YOUR_USERNAME.github.io/YOUR_REPO/) · [Report a Bug](https://github.com/YOUR_USERNAME/YOUR_REPO/issues) · [Request a Feature](https://github.com/YOUR_USERNAME/YOUR_REPO/issues)
+[Live Demo](https://bssjtcevents.com/) · [Report a Bug](https://bssjtcevents.com//issues) · [Request a Feature](https://bssjtcevents.com//issues)
 
 </div>
 
