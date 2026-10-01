@@ -1818,11 +1818,11 @@ function buildCategoryFormCard(catName) {
                     <h5 style="color: var(--text-muted); margin-bottom: 8px;">Main Players (${config.mainPlayers})</h5>
         `;
         for (let i = 1; i <= config.mainPlayers; i++) {
-            html += `<input type="text" class="player-name-input" data-category="${catName}" required placeholder="Main Player ${i} Full Name" style="margin-bottom: 8px; width: 100%;">`;
+            html += `<input type="text" class="player-name-input" data-role="main" data-category="${catName}" required placeholder="Main Player ${i} Full Name" style="margin-bottom: 8px; width: 100%;">`;
         }
-        html += `</div><div><h5 style="color: var(--text-muted); margin-bottom: 8px;">Substitutes (${config.substitutes})</h5>`;
+        html += `</div><div><h5 style="color: var(--text-muted); margin-bottom: 8px;">Substitutes (${config.substitutes > 0 ? 'at least 1 required, up to ' + config.substitutes : config.substitutes})</h5>`;
         for (let i = 1; i <= config.substitutes; i++) {
-            html += `<input type="text" class="player-name-input" data-category="${catName}" required placeholder="Substitute ${i} Full Name" style="margin-bottom: 8px; width: 100%;">`;
+            html += `<input type="text" class="player-name-input" data-role="sub" data-category="${catName}" placeholder="Substitute ${i} Full Name ${i > 1 ? '(Optional)' : '*'}" style="margin-bottom: 8px; width: 100%;">`;
         }
         html += `</div></div>`;
     } else {
@@ -1992,6 +1992,21 @@ async function handleSportsRegistrationSubmit(e) {
         alert('Please select at least one category.');
         return;
     }
+    // At least one substitute is compulsory for team categories that allow substitutes
+    for (const card of cards) {
+        const cat = card.getAttribute('data-category');
+        const cfg = sportsCategoryConfigs[cat];
+        if (cfg && cfg.isTeam && cfg.substitutes > 0) {
+            const subInputs = Array.from(card.querySelectorAll('.player-name-input[data-role="sub"]'));
+            if (!subInputs.some(i => i.value.trim())) {
+                alert('Please enter at least one substitute for ' + cat + '.');
+                subInputs[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                subInputs[0]?.focus();
+                return;
+            }
+        }
+    }
+
     const categories = cards.map(card => {
         const category = card.getAttribute('data-category');
         const teamName = card.querySelector('.team-name-input')?.value.trim() || '';
