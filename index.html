@@ -1253,6 +1253,15 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 <div id="registrations" class="page">
     <h2>Registration Submissions</h2>
 
+    <!-- Unique delegates counter -->
+    <div id="unique-delegates-counter" style="margin-top: 20px; padding: 20px 25px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 14px;">
+        <div>
+            <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Total Unique Delegates</div>
+            <div id="unique-delegates-count" style="font-size: 2.8rem; font-weight: 700; color: var(--secondary); line-height: 1.1;">0</div>
+        </div>
+        <div id="unique-delegates-breakdown" style="color: var(--text-muted); font-size: 0.9rem;"></div>
+    </div>
+
     <!-- Level 1: Select Event -->
     <div id="sub-main-tiles" class="grid-2" style="margin-top: 20px;">
         <div class="big-tile" onclick="openSubmissionsEvent('MUN')">
@@ -2333,7 +2342,7 @@ async function handleSportsRegistrationSubmit(e) {
                     'School': document.getElementById('mun-school-name')?.value.trim() || '',
                     'Delegation': document.getElementById('mun-delegation-name')?.value.trim() || '',
                     'Delegation Tier': currentTargetCategory || '',
-                    'Head Delegate Email': recipientEmail
+                    'Head Delegate Email': recipientEmail    
                 };
                 batch.set(db.collection('registrations').doc(), {
                     eventType: 'MUN', subType: 'Categories', registrationType: 'Categories',
@@ -2387,6 +2396,62 @@ async function handleSportsRegistrationSubmit(e) {
 
 
     
+
+    // ---- Unique delegates counter ----
+    function normalizeDelegateText(s) {
+        return String(s || '').toLowerCase().replace(/\(head delegate\)/g, '').replace(/\s+/g, ' ').trim();
+    }
+
+    // Pulls every delegate name out of one delegation record
+    function extractDelegateNames(r) {
+        const data = r.formData || r.details || {};
+        const names = [];
+
+        if (r.eventType === 'MUN') {
+            Object.entries(data).forEach(([k, v]) => {
+                if (/^(full name|head delegate name|delegate \d+ (full )?name)$/i.test(k.trim())) names.push(v);
+            });
+        } else {
+            if (data['Head Delegate Name']) names.push(data['Head Delegate Name']);
+            if (Array.isArray(r.categories)) {
+                r.categories.forEach(c => (c.players || []).forEach(p => names.push(p)));
+            } else {
+                // older records: players only exist inside text like "Team: X | Players: a, b"
+                Object.values(data).forEach(v => {
+                    const m = /Players:\s*(.*)$/.exec(String(v));
+                    if (m) m[1].split(',').forEach(p => names.push(p));
+                });
+            }
+        }
+        return names;
+    }
+
+    function updateUniqueDelegateCount() {
+        const countEl = document.getElementById('unique-delegates-count');
+        if (!countEl) return;
+
+        const all = new Set();
+        const perEvent = { 'MUN': new Set(), 'Sports Fest': new Set() };
+
+        allRegistrations.forEach(r => {
+            // "Categories" records repeat people already stored in the delegation record, so skip them
+            if (r.subType === 'Categories' || r.registrationType === 'Categories') return;
+            const data = r.formData || r.details || {};
+            const school = normalizeDelegateText(data['School / Institution Name'] || data['School'] || '');
+            extractDelegateNames(r).forEach(n => {
+                const name = normalizeDelegateText(n);
+                if (!name) return;
+                const key = name + '|' + school;
+                all.add(key);
+                if (perEvent[r.eventType]) perEvent[r.eventType].add(key);
+            });
+        });
+
+        countEl.innerText = all.size;
+        const bd = document.getElementById('unique-delegates-breakdown');
+        if (bd) bd.innerText = `MUN: ${perEvent['MUN'].size}  \u2022  Sports Fest: ${perEvent['Sports Fest'].size}`;
+    }
+
     function fetchRegistrations() {
     
         db.collection("registrations").onSnapshot(snapshot => {
@@ -2398,6 +2463,8 @@ async function handleSportsRegistrationSubmit(e) {
                 allRegistrations.push({ id: doc.id, ...doc.data() });
     
             });
+
+            updateUniqueDelegateCount();
 
 
             
