@@ -794,9 +794,10 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     .hero-tile.disabled:hover .hero-cta { background: rgba(0,0,0,.45); border-color: rgba(255,255,255,.35); }
 
     #sports-main-tiles .big-tile { display: flex; flex-direction: column; justify-content: center; }
-    #sports-main-tiles .hero-tile { height: auto; min-height: 320px; }
+    #sports-main-tiles .hero-tile, #mun-main-tiles .hero-tile { height: auto; min-height: 320px; }
 
     .cat-tile { height: 230px; }
+    .tile-delete { position: absolute; top: 10px; right: 10px; z-index: 4; width: auto; padding: 4px 10px; font-size: .8rem; }
     .cat-tile .hero-tile-label { gap: 12px; }
     .cat-tile .hero-tile-label h3 { font-size: 1.4rem; }
     .cat-tile .hero-cta { padding: 8px 18px; font-size: .85rem; }
@@ -830,6 +831,14 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     .contact-name { font-family: 'Playfair Display', serif; font-size: 1.25rem; margin-bottom: 8px; }
     .contact-phone { display: inline-flex; align-items: center; gap: 8px; color: var(--secondary); text-decoration: none; font-size: 1rem; font-variant-numeric: tabular-nums; }
     .contact-phone svg { width: 16px; height: 16px; fill: currentColor; }
+    .countdown-box { text-align: center; }
+    /* Contact / Find Us / countdown only show on a page's main view, not inside sub-sections */
+    #sports:has(#sports-main-tiles.hidden) .main-only,
+    #mun:has(#mun-main-tiles.hidden) .main-only { display: none; }
+    body[data-theme="mun"] .section-title::after { background: linear-gradient(90deg, #dc2626, #fca5a5); }
+    .sub-search { display: none; gap: 10px; align-items: center; flex-wrap: wrap; margin: 15px 0 5px; }
+    .sub-search input { flex: 1 1 260px; min-width: 200px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,.35); color: var(--text-main); font-size: .95rem; }
+    .sub-search .btn { width: auto; }
     .map-wrap { height: 420px; border-radius: 18px; overflow: hidden; border: 1px solid var(--glass-border); background: rgba(0,0,0,.35); display: grid; place-items: center; color: var(--text-muted); }
     .map-wrap iframe { width: 100%; height: 100%; border: 0; filter: grayscale(.25) contrast(1.05); }
 
@@ -889,16 +898,6 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <div class="hero-section">
         <p class="eyebrow">Beaconhouse Johar Town Campus &bull; Lahore</p>
         <h2 class="hero-title">Welcome to JTC Events</h2>
-        <div class="countdown" id="countdown">
-            <p class="countdown-label" id="countdown-label">Sports Fest begins in</p>
-            <div class="countdown-row">
-                <div class="cd-box"><span data-u="d">--</span><small>Days</small></div>
-                <div class="cd-box"><span data-u="h">--</span><small>Hours</small></div>
-                <div class="cd-box"><span data-u="m">--</span><small>Minutes</small></div>
-                <div class="cd-box"><span data-u="s">--</span><small>Seconds</small></div>
-            </div>
-            <p class="countdown-note" id="countdown-note"></p>
-        </div>
     </div>
 
     <div class="hero-tiles">
@@ -920,55 +919,75 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     </section>
 
     <section class="home-box">
-        <h3 class="section-title">Contact Us</h3>
-        <div class="contact-grid" id="contact-grid"></div>
-    </section>
-
-    <section class="home-box">
         <h3 class="section-title">Find Us</h3>
-        <div class="map-wrap" id="map-wrap"></div>
+        <div class="map-wrap"></div>
     </section>
     </div>
 
     <!-- MUN PAGE -->
 <div id="mun" class="page">
     <button class="btn btn-secondary back-home-btn" onclick="switchPage('home', navBtnFor('home'))">&larr; Back to Home</button>
-    <div id="mun-main-tiles" class="grid-2">
-        <div class="big-tile" onclick="openMunSubSection('management')">
-            <h2>Management</h2>
-            <p>Meet the Secretariat, Directorate, and Executive Committee.</p>
+    <section class="home-box main-only countdown-box">
+        <div class="countdown" data-countdown="mun">
+            <p class="countdown-label"></p>
+            <div class="countdown-row">
+                <div class="cd-box"><span data-u="d">--</span><small>Days</small></div>
+                <div class="cd-box"><span data-u="h">--</span><small>Hours</small></div>
+                <div class="cd-box"><span data-u="m">--</span><small>Minutes</small></div>
+                <div class="cd-box"><span data-u="s">--</span><small>Seconds</small></div>
+            </div>
+            <p class="countdown-note"></p>
         </div>
-        <div class="big-tile" onclick="openMunSubSection('committees')">
-            <h2>Committees</h2>
-            <p>Explore committees, rules, and registration forms.</p>
+    </section>
+    <div id="mun-main-tiles" class="grid-2">
+        <div class="hero-tile" data-mun-sub="management" onclick="openMunSubSection('management')">
+            <img src="mun-management.jpg" alt="MUN management" onerror="this.onerror=null;this.src='JTCMUN.png'">
+            <div class="hero-tile-label">
+                <h3>Management</h3>
+                <span class="hero-cta">Meet the Team &rarr;</span>
+            </div>
+        </div>
+        <div class="hero-tile" data-mun-sub="committees" onclick="openMunSubSection('committees')">
+            <img src="mun-committees.jpg" alt="MUN committees" onerror="this.onerror=null;this.src='JTCMUN.png'">
+            <div class="hero-tile-label">
+                <h3>Committees</h3>
+                <span class="hero-cta">Explore Committees &rarr;</span>
+            </div>
         </div>
     </div>
     
-    <!-- Code of Conduct Badge -->
-    <div class="coc-badge-container">
-        <div class="coc-badge" onclick="openCodeOfConduct('mun')">
-            <span class="coc-icon">📜</span>
-            <div class="coc-info">
+    <div class="wide-tiles main-only">
+        <div class="hero-tile wide-tile" data-mun-cta="coc" onclick="openCodeOfConduct('mun')">
+            <img src="mun-conduct.jpg" alt="Invite & Code of Conduct" onerror="this.onerror=null;this.src='JTCMUN.png'">
+            <div class="hero-tile-label">
                 <h3>Invite & Code of Conduct</h3>
-                <p id="mun-coc-status">Loading guidelines...</p>
+                <p id="mun-coc-status" class="tile-sub">Loading guidelines...</p>
+                <span class="hero-cta">View Document &rarr;</span>
             </div>
         </div>
-        <div class="admin-only hidden" style="margin-top: 10px;">
-            <input type="file" id="mun-coc-file" accept=".pdf,.doc,.docx,image/*" class="hidden" onchange="uploadCodeOfConduct('mun', this)">
-            <button class="btn btn-secondary" onclick="document.getElementById('mun-coc-file').click()">Upload / Replace MUN Code of Conduct</button>
+        <div class="hero-tile wide-tile" data-mun-cta="register" onclick="openMunRegisterModal()">
+            <img src="mun-register.jpg" alt="Register Now" onerror="this.onerror=null;this.src='JTCMUN.png'">
+            <div class="hero-tile-label">
+                <h3>Register Now</h3>
+                <p class="tile-sub">Complete your MUN event registration</p>
+                <span class="hero-cta">Start Registration &rarr;</span>
+            </div>
         </div>
+    </div>
+    <div class="admin-only hidden main-only" style="margin: 12px 0 20px;">
+        <input type="file" id="mun-coc-file" accept=".pdf,.doc,.docx,image/*" class="hidden" onchange="uploadCodeOfConduct('mun', this)">
+        <button class="btn btn-secondary" onclick="document.getElementById('mun-coc-file').click()">Upload / Replace MUN Code of Conduct</button>
     </div>
 
-    <!-- Register Now Badge -->
-<div class="coc-badge-container">
-    <div class="coc-badge" onclick="openMunRegisterModal()">
-        <span class="coc-icon">📝</span>
-        <div class="coc-info">
-            <h3>Register Now</h3>
-            <p>Click here to complete your MUN event registration</p>
-        </div>
-    </div>
-</div>
+    <section class="home-box main-only">
+        <h3 class="section-title">Contact Us</h3>
+        <div class="contact-grid"></div>
+    </section>
+
+    <section class="home-box main-only">
+        <h3 class="section-title">Find Us</h3>
+        <div class="map-wrap"></div>
+    </section>
 
     <div id="mun-management" class="hidden">
         <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToMunMain()">&larr; Back to Main MUN</button>
@@ -983,19 +1002,22 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
             <button class="btn" onclick="addManagementCard()">Add Member</button>
         </div>
 
-        <h3>Secretariat</h3><div id="container-Secretariat" class="grid-3"></div>
-        <h3 style="margin-top:20px;">Directorate</h3><div id="container-Directorate" class="grid-3"></div>
-        <h3 style="margin-top:20px;">EC</h3><div id="container-EC" class="grid-3"></div>
+        <!-- Rendered by renderMunManagement() -->
+        <div id="mun-management-container"></div>
     </div>
 
     <div id="mun-committees" class="hidden">
         <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backToMunMain()">&larr; Back to Main MUN</button>
-        <div class="section-header">
-            <h2>MUN Committees</h2>
+        <div style="text-align: center; margin-bottom: 24px;">
+            <h3 style="color: var(--secondary); font-size: 1.6rem; margin-bottom: 8px;">Official MUN Committees</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Click on any committee to view its details and agenda.</p>
+        </div>
+
+        <div class="admin-only hidden" style="margin-bottom: 20px; text-align: right;">
             <button id="admin-add-committee-btn" class="btn hidden" style="width:auto;" onclick="openCommitteeModal()">+ Add Committee</button>
         </div>
 
-        <div id="mun-committee-list" class="grid-3"></div>
+        <div id="mun-committee-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-bottom: 40px;"></div>
 
         <div class="rules-box">
             <div class="section-header">
@@ -1010,6 +1032,18 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <!-- SPORTS PAGE -->
 <div id="sports" class="page">
     <button class="btn btn-secondary back-home-btn" onclick="switchPage('home', navBtnFor('home'))">&larr; Back to Home</button>
+    <section class="home-box main-only countdown-box">
+        <div class="countdown" data-countdown="sports">
+            <p class="countdown-label"></p>
+            <div class="countdown-row">
+                <div class="cd-box"><span data-u="d">--</span><small>Days</small></div>
+                <div class="cd-box"><span data-u="h">--</span><small>Hours</small></div>
+                <div class="cd-box"><span data-u="m">--</span><small>Minutes</small></div>
+                <div class="cd-box"><span data-u="s">--</span><small>Seconds</small></div>
+            </div>
+            <p class="countdown-note"></p>
+        </div>
+    </section>
     <div id="sports-main-tiles" class="grid-2">
         <div class="hero-tile" data-sub="management" onclick="openSportsSubSection('management')">
             <img src="management.jpg" alt="Sports Fest management" onerror="this.onerror=null;this.src='SF.png'">
@@ -1049,6 +1083,16 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <input type="file" id="sports-coc-file" accept=".pdf,.doc,.docx,image/*" class="hidden" onchange="uploadCodeOfConduct('sports', this)">
         <button class="btn btn-secondary" onclick="document.getElementById('sports-coc-file').click()">Upload / Replace Sports Code of Conduct</button>
     </div>
+
+    <section class="home-box main-only">
+        <h3 class="section-title">Contact Us</h3>
+        <div class="contact-grid"></div>
+    </section>
+
+    <section class="home-box main-only">
+        <h3 class="section-title">Find Us</h3>
+        <div class="map-wrap"></div>
+    </section>
 
     <!-- SPORTS FEST REGISTRATION MODAL (Hidden by default) -->
 <div id="sports-register-modal" class="modal-overlay" style="display: none !important; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); z-index: 99999; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
@@ -1317,6 +1361,12 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <div id="sub-table-view" class="hidden" style="margin-top: 20px;">
         <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backFromTableView()">&larr; Back to Selection</button>
         <button class="btn" style="width: auto; background: linear-gradient(135deg, #10b981, #047857);" onclick="exportSubmissionsToCSV()">📥 Export to CSV</button>
+        <div id="sub-search-row" class="sub-search">
+            <input type="text" id="sub-search-input" placeholder="Search delegations (delegation, school, delegate, email, phone...)" autocomplete="off"
+                   oninput="applySubmissionSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();applySubmissionSearch();}">
+            <button class="btn" onclick="applySubmissionSearch()">🔍 Search</button>
+            <button class="btn btn-secondary" onclick="clearSubmissionSearch()">Clear</button>
+        </div>
         <h3 id="sub-category-title">Submissions</h3>
         <div class="table-responsive">
             <table>
@@ -1511,6 +1561,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 
         if (isAdmin) fetchRegistrations();
         initFirestoreListeners();
+        renderMunManagement();
     });
 
     function toggleMediaInput() {
@@ -1599,19 +1650,26 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         db.collection("committees").onSnapshot(snapshot => {
             const list = document.getElementById('mun-committee-list');
             if (!list) return;
-            list.innerHTML = '';
+            munCommitteeData = {};
+            let html = '';
             snapshot.forEach(doc => {
                 const item = doc.data();
-                list.innerHTML += `
-                    <div class="card">
-                        ${renderMediaTag(item.img, item.title)}
-                        <div class="card-body">
-                            <h3 class="card-title">${item.title}</h3>
-                            <p class="card-desc">${item.desc || ''}</p>
-                            ${isAdmin ? `<div class="admin-controls" style="margin-top:10px;"><button class="btn btn-danger" onclick="deleteDoc('committees','${doc.id}')">Delete</button></div>` : ''}
+                munCommitteeData[doc.id] = item;
+                const fallbackSrc = 'JTCMUN.png';
+                const isVideo = /youtube\.com|youtu\.be|\.mp4$|^data:video/.test(item.img || '');
+                const imageSrc = (!isVideo && getDirectDriveUrl(item.img)) || fallbackSrc;
+                html += `
+                    <div class="hero-tile cat-tile" onclick="openCommitteeDetails('${doc.id}')">
+                        <img src="${imageSrc}" alt="${escapeHtml(item.title)}" referrerpolicy="no-referrer"
+                             onerror="this.onerror=null; this.src='${fallbackSrc}';">
+                        <div class="hero-tile-label">
+                            <h3>${escapeHtml(item.title)}</h3>
+                            <span class="hero-cta">View Details &rarr;</span>
                         </div>
+                        ${isAdmin ? `<button class="btn btn-danger tile-delete" onclick="event.stopPropagation(); deleteDoc('committees','${doc.id}')">Delete</button>` : ''}
                     </div>`;
             });
+            list.innerHTML = html;
         });
 
         db.collection("sports").onSnapshot(snapshot => {
@@ -1633,25 +1691,12 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         });
 
         db.collection("management").onSnapshot(snapshot => {
-            ['Event Director', 'Event Heads'].forEach(cat => {
-                const el = document.getElementById(`container-${cat}`);
-                if (el) el.innerHTML = '';
-            });
+            munMgmtMembers = [];
             snapshot.forEach(doc => {
                 const m = doc.data();
-                const container = document.getElementById(`container-${m.cat}`);
-                if (container) {
-                    container.innerHTML += `
-                        <div class="card">
-                            ${renderMediaTag(m.img, m.title)}
-                            <div class="card-body">
-                                <h4 class="card-title">${m.title}</h4>
-                                <p class="card-desc">${m.desc || ''}</p>
-                                ${isAdmin ? `<button class="btn btn-danger" style="margin-top:10px;" onclick="deleteDoc('management','${doc.id}')">Delete</button>` : ''}
-                            </div>
-                        </div>`;
-                }
+                if (MUN_MGMT_CATS.includes(m.cat)) munMgmtMembers.push({ id: doc.id, ...m });
             });
+            renderMunManagement();
         });
 
         db.collection("rules").doc("mun").onSnapshot(doc => {
@@ -2558,6 +2603,14 @@ async function handleSportsRegistrationSubmit(e) {
         });
     }
 
+    function isDelegationSubType(t) { return t === 'Delegations' || t === 'Junior Delegation' || t === 'Senior Delegation'; }
+    function applySubmissionSearch() { renderRegistrationsTable(currentSubEvent, currentSubType); }
+    function clearSubmissionSearch() {
+        const i = document.getElementById('sub-search-input');
+        if (i) { i.value = ''; i.focus(); }
+        applySubmissionSearch();
+    }
+
     function openSubmissionsList(subType, categoryName) {
         currentSubType = subType;
         currentSubCategory = categoryName || '';
@@ -2565,6 +2618,11 @@ async function handleSportsRegistrationSubmit(e) {
         document.getElementById('sub-delegation-select').classList.add('hidden');
         document.getElementById('sub-category-select').classList.add('hidden');
         document.getElementById('sub-table-view').classList.remove('hidden');
+
+        // Search box is only for delegation lists; start each list with a clean search
+        const searchRow = document.getElementById('sub-search-row'), searchInput = document.getElementById('sub-search-input');
+        if (searchInput) searchInput.value = '';
+        if (searchRow) searchRow.style.display = isDelegationSubType(subType) ? 'flex' : 'none';
 
         const typeLabel = (currentSubEvent === 'MUN' && subType === 'Categories') ? 'Committees' : subType;
         document.getElementById('sub-category-title').innerText =
@@ -2619,6 +2677,15 @@ function renderRegistrationsTable(eventType, subType) {
         return matchesEvent && matchesType;
     });
 
+    // Delegation search: matches any submitted field (delegation name, school, delegates, email, phone...)
+    const searchQ = ((document.getElementById('sub-search-input') || {}).value || '').trim().toLowerCase();
+    if (searchQ && isDelegationSubType(subType)) {
+        filtered = filtered.filter(r => {
+            const hay = [r.categoryOrCommittee, ...Object.values(r.formData || r.details || {})].join(' ').toLowerCase();
+            return hay.includes(searchQ);
+        });
+    }
+
     filtered.sort((a, b) => {
         const catA = (a.categoryOrCommittee || 'General').toLowerCase();
         const catB = (b.categoryOrCommittee || 'General').toLowerCase();
@@ -2628,7 +2695,9 @@ function renderRegistrationsTable(eventType, subType) {
     });
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No registrations submitted yet for this section.</td></tr>';
+        tbody.innerHTML = searchQ && isDelegationSubType(subType)
+            ? `<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No delegations match "${escapeHtml(searchQ)}".</td></tr>`
+            : '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No registrations submitted yet for this section.</td></tr>';
         return;
     }
 
@@ -3130,8 +3199,8 @@ function openCodeOfConduct(type) {
     }
     ];
 
-    function renderManagementCard(member) {
-    const fallbackSrc = 'SF.png';
+    function renderManagementCard(member, fallback) {
+    const fallbackSrc = fallback || 'SF.png';
     // Automatically handles direct Google Drive URLs if helper is present
     const imageSrc = (typeof getDirectDriveUrl === 'function') 
         ? getDirectDriveUrl(member.img) 
@@ -3161,6 +3230,44 @@ function openCodeOfConduct(type) {
 
         </div>
     `;
+    }
+
+    // ---- MUN management (Secretariat / Directorate / EC), styled like the Sports Fest management page
+    let munMgmtMembers = [];
+    let munCommitteeData = {};
+    const MUN_MGMT_CATS = ['Secretariat', 'Directorate', 'EC'];
+    const MUN_MGMT_TITLES = { Secretariat: 'Secretariat', Directorate: 'Directorate', EC: 'Executive Committee' };
+
+    function renderMunManagement() {
+        const container = document.getElementById('mun-management-container');
+        if (!container) return;
+        let html = '';
+        MUN_MGMT_CATS.forEach(cat => {
+            const members = munMgmtMembers.filter(m => m.cat === cat);
+            if (members.length === 0) return;
+            html += `
+                <div class="management-category-section" style="margin-bottom: 40px;">
+                    <h2 style="color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 8px; margin-bottom: 24px; font-size: 1.6rem;">
+                        ${MUN_MGMT_TITLES[cat]}
+                    </h2>
+                    <div class="management-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; justify-content: center;">
+                        ${members.map(m => `<div>${renderManagementCard(m, 'JTCMUN.png')}${isAdmin ? `<button class="btn btn-danger" style="margin-top:8px;" onclick="deleteDoc('management','${m.id}')">Delete</button>` : ''}</div>`).join('')}
+                    </div>
+                </div>`;
+        });
+        container.innerHTML = html || '<p style="color: var(--text-muted); text-align: center;">Management team coming soon.</p>';
+    }
+
+    function openCommitteeDetails(id) {
+        const item = munCommitteeData[id];
+        if (!item) return;
+        const modal = document.getElementById('rules-modal');
+        if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
+        document.getElementById('modal-title').innerText = item.title || 'Committee';
+        document.getElementById('modal-rules').innerHTML = item.desc
+            ? escapeHtml(item.desc).replace(/\n/g, '<br>')
+            : '<em>Details coming soon.</em>';
+        modal.style.display = 'flex';
     }
 
     function renderManagement() {
@@ -3616,9 +3723,10 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ============ EDIT ME ============ */
 const EVENT_DATE  = '2026-10-16T09:00:00+14:00';   // e.g. '2026-11-20T09:00:00+05:00'  (null = "date to be announced")
 const EVENT_LABEL = 'Sports Fest begins in';
+const MUN_EVENT_DATE  = '2026-10-30T00:00:00+05:00';   // 30 October 2026, start of day, Pakistan time (PKT = +05:00)
+const MUN_EVENT_LABEL = 'JTC MUN begins in';
 const MAP_EMBED_URL = '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3403.603933447607!2d74.27443191185881!3d31.452568974137467!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919016fdb873cd1%3A0x815f40a50155a88f!2sBeaconhouse%20Johar%20Town%20(Boys)%20Campus%20Senior%2FMiddle!5e0!3m2!1sen!2s!4v1790775537768!5m2!1sen!2s" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>';   // paste the Google Maps "Embed a map" src URL here
 const CONTACTS = [
-    { name: 'Umair Mazhar', phone: '0323-3679408', img: 'umair.jpeg' },
     { name: 'Naqi Ali', phone: '0336-8674125', img: 'naqiali.jpeg' },
     { name: 'Hashim Fowad', phone: '0325-6921615', img: 'hashim.jpeg' },
     { name: 'Yousaf Khan', phone: '0321-4638661', img: 'yousaf.jpeg' },
@@ -3629,7 +3737,7 @@ const CONTACTS = [
 (function () {
     // ---- Contacts & map
     const PHONE_SVG = '<svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.6 3.6a1 1 0 0 1-.25 1z"/></svg>';
-    document.getElementById('contact-grid').innerHTML = CONTACTS.map(c =>
+    const CONTACT_HTML = CONTACTS.map(c =>
         `<div class="contact-card">
             <div class="contact-photo">${PHONE_SVG}<img src="${escapeHtml(c.img || '')}" alt="${escapeHtml(c.name)}" onerror="this.remove()"></div>
             <div class="contact-body">
@@ -3637,25 +3745,34 @@ const CONTACTS = [
                 <a class="contact-phone" href="tel:${escapeHtml(c.phone.replace(/[^0-9+]/g, ''))}">${PHONE_SVG}${escapeHtml(c.phone)}</a>
             </div>
         </div>`).join('');
-    const mapWrap = document.getElementById('map-wrap');
+    document.querySelectorAll('.contact-grid').forEach(g => { g.innerHTML = CONTACT_HTML; });
     const mapSrc = ((MAP_EMBED_URL || '').match(/src="([^"]+)"/) || [null, (MAP_EMBED_URL || '').trim()])[1];
-    mapWrap.innerHTML = mapSrc
+    const MAP_HTML = mapSrc
         ? `<iframe src="${escapeHtml(mapSrc)}" title="JTC location map" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>`
         : '<span>Map location coming soon</span>';
+    document.querySelectorAll('.map-wrap').forEach(m => { m.innerHTML = MAP_HTML; });
 
-    // ---- Countdown
-    document.getElementById('countdown-label').textContent = EVENT_LABEL;
-    const cd = document.getElementById('countdown'), note = document.getElementById('countdown-note');
-    const setU = (k, v) => { cd.querySelector(`[data-u="${k}"]`).textContent = v; };
-    function tick() {
-        if (!EVENT_DATE) { ['d','h','m','s'].forEach(k => setU(k, '--')); note.textContent = 'Event date to be announced'; return; }
-        const diff = new Date(EVENT_DATE) - Date.now();
-        if (isNaN(diff) || diff <= 0) { ['d','h','m','s'].forEach(k => setU(k, '00')); note.textContent = isNaN(diff) ? '' : 'The event has begun!'; return; }
-        const t = Math.floor(diff / 1000), p = n => String(n).padStart(2, '0');
-        setU('d', p(Math.floor(t / 86400))); setU('h', p(Math.floor(t % 86400 / 3600)));
-        setU('m', p(Math.floor(t % 3600 / 60))); setU('s', p(t % 60)); note.textContent = '';
-    }
-    tick(); setInterval(tick, 1000);
+    // ---- Countdowns (Sports Fest + MUN)
+    const COUNTDOWNS = {
+        sports: { date: EVENT_DATE, label: EVENT_LABEL },
+        mun:    { date: MUN_EVENT_DATE, label: MUN_EVENT_LABEL }
+    };
+    const p2 = n => String(n).padStart(2, '0');
+    document.querySelectorAll('[data-countdown]').forEach(cd => {
+        const cfg = COUNTDOWNS[cd.dataset.countdown] || {};
+        const note = cd.querySelector('.countdown-note');
+        cd.querySelector('.countdown-label').textContent = cfg.label || '';
+        const setU = (k, v) => { cd.querySelector(`[data-u="${k}"]`).textContent = v; };
+        function tick() {
+            if (!cfg.date) { ['d','h','m','s'].forEach(k => setU(k, '--')); note.textContent = 'Event date to be announced'; return; }
+            const diff = new Date(cfg.date) - Date.now();
+            if (isNaN(diff) || diff <= 0) { ['d','h','m','s'].forEach(k => setU(k, '00')); note.textContent = isNaN(diff) ? '' : 'The event has begun!'; return; }
+            const t = Math.floor(diff / 1000);
+            setU('d', p2(Math.floor(t / 86400))); setU('h', p2(Math.floor(t % 86400 / 3600)));
+            setU('m', p2(Math.floor(t % 3600 / 60))); setU('s', p2(t % 60)); note.textContent = '';
+        }
+        tick(); setInterval(tick, 1000);
+    });
 
     // ---- Page transitions (expand from tile / shrink back into it)
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3727,6 +3844,28 @@ const CONTACTS = [
         const cur = openSub(), t = cur && subTile(cur);
         if (reduce || busy || !t) return _backSub();
         collapse(_backSub, BASE.sports, t);
+    };
+
+    // MUN: Management / Committees tiles expand into their section, back shrinks into the tile
+    const munTile = sec => document.querySelector(`.hero-tile[data-mun-sub="${sec}"]`);
+    const munOpenSub = () => ['management', 'committees'].find(x => !document.getElementById('mun-' + x).classList.contains('hidden'));
+    const _openMun = window.openMunSubSection, _backMun = window.backToMunMain;
+    window.openMunSubSection = function (sec) {
+        const t = munTile(sec);
+        if (reduce || busy || !t) return _openMun(sec);
+        expand(() => _openMun(sec), BASE.mun, t);
+    };
+    window.backToMunMain = function () {
+        const cur = munOpenSub(), t = cur && munTile(cur);
+        if (reduce || busy || !t) return _backMun();
+        collapse(_backMun, BASE.mun, t);
+    };
+    // MUN Register Now: expands from the tile into the delegation picker
+    const _openMunReg = window.openMunRegisterModal;
+    window.openMunRegisterModal = function () {
+        const t = document.querySelector('.hero-tile[data-mun-cta="register"]');
+        if (reduce || busy || !t) return _openMunReg();
+        expand(() => _openMunReg(), BASE.mun, t, true);
     };
 
     // Category tiles expand into the rules & regulations, and shrink back into the tile on close
