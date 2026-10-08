@@ -1416,7 +1416,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                                 <li>Delegation Fee: PKR 4,500</li>
                             </ul>
                         </li>
-                        <li><strong>Delegation Size:</strong> Head Delegate + 6 more delegates (7 in total), each with a preferred committee.</li>
+                        <li><strong>Delegation Size:</strong> Register at least 5 delegates total, including the Head Delegate. The other two delegate slots are optional.</li>
                     </ul>
                 </div>
             </div>
@@ -1454,7 +1454,8 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                     </div>
                 </div>
 
-                <h4 style="color: var(--secondary); margin-bottom: 12px;">2. Remaining Delegates (Delegates 2 to 7)</h4>
+                <h4 style="color: var(--secondary); margin-bottom: 12px;">2. Additional Delegates (any 4 of 6 required; up to 2 more optional)</h4>
+                <p style="color: var(--text-muted); margin-top: -6px; margin-bottom: 16px;">Complete all fields for each additional delegate you register. Leave all fields blank for unused slots.</p>
                 <div id="munr-delegate-cards" style="margin-bottom: 24px;"></div>
 
                 <div style="display: flex; gap: 12px; justify-content: flex-end;">
@@ -3424,16 +3425,16 @@ function openCodeOfConduct(type) {
                     <h4 style="color: var(--secondary); margin-bottom: 12px; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">🎙️ Delegate ${i}</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div class="form-group">
-                            <label>Full Name *</label>
-                            <input type="text" id="munr-d${i}-name" required placeholder="Delegate ${i} Full Name">
+                            <label>Full Name</label>
+                            <input type="text" id="munr-d${i}-name" placeholder="Delegate ${i} Full Name">
                         </div>
                         <div class="form-group">
-                            <label>Grade *</label>
-                            <select id="munr-d${i}-grade" class="munr-grade" required></select>
+                            <label>Grade</label>
+                            <select id="munr-d${i}-grade" class="munr-grade"></select>
                         </div>
                         <div class="form-group" style="grid-column: span 2;">
-                            <label>Preferred Committee *</label>
-                            <select id="munr-d${i}-committee" required>${opts}</select>
+                            <label>Preferred Committee</label>
+                            <select id="munr-d${i}-committee">${opts}</select>
                         </div>
                     </div>
                 </div>`;
@@ -3454,20 +3455,39 @@ function openCodeOfConduct(type) {
             'Delegation Tier': selectedMunTier
         };
         const delegates = [{ name: info['Head Delegate Name'], committee: val('munr-hd-committee'), grade: val('munr-hd-grade'), head: true }];
-        for (let i = 2; i <= 7; i++) delegates.push({ name: val(`munr-d${i}-name`), committee: val(`munr-d${i}-committee`), grade: val(`munr-d${i}-grade`), head: false });
+        const additionalDelegates = [];
+        for (let i = 2; i <= 7; i++) {
+            const delegate = {
+                name: val(`munr-d${i}-name`),
+                committee: val(`munr-d${i}-committee`),
+                grade: val(`munr-d${i}-grade`),
+                head: false
+            };
+            const hasAnyDetails = delegate.name || delegate.committee || delegate.grade;
+            if (hasAnyDetails && (!delegate.name || !delegate.committee || !delegate.grade)) {
+                alert(`Please complete the name, grade, and preferred committee for Delegate ${i}, or leave all three fields blank.`);
+                return;
+            }
+            if (hasAnyDetails) additionalDelegates.push({ ...delegate, slot: i });
+        }
+        if (additionalDelegates.length < 4) {
+            alert('Please register at least 4 additional delegates to make 5 delegates total, including the Head Delegate.');
+            return;
+        }
+        delegates.push(...additionalDelegates.map(({ slot, ...delegate }) => delegate));
 
         // Grade must belong to the chosen delegation type (Junior: up to O3, Senior: AS and above)
         const allowed = MUN_GRADES[selectedMunTier] || [];
         if (delegates.some(d => !allowed.includes(d.grade))) {
-            alert(`Please select a valid grade for every delegate (${selectedMunTier}: ${allowed.join(', ')}).`);
+            alert(`Please select a valid grade for every registered delegate (${selectedMunTier}: ${allowed.join(', ')}).`);
             return;
         }
 
         const fullForm = { ...info, 'Head Delegate Grade': delegates[0].grade, 'Head Delegate Committee': delegates[0].committee };
-        delegates.slice(1).forEach((d, k) => {
-            fullForm[`Delegate ${k + 2} Name`] = d.name;
-            fullForm[`Delegate ${k + 2} Grade`] = d.grade;
-            fullForm[`Delegate ${k + 2} Committee`] = d.committee;
+        additionalDelegates.forEach(d => {
+            fullForm[`Delegate ${d.slot} Name`] = d.name;
+            fullForm[`Delegate ${d.slot} Grade`] = d.grade;
+            fullForm[`Delegate ${d.slot} Committee`] = d.committee;
         });
 
         const btn = document.getElementById('munr-submit-btn');
