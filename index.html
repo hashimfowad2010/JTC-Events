@@ -887,7 +887,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <nav>
             <button class="nav-btn active" onclick="switchPage('home', this)">Home</button>
             <button class="nav-btn" onclick="switchPage('sports', this)">JTC SPORTS FEST</button>
-            <button class="nav-btn" onclick="switchPage('mun', this)">JTC MUN</button>
+            <button class="nav-btn" onclick="switchPage('mun', this)">JTC MUN (Coming soon)</button>
             <button class="nav-btn admin-only hidden" onclick="switchPage('registrations', this)">Submissions</button>
         </nav>
         <div class="auth-status">
@@ -918,7 +918,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
             <img src="JTCMUN.png" alt="JTC MUN">
             <div class="hero-tile-label">
                 <h3>JTC MUN</h3>
-                <span class="hero-cta">Explore MUN &rarr;</span>
+                <span class="hero-cta">Coming Soon</span>
             </div>
         </div>
     </div>
@@ -1391,11 +1391,11 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 <div class="category-card" onclick="startMunRegistration('Junior Delegation')" style="padding: 30px; text-align: center; cursor: pointer;">
                     <h3 style="color: var(--secondary); font-size: 1.5rem; margin-bottom: 8px;">Junior Delegation</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted);">Register a junior school delegation</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Register a school delegation</p>
                 </div>
                 <div class="category-card" onclick="startMunRegistration('Senior Delegation')" style="padding: 30px; text-align: center; cursor: pointer;">
                     <h3 style="color: var(--secondary); font-size: 1.5rem; margin-bottom: 8px;">Senior Delegation</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted);">Register a senior school delegation</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Register a college delegation</p>
                 </div>
             </div>
         </div>
@@ -1452,6 +1452,10 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                         <input type="tel" id="munr-hd-phone" required placeholder="e.g. 03xx-xxxxxxx">
                     </div>
                     <div class="form-group">
+                        <label>Head Delegate Grade *</label>
+                        <select id="munr-hd-grade" class="munr-grade" required></select>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
                         <label>Head Delegate Preferred Committee *</label>
                         <select id="munr-hd-committee" required></select>
                     </div>
@@ -3364,6 +3368,22 @@ function openCodeOfConduct(type) {
     // ---- MUN registration (same flow as Sports Fest: pick type -> form -> Firestore batch -> EmailJS)
     let selectedMunTier = '';
 
+    // Junior: up to O3 only. Senior: AS and above only.
+    const MUN_GRADES = {
+        'Junior Delegation': ['Grade 6', 'Grade 7', 'Grade 8', 'O1', 'O2', 'O3'],
+        'Senior Delegation': ['AS', 'A2']
+    };
+
+    function refreshMunGradeOptions() {
+        const grades = MUN_GRADES[selectedMunTier] || [];
+        document.querySelectorAll('#mun-register-modal select.munr-grade').forEach(sel => {
+            const keep = sel.value;
+            sel.innerHTML = '<option value="">Select Grade</option>' +
+                grades.map(g => `<option value="${g}">${g}</option>`).join('');
+            if (grades.includes(keep)) sel.value = keep;   // a grade from the other tier is cleared
+        });
+    }
+
     function munCommitteeOptionsHtml() {
         return '<option value="">Select Committee</option>' +
             munCommittees.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
@@ -3389,6 +3409,7 @@ function openCodeOfConduct(type) {
         document.getElementById('munr-step-tier').style.display = 'none';
         document.getElementById('munr-step-form').style.display = 'block';
         renderMunDelegateCards();
+        refreshMunGradeOptions();
     }
 
     function backToMunTierSelect() {
@@ -3413,6 +3434,10 @@ function openCodeOfConduct(type) {
                             <input type="text" id="munr-d${i}-name" required placeholder="Delegate ${i} Full Name">
                         </div>
                         <div class="form-group">
+                            <label>Grade *</label>
+                            <select id="munr-d${i}-grade" class="munr-grade" required></select>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
                             <label>Preferred Committee *</label>
                             <select id="munr-d${i}-committee" required>${opts}</select>
                         </div>
@@ -3434,12 +3459,20 @@ function openCodeOfConduct(type) {
             'Head Delegate Contact': val('munr-hd-phone'),
             'Delegation Tier': selectedMunTier
         };
-        const delegates = [{ name: info['Head Delegate Name'], committee: val('munr-hd-committee'), head: true }];
-        for (let i = 2; i <= 7; i++) delegates.push({ name: val(`munr-d${i}-name`), committee: val(`munr-d${i}-committee`), head: false });
+        const delegates = [{ name: info['Head Delegate Name'], committee: val('munr-hd-committee'), grade: val('munr-hd-grade'), head: true }];
+        for (let i = 2; i <= 7; i++) delegates.push({ name: val(`munr-d${i}-name`), committee: val(`munr-d${i}-committee`), grade: val(`munr-d${i}-grade`), head: false });
 
-        const fullForm = { ...info, 'Head Delegate Committee': delegates[0].committee };
+        // Grade must belong to the chosen delegation type (Junior: up to O3, Senior: AS and above)
+        const allowed = MUN_GRADES[selectedMunTier] || [];
+        if (delegates.some(d => !allowed.includes(d.grade))) {
+            alert(`Please select a valid grade for every delegate (${selectedMunTier}: ${allowed.join(', ')}).`);
+            return;
+        }
+
+        const fullForm = { ...info, 'Head Delegate Grade': delegates[0].grade, 'Head Delegate Committee': delegates[0].committee };
         delegates.slice(1).forEach((d, k) => {
             fullForm[`Delegate ${k + 2} Name`] = d.name;
+            fullForm[`Delegate ${k + 2} Grade`] = d.grade;
             fullForm[`Delegate ${k + 2} Committee`] = d.committee;
         });
 
@@ -3467,7 +3500,7 @@ function openCodeOfConduct(type) {
 
             // B) One "Categories" (committee) record per committee picked
             const byCommittee = {};
-            delegates.forEach(d => { if (d.name && d.committee) (byCommittee[d.committee] ||= []).push(d.name + (d.head ? ' (Head Delegate)' : '')); });
+            delegates.forEach(d => { if (d.name && d.committee) (byCommittee[d.committee] ||= []).push(d.name + (d.head ? ' (Head Delegate, ' : ' (') + d.grade + ')'); });
             Object.entries(byCommittee).forEach(([committee, names]) => {
                 const cf = {
                     'Delegates': names.join(', '),
@@ -3486,7 +3519,7 @@ function openCodeOfConduct(type) {
             await batch.commit();
 
             // Same EmailJS function + same template fields as Sports Fest; never blocks the registration
-            const committeesSummary = delegates.map(d => `${d.name}${d.head ? ' (Head Delegate)' : ''} - ${d.committee}`).join('\n');
+            const committeesSummary = delegates.map(d => `${d.name}${d.head ? ' (Head Delegate)' : ''}, ${d.grade} - ${d.committee}`).join('\n');
             sendConfirmationEmail({
                 to_email: info['Head Delegate Email'],
                 to_name: info['Head Delegate Name'],
