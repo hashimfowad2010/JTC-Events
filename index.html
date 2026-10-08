@@ -947,14 +947,14 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     </section>
     <div id="mun-main-tiles" class="grid-2">
         <div class="hero-tile" data-mun-sub="management" onclick="openMunSubSection('management')">
-            <img src="mun-management.jpg" alt="MUN management" onerror="this.onerror=null;this.src='JTCMUN.png'">
+            <img src="management mun.jpg" alt="MUN management" onerror="this.onerror=null;this.src='JTCMUN.png'">
             <div class="hero-tile-label">
                 <h3>Management</h3>
                 <span class="hero-cta">Meet the Team &rarr;</span>
             </div>
         </div>
         <div class="hero-tile" data-mun-sub="committees" onclick="openMunSubSection('committees')">
-            <img src="mun-committees.jpg" alt="MUN committees" onerror="this.onerror=null;this.src='JTCMUN.png'">
+            <img src="committees.jpg" alt="MUN committees" onerror="this.onerror=null;this.src='JTCMUN.png'">
             <div class="hero-tile-label">
                 <h3>Committees</h3>
                 <span class="hero-cta">Explore Committees &rarr;</span>
@@ -964,7 +964,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     
     <div class="wide-tiles main-only">
         <div class="hero-tile wide-tile" data-mun-cta="coc" onclick="openCodeOfConduct('mun')">
-            <img src="mun-conduct.jpg" alt="JTCMUN III Invite" onerror="this.onerror=null;this.src='JTCMUN.png'">
+            <img src="invite.jpeg" alt="JTCMUN III Invite" onerror="this.onerror=null;this.src='JTCMUN.png'">
             <div class="hero-tile-label">
                 <h3>JTCMUN III Invite</h3>
                 <p class="tile-sub">View the official JTCMUN III invite</p>
@@ -972,7 +972,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
             </div>
         </div>
         <div class="hero-tile wide-tile" data-mun-cta="register" onclick="openMunRegisterModal()">
-            <img src="mun-register.jpg" alt="Register Now" onerror="this.onerror=null;this.src='JTCMUN.png'">
+            <img src="register mun.jpg" alt="Register Now" onerror="this.onerror=null;this.src='JTCMUN.png'">
             <div class="hero-tile-label">
                 <h3>Register Now</h3>
                 <p class="tile-sub">Complete your MUN event registration</p>
@@ -1008,13 +1008,6 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 
         <div id="mun-committee-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 24px; margin-bottom: 40px;"></div>
 
-        <div class="rules-box">
-            <div class="section-header">
-                <h3>Rules & Regulations</h3>
-                <button class="admin-only btn btn-secondary hidden" style="width:auto;" onclick="editRules('mun')">Edit Rules</button>
-            </div>
-            <p id="mun-rules-text">Loading rules...</p>
-        </div>
     </div>
 </div>
 
@@ -3307,11 +3300,11 @@ function openCodeOfConduct(type) {
     // ---- MUN management: same layout as Sports Fest management (red theme comes from the MUN page theme)
     // Put member1.png ... member5.png next to index.html, then replace the title / name text below.
     const munManagementMembers = [
-        { cat: "Event Coordinator", title: "Event Coordinator", desc: "Member Name 1", img: "member1.png" },
-        { cat: "EC", title: "EC", desc: "Member Name 2", img: "member2.png" },
-        { cat: "EC", title: "EC", desc: "Member Name 3", img: "member3.png" },
-        { cat: "EC", title: "EC", desc: "Member Name 4", img: "member4.png" },
-        { cat: "EC", title: "EC", desc: "Member Name 5", img: "member5.png" }
+        { cat: "Chairperson", title: "Chairperson", desc: "Syed Ali Mardan", img: "member1.png" },
+        { cat: "Executive Council", title: "Secretary General", desc: "Abdullah Salman", img: "member2.png" },
+        { cat: "Executive Council", title: "President", desc: "Umer Akhlaq", img: "member3.png" },
+        { cat: "Executive Council", title: "Director General", desc: "Ali Shahzad", img: "member4.png" },
+        { cat: "Executive Council", title: "General Secretary", desc: "Umair Mazhar", img: "member5.png" }
     ];
 
     function renderMunManagement() {
@@ -3332,13 +3325,14 @@ function openCodeOfConduct(type) {
     // ---- MUN committees (from the committees poster). `img` can be a Google Drive share link or a file name.
     let munCommitteeData = {};
     const munCommitteeList = [
-        { id: 'sokovia', code: 'Sokovia Accords', full: 'Specialized Crisis Committee', agenda: '', img: 'committee-pics/sokovia-accords.png' },
-        { id: 'unhrc', code: 'UNHRC', full: 'United Nations Human Rights Council', agenda: 'Protecting Migrants and fighting Human Trafficking in the Darién Gap', img: 'committee-pics/unhrc.png' },
-        { id: 'unsc', code: 'UNSC', full: 'United Nations Security Council', agenda: 'Addressing the Security Crises around the Suwalki Gap and Kaliningrad', img: 'committee-pics/unsc.png' },
-        { id: 'disec', code: 'DISEC', full: 'Disarmament & International Security Committee', agenda: 'Keeping Lethal Autonomous Weapon Systems (LAWS) in bounds', img: 'committee-pics/disec.png' },
-        { id: 'unw', code: 'UNW', full: 'UN Women', agenda: 'Addressing the Pink Tax and price discrimination on Women and Girls', img: 'committee-pics/unw.png' },
-        { id: 'pna', code: 'PNA', full: 'Pakistan National Assembly', agenda: 'Strengthening judicial independence and reforming anti-corruption agencies', img: 'committee-pics/pna.png' },
-        { id: 'who', code: 'WHO', full: 'World Health Organization', agenda: 'Establishing a Global System for Sharing Pathogens and Ensuring Fair Benefits in Global Health', img: 'committee-pics/who.png' }
+        
+        { id: 'unhrc', code: '', full: '', agenda: 'Protecting Migrants and fighting Human Trafficking in the Darién Gap', img: 'UNHRC.png' },
+        { id: 'unsc', code: '', full: '', agenda: 'Addressing the Security Crises around the Suwalki Gap and Kaliningrad', img: 'UNSC.png' },
+        { id: 'disec', code: '', full: '', agenda: 'Keeping Lethal Autonomous Weapon Systems (LAWS) in bounds', img: 'DISEC.png' },
+        { id: 'unw', code: '', full: '', agenda: 'Addressing the Pink Tax and price discrimination on Women and Girls', img: 'UNW.png' },
+        { id: 'pna', code: '', full: '', agenda: 'Strengthening judicial independence and reforming anti-corruption agencies', img: 'PNA.png' },
+        { id: 'who', code: '', full: '', agenda: 'Establishing a Global System for Sharing Pathogens and Ensuring Fair Benefits in Global Health', img: 'WHO.png' },
+        { id: 'sokovia', code: 'Specialized Crisis', full: '', agenda: 'Sokovia Accords', img: 'CRISIS.png' }
     ];
 
     function renderMunCommittees() {
