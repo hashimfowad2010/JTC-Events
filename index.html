@@ -1372,7 +1372,8 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 <div id="registrations" class="page">
     <h2>Registration Submissions</h2>
     <div class="admin-only hidden" style="margin-top: 12px;">
-        <button id="paper-import-btn" class="btn" style="width: auto;" onclick="importPaperRegistrations()">Import Paper Registrations (13 Oct)</button>
+        <button id="paper-import-btn" class="btn" style="width: auto;" onclick="importPaperRegistrations('paper-2026-10-13', this)">Import Paper Registrations (13 Oct)</button>
+        <button id="paper-import-btn-b" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('paper-2026-10-13b', this)">Import Arm Wrestling + Shadow Wolves</button>
     </div>
 
     <!-- Unique delegates counter -->
@@ -4009,15 +4010,37 @@ const PAPER_IMPORT_DELEGATIONS = [
  }
 ];
 
-async function importPaperRegistrations() {
-    if (!isAdmin) return alert('Please log in as admin first.');
-    if (allRegistrations.some(r => r.importBatch === PAPER_IMPORT_BATCH)) {
-        return alert('These paper registrations have already been imported.');
+// Second paper batch: 5 arm wrestling delegations + Shadow Wolves futsal. Head delegate Anzal, no chaperone.
+const HD_DEFAULT_EMAIL = 'hashimfowad.2010@gmail.com', HD_DEFAULT_PHONE = '03256921615';
+const AW = 'Strongman - Arm Wrestling';
+const PAPER_IMPORT_DELEGATIONS_B = [
+    ...['Anzal', 'Talal Khattak', 'Hassan Amir', 'Sikandar', 'Abdullah'].map((name, i) => ({
+        name: `BJTC Arm Wrestling ${i + 1}`, hd: 'Anzal', email: HD_DEFAULT_EMAIL, phone: HD_DEFAULT_PHONE,
+        entries: [[AW, '', [name]]]
+    })),
+    {
+        name: 'BJTC Shadow Wolves', hd: 'Anzal', email: HD_DEFAULT_EMAIL, phone: HD_DEFAULT_PHONE,
+        entries: [['Futsal (Boys)', 'Shadow Wolves', ['Talal Khattak', 'Azan Khan', 'Mirza Talha', 'Saad Baig', 'Zeerak', 'Murtaza Ali', 'Aon Yousaf', 'Shahzaib Ramzan']]]
     }
-    const total = PAPER_IMPORT_DELEGATIONS.length;
-    if (!confirm(`Import ${total} Sports Fest delegations (Under 15, paid) from the paper sheets?`)) return;
+];
 
-    const btn = document.getElementById('paper-import-btn');
+const PAPER_IMPORTS = {
+    [PAPER_IMPORT_BATCH]: { label: 'Import Paper Registrations (13 Oct)', chaperone: 'Sir Yousaf', chaperoneContact: '03256921615', delegations: PAPER_IMPORT_DELEGATIONS },
+    'paper-2026-10-13b': { label: 'Import Arm Wrestling + Shadow Wolves', chaperone: '', chaperoneContact: '', delegations: PAPER_IMPORT_DELEGATIONS_B }
+};
+
+async function importPaperRegistrations(batchKey, btn) {
+    batchKey = batchKey || PAPER_IMPORT_BATCH;
+    const cfg = PAPER_IMPORTS[batchKey];
+    if (!cfg) return;
+    if (!isAdmin) return alert('Please log in as admin first.');
+    if (allRegistrations.some(r => r.importBatch === batchKey)) {
+        return alert('These registrations have already been imported.');
+    }
+    const PAPER_IMPORT_DELEGATIONS = cfg.delegations;
+    const total = PAPER_IMPORT_DELEGATIONS.length;
+    if (!confirm(`Import ${total} Sports Fest delegations (Under 15, paid)?`)) return;
+
     if (btn) { btn.disabled = true; btn.innerText = 'Importing...'; }
     try {
         const stamp = firebase.firestore.FieldValue.serverTimestamp();
@@ -4032,8 +4055,8 @@ async function importPaperRegistrations() {
                 'Head Delegate Name': d.hd,
                 'Head Delegate Email': d.email,
                 'Head Delegate Contact': d.phone,
-                'Chaperone Name': 'Sir Yousaf',
-                'Chaperone Contact': '03256921615',
+                'Chaperone Name': cfg.chaperone,
+                'Chaperone Contact': cfg.chaperoneContact,
                 'Division': division
             };
             const categories = d.entries.map(([category, teamName, players]) => ({
@@ -4048,7 +4071,7 @@ async function importPaperRegistrations() {
             batch.set(delegationRef, {
                 eventType: 'Sports Fest', subType: 'Delegations', registrationType: 'Delegations',
                 categoryOrCommittee: d.name, paymentStatus: 'paid', submittedAt: stamp,
-                importBatch: PAPER_IMPORT_BATCH, formData: fullForm, details: fullForm, categories
+                importBatch: batchKey, formData: fullForm, details: fullForm, categories
             });
 
             categories.forEach(c => {
@@ -4065,7 +4088,7 @@ async function importPaperRegistrations() {
                 batch.set(db.collection('registrations').doc(), {
                     eventType: 'Sports Fest', subType: 'Categories', registrationType: 'Categories',
                     categoryOrCommittee: c.category, parentDelegationId: delegationRef.id,
-                    paymentStatus: 'paid', submittedAt: stamp, importBatch: PAPER_IMPORT_BATCH,
+                    paymentStatus: 'paid', submittedAt: stamp, importBatch: batchKey,
                     formData: cf, details: cf
                 });
             });
@@ -4076,7 +4099,7 @@ async function importPaperRegistrations() {
     } catch (err) {
         alert('Import failed, nothing was saved: ' + (err.message || err));
     } finally {
-        if (btn) { btn.disabled = false; btn.innerText = 'Import Paper Registrations (13 Oct)'; }
+        if (btn) { btn.disabled = false; btn.innerText = cfg.label; }
     }
 }
 
