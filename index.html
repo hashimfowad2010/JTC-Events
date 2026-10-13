@@ -244,6 +244,19 @@
     tr.row-paid td:first-child    { box-shadow: inset 4px 0 0 #10b981; }
     tr.row-unpaid td:first-child  { box-shadow: inset 4px 0 0 #9ca3af; }
     tr.row-dup td:first-child     { box-shadow: inset 4px 0 0 #facc15; }
+    tr.row-dupdiff td { background: rgba(250, 204, 21, 0.04); }
+    tr.row-dupdiff td:first-child { box-shadow: inset 4px 0 0 #facc15; }
+    .edit-cat-section { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--glass-border); }
+    .edit-cat-section h3 { color: var(--secondary); font-size: 1.1rem; margin-bottom: 12px; }
+    .edit-cat-card { background: rgba(255,255,255,.03); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .edit-cat-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; color: var(--secondary); }
+    .edit-cat-head .btn { width: auto; padding: 4px 12px; font-size: .8rem; }
+    .edit-cat-add { display: flex; gap: 10px; flex-wrap: wrap; }
+    .edit-cat-add select { flex: 1 1 220px; padding: 10px; background: rgba(255,255,255,.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-main); }
+    .edit-cat-add select option, .edit-cat-add select optgroup { background: #121012; }
+    .edit-cat-add .btn { width: auto; }
+    .edit-cat-note { margin-top: 8px; font-size: .8rem; color: var(--text-muted); }
+    .diff-line { display: inline-block; margin: 1px 0; padding: 1px 6px; border-radius: 4px; background: rgba(250, 204, 21, 0.32); color: #fef9c3; box-shadow: inset 2px 0 0 #facc15; }
     tr.row-invalid td:first-child { box-shadow: inset 4px 0 0 #ef4444; }
     .row-flag { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 10px; font-size: .72rem; font-weight: 700; }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
@@ -725,6 +738,9 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         box-shadow: 0 0 0 1px #10b981 inset;
     }
     .category-select-card.selected h3 { color: #6ee7b7; }
+    .category-gender-heading { grid-column: 1 / -1; margin: 6px 0 -4px; color: var(--secondary); font-size: 1.05rem; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px; }
+    .category-gender-heading:not(:first-child) { margin-top: 14px; }
+    .category-open-tag { margin: 6px 0 0; font-size: .75rem; color: var(--text-muted); letter-spacing: .5px; }
     .category-select-card.selected h3::after { content: " \2713"; }
 
     /* ===== Registration: input boxes twice as tall ===== */
@@ -1022,6 +1038,14 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 
     <div class="wide-tiles main-only">
         <div class="hero-tile wide-tile socials-tile disabled" aria-disabled="true">
+            <img src="schedule.jpg" alt="Schedule" onerror="this.onerror=null;this.src='JTCMUN.png'">
+            <div class="hero-tile-label">
+                <h3>Schedule</h3>
+                <p class="tile-sub">Match timings, venues and the full event timetable</p>
+                <span class="hero-cta">Coming Soon</span>
+            </div>
+        </div>
+        <div class="hero-tile wide-tile socials-tile disabled" aria-disabled="true">
             <img src="socials.jpg" alt="Socials" onerror="this.onerror=null;this.src='JTCMUN.png'">
             <div class="hero-tile-label">
                 <h3>Socials</h3>
@@ -1117,6 +1141,14 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     </div>
 
     <div class="wide-tiles main-only">
+        <div class="hero-tile wide-tile socials-tile disabled" aria-disabled="true">
+            <img src="schedule.jpg" alt="Schedule" onerror="this.onerror=null;this.src='SF.png'">
+            <div class="hero-tile-label">
+                <h3>Schedule</h3>
+                <p class="tile-sub">Match timings, venues and the full event timetable</p>
+                <span class="hero-cta">Coming Soon</span>
+            </div>
+        </div>
         <div class="hero-tile wide-tile socials-tile disabled" aria-disabled="true">
             <img src="socials.jpg" alt="Socials" onerror="this.onerror=null;this.src='SF.png'">
             <div class="hero-tile-label">
@@ -1339,6 +1371,9 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <!-- ADMIN SUBMISSIONS PAGE -->
 <div id="registrations" class="page">
     <h2>Registration Submissions</h2>
+    <div class="admin-only hidden" style="margin-top: 12px;">
+        <button id="paper-import-btn" class="btn" style="width: auto;" onclick="importPaperRegistrations()">Import Paper Registrations (13 Oct)</button>
+    </div>
 
     <!-- Unique delegates counter -->
     <div id="unique-delegates-counter" style="margin-top: 20px; padding: 20px 25px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 14px;">
@@ -1422,7 +1457,8 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <div class="status-legend">
             <span><i style="background:#10b981"></i>Paid</span>
             <span><i style="background:#9ca3af"></i>Valid, unpaid</span>
-            <span><i style="background:#facc15"></i>Multiple entries</span>
+            <span><i style="background:#facc15"></i>Multiple entries (identical)</span>
+            <span><i style="background:rgba(250,204,21,.32); box-shadow: inset 2px 0 0 #facc15"></i>Multiple entries: highlighted lines differ</span>
             <span><i style="background:#ef4444"></i>Invalid (not a @gmail.com email)</span>
         </div>
         <div class="table-responsive">
@@ -1686,6 +1722,21 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 </div>
 
 <!-- THANK YOU / SUCCESS MODAL -->
+<!-- EDIT SUBMISSION MODAL (admin) -->
+<div id="edit-sub-modal" class="modal">
+    <div class="modal-content" style="max-width: 650px;">
+        <h2>Edit Submission</h2>
+        <p id="edit-sub-meta" style="color: var(--text-muted); font-size: 0.85rem; margin: 6px 0 16px; line-height: 1.5;"></p>
+        <form id="edit-sub-form" onsubmit="saveSubmissionEdit(event)">
+            <div id="edit-sub-fields"></div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
+                <button type="button" class="btn btn-secondary" style="width: auto;" onclick="closeModal('edit-sub-modal')">Cancel</button>
+                <button type="submit" id="edit-sub-save" class="btn" style="width: auto;">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="thank-you-modal" class="modal">
     <div class="modal-content" style="text-align: center; max-width: 450px;">
         <span style="font-size: 3rem;">🎉</span>
@@ -1879,30 +1930,61 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 let selectedDivision = "";
 
 // CATEGORY CONFIGURATION (Team sizes, subs, and individual limits)
-const sportsCategoryConfigs = {
-    "Futsal": { isTeam: true, mainPlayers: 5, substitutes: 3 },
-    "Basketball": { isTeam: true, mainPlayers: 5, substitutes: 3 },
-    "Padel Tennis": { isTeam: true, mainPlayers: 2, substitutes: 0 }, // Strict 2 players, 0 substitutes
-    "Cricket": { isTeam: true, mainPlayers: 8, substitutes: 3 },
-    "Table Tennis - Singles": { isTeam: false, count: 1 },
-    "Table Tennis - Doubles": { isTeam: true, mainPlayers: 2, substitutes: 0 },
-    "Badminton - Singles": { isTeam: false, count: 1 },
-    "Badminton - Doubles": { isTeam: true, mainPlayers: 2, substitutes: 0 },
-    "Athletics - 50 Meters": { isTeam: false, count: 1 },
-    "Athletics - Vertical Jump": { isTeam: false, count: 1 },
-    "Dodgeball": { isTeam: true, mainPlayers: 6, substitutes: 2 },
-    "Tug Of War": { isTeam: true, mainPlayers: 8, substitutes: 0 },
-    "Strongman - Pushups & Squats": { isTeam: false, count: 1 }, // Single person category
-    "Strongman - Arm Wrestling": { isTeam: false, count: 1 },
-    "Strong Woman - Pushups & Squats": { isTeam: false, count: 1 },
-    "Strong Woman - Arm Wrestling": { isTeam: false, count: 1 },
-    "Chess": { isTeam: false, count: 1 },             // Single person category
-    "E-Gaming FC": { isTeam: false, count: 1 },          // Single person category
-    "E-Gaming Tekken": { isTeam: false, count: 1 },
-    "Math Mystic": { isTeam: false, count: 1 },
-    "Foosball": { isTeam: true, mainPlayers: 2, substitutes: 0 },
-    "Ludo": { isTeam: false, count: 1 }
-};
+// Every sport is split into separate Boys / Girls categories (Cricket is Boys only).
+//   divisions: limits which age divisions a category appears in (default: all three)
+//   open:      open to all ages; shown in every division and recorded as "Open (All Ages)"
+const OPEN_DIVISION = 'Open (All Ages)';
+const sportsCategoryConfigs = {};
+function addSportCategory(baseName, cfg, genders, opts = {}) {
+    genders.forEach(gender => {
+        const key = opts.noSuffix ? baseName : `${baseName} (${gender})`;
+        sportsCategoryConfigs[key] = {
+            ...cfg,
+            gender,
+            open: !!opts.open,
+            divisions: (opts.divisions && opts.divisions[gender]) || null
+        };
+    });
+}
+const BOYS_GIRLS = ['Boys', 'Girls'];
+const SINGLE = { isTeam: false, count: 1 };
+const PAIR = { isTeam: true, mainPlayers: 2, substitutes: 0 };
+
+addSportCategory('Futsal', { isTeam: true, mainPlayers: 5, substitutes: 3 }, BOYS_GIRLS, { divisions: { Girls: ['Under 15', 'Under 19'] } });
+addSportCategory('Basketball', { isTeam: true, mainPlayers: 5, substitutes: 3 }, BOYS_GIRLS);
+addSportCategory('Padel Tennis', PAIR, BOYS_GIRLS);                       // Strict 2 players, 0 substitutes
+addSportCategory('Cricket', { isTeam: true, mainPlayers: 8, substitutes: 3 }, ['Boys'], { divisions: { Boys: ['Under 15', 'Under 19'] } });
+addSportCategory('Table Tennis - Singles', SINGLE, BOYS_GIRLS);
+addSportCategory('Table Tennis - Doubles', PAIR, BOYS_GIRLS);
+addSportCategory('Badminton - Singles', SINGLE, BOYS_GIRLS);
+addSportCategory('Badminton - Doubles', PAIR, BOYS_GIRLS);
+addSportCategory('Athletics - 50 Meters', SINGLE, BOYS_GIRLS);
+addSportCategory('Athletics - Vertical Jump', SINGLE, BOYS_GIRLS);
+addSportCategory('Dodgeball', { isTeam: true, mainPlayers: 6, substitutes: 2 }, BOYS_GIRLS);
+addSportCategory('Tug Of War', { isTeam: true, mainPlayers: 8, substitutes: 0 }, BOYS_GIRLS);
+addSportCategory('Strongman - Pushups & Squats', SINGLE, ['Boys'], { noSuffix: true });
+addSportCategory('Strongman - Arm Wrestling', SINGLE, ['Boys'], { noSuffix: true });
+addSportCategory('Strong Woman - Pushups & Squats', SINGLE, ['Girls'], { noSuffix: true });
+addSportCategory('Strong Woman - Arm Wrestling', SINGLE, ['Girls'], { noSuffix: true });
+addSportCategory('Chess', SINGLE, BOYS_GIRLS, { open: true });
+addSportCategory('E-Gaming FC', SINGLE, BOYS_GIRLS, { open: true });
+addSportCategory('E-Gaming Tekken', SINGLE, BOYS_GIRLS, { open: true });
+addSportCategory('Math Mystic', SINGLE, BOYS_GIRLS);
+addSportCategory('Foosball', PAIR, BOYS_GIRLS);
+addSportCategory('Ludo', SINGLE, BOYS_GIRLS, { open: true });
+
+// Is this category offered in the chosen age division?
+function categoryAvailableIn(catName, division) {
+    const cfg = sportsCategoryConfigs[catName];
+    if (!cfg) return false;
+    if (cfg.open || !cfg.divisions) return true;
+    return cfg.divisions.includes(division);
+}
+// Division recorded for a category entry
+function categoryDivisionLabel(catName) {
+    const cfg = sportsCategoryConfigs[catName];
+    return cfg && cfg.open ? OPEN_DIVISION : selectedDivision;
+}
 
 function openSportsRegisterModal() {
     const modal = document.getElementById('sports-register-modal');
@@ -1951,20 +2033,37 @@ function renderCategoryCheckboxes() {
     if (!container) return;
 
     container.innerHTML = '';
-    Object.keys(sportsCategoryConfigs).forEach(catName => {
-        const card = document.createElement('div');
-        card.className = 'category-card category-select-card';
-        card.setAttribute('data-category', catName);
-        card.setAttribute('role', 'button');
-        card.setAttribute('tabindex', '0');
-        const title = document.createElement('h3');
-        title.textContent = catName;
-        card.appendChild(title);
-        card.addEventListener('click', () => toggleCategoryCard(card, catName));
-        card.addEventListener('keydown', ev => {
-            if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleCategoryCard(card, catName); }
+    ['Boys', 'Girls'].forEach(gender => {
+        const names = Object.keys(sportsCategoryConfigs).filter(n =>
+            sportsCategoryConfigs[n].gender === gender && categoryAvailableIn(n, selectedDivision));
+        if (!names.length) return;
+
+        const heading = document.createElement('h4');
+        heading.className = 'category-gender-heading';
+        heading.textContent = `${gender} Categories`;
+        container.appendChild(heading);
+
+        names.forEach(catName => {
+            const card = document.createElement('div');
+            card.className = 'category-card category-select-card';
+            card.setAttribute('data-category', catName);
+            card.setAttribute('role', 'button');
+            card.setAttribute('tabindex', '0');
+            const title = document.createElement('h3');
+            title.textContent = catName;
+            card.appendChild(title);
+            if (sportsCategoryConfigs[catName].open) {
+                const tag = document.createElement('p');
+                tag.className = 'category-open-tag';
+                tag.textContent = 'Open to all ages';
+                card.appendChild(tag);
+            }
+            card.addEventListener('click', () => toggleCategoryCard(card, catName));
+            card.addEventListener('keydown', ev => {
+                if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleCategoryCard(card, catName); }
+            });
+            container.appendChild(card);
         });
-        container.appendChild(card);
     });
 
     document.getElementById('dynamic-category-forms-container').innerHTML = '';
@@ -2017,7 +2116,7 @@ function buildCategoryFormCard(catName) {
     let html = `
         <div class="category-form-card" data-category="${catName}" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 10px; padding: 16px; margin-bottom: 16px;">
             <h4 style="color: var(--secondary); margin-bottom: 12px; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">
-                ⚽ ${catName} (${selectedDivision})
+                ⚽ ${catName} (${categoryDivisionLabel(catName)})
             </h4>
     `;
 
@@ -2227,7 +2326,7 @@ async function handleSportsRegistrationSubmit(e) {
         const teamName = card.querySelector('.team-name-input')?.value.trim() || '';
         const players = Array.from(card.querySelectorAll('.player-name-input'))
             .map(i => i.value.trim()).filter(Boolean);
-        return { category, teamName, players };
+        return { category, teamName, players, division: categoryDivisionLabel(category) };
     });
 
     const btn = document.getElementById('reg-submit-btn');
@@ -2263,7 +2362,7 @@ async function handleSportsRegistrationSubmit(e) {
                 'Players': c.players.join(', '),
                 'Delegation': delegationInfo['Delegation Name'],
                 'School': delegationInfo['School / Institution Name'],
-                'Division': selectedDivision,
+                'Division': c.division || selectedDivision,
                 'Head Delegate': delegationInfo['Head Delegate Name'],
                 'Head Delegate Email': delegationInfo['Head Delegate Email'],
                 'Head Delegate Contact': delegationInfo['Head Delegate Contact']
@@ -2838,6 +2937,1149 @@ async function togglePaymentStatus(docId, currentStatus) {
 
 // Deleting a delegation also deletes its category / committee entries.
 // Deleting a single category entry only removes that entry.
+// ---- Editing a submission (admin) ----
+// Delegation fields that are copied onto its category / committee entries: delegation key -> child key
+const DELEGATION_LINK_FIELDS = {
+    'School / Institution Name': 'School',
+    'Delegation Name': 'Delegation',
+    'Head Delegate Name': 'Head Delegate',
+    'Head Delegate Email': 'Head Delegate Email',
+    'Head Delegate Contact': 'Head Delegate Contact',
+    'Division': 'Division',
+    'Delegation Tier': 'Delegation Tier'
+};
+let editingSubId = null;
+
+// "Team: X | Players: a, b" -> { team: 'X', players: ['a','b'] }
+function parseTeamPlayers(text) {
+    const m = /^(?:Team:\s*(.*?)\s*\|\s*)?Players:\s*([\s\S]*)$/.exec(String(text || '').trim());
+    if (!m) return null;
+    return { team: (m[1] || '').trim(), players: m[2].split(',').map(p => p.trim()).filter(Boolean) };
+}
+
+// Sports Fest delegations: is this form field one of its category lines?
+function isCategoryField(rec, key, val) {
+    return !!sportsCategoryConfigs[key] ||
+        (Array.isArray(rec.categories) && rec.categories.some(c => c.category === key)) ||
+        !!parseTeamPlayers(val);
+}
+function isSportsDelegation(rec) { return rec && rec.eventType === 'Sports Fest' && isDelegationRecord(rec); }
+function divisionForCategory(catName, delegationDivision) {
+    const cfg = sportsCategoryConfigs[catName];
+    return cfg && cfg.open ? OPEN_DIVISION : (delegationDivision || '');
+}
+
+function makeEditField(key, val) {
+    const group = document.createElement('div');
+    group.className = 'form-group';
+    const label = document.createElement('label');
+    label.textContent = key;
+    const value = String(val ?? '');
+    const long = value.length > 60 || value.includes('\n');
+    const input = document.createElement(long ? 'textarea' : 'input');
+    if (long) input.rows = Math.min(8, Math.max(3, Math.ceil(value.length / 60)));
+    else input.type = 'text';
+    input.value = value;
+    input.dataset.key = key;
+    group.append(label, input);
+    return group;
+}
+
+// One editable category card (team name + players) inside the edit popup
+function makeEditCategoryCard(catName, team, players) {
+    const cfg = sportsCategoryConfigs[catName];
+    const card = document.createElement('div');
+    card.className = 'edit-cat-card';
+    card.dataset.cat = catName;
+
+    const head = document.createElement('div');
+    head.className = 'edit-cat-head';
+    const title = document.createElement('strong');
+    title.textContent = catName;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-danger';
+    remove.textContent = 'Remove';
+    remove.onclick = () => { card.remove(); refreshEditCategorySelect(); };
+    head.append(title, remove);
+    card.appendChild(head);
+
+    if ((cfg && cfg.isTeam) || team) {
+        const tg = document.createElement('div');
+        tg.className = 'form-group';
+        tg.innerHTML = '<label>Team Name</label>';
+        const ti = document.createElement('input');
+        ti.type = 'text'; ti.className = 'edit-cat-team'; ti.value = team || ''; ti.placeholder = 'Team name';
+        tg.appendChild(ti);
+        card.appendChild(tg);
+    }
+    const pg = document.createElement('div');
+    pg.className = 'form-group';
+    pg.innerHTML = '<label>Players (separate names with commas)</label>';
+    const pi = document.createElement('textarea');
+    pi.rows = 2; pi.className = 'edit-cat-players'; pi.value = (players || []).join(', ');
+    pi.placeholder = cfg ? (cfg.isTeam ? `${cfg.mainPlayers} main players${cfg.substitutes ? ' + up to ' + cfg.substitutes + ' substitutes' : ''}` : 'Participant name') : 'Player names';
+    pg.appendChild(pi);
+    card.appendChild(pg);
+    return card;
+}
+
+// Dropdown of categories that can still be added to the delegation being edited
+function refreshEditCategorySelect() {
+    const sel = document.getElementById('edit-cat-select');
+    if (!sel) return;
+    const division = sel.dataset.division || '';
+    const present = new Set([...document.querySelectorAll('#edit-cat-list .edit-cat-card')].map(c => c.dataset.cat));
+    sel.innerHTML = '<option value="">Select a category to add</option>';
+    ['Boys', 'Girls'].forEach(gender => {
+        const names = Object.keys(sportsCategoryConfigs).filter(n => sportsCategoryConfigs[n].gender === gender &&
+            !present.has(n) && (!division || categoryAvailableIn(n, division)));
+        if (!names.length) return;
+        const og = document.createElement('optgroup');
+        og.label = gender;
+        names.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; og.appendChild(o); });
+        sel.appendChild(og);
+    });
+}
+
+function addEditCategory() {
+    const sel = document.getElementById('edit-cat-select');
+    if (!sel || !sel.value) return;
+    const card = makeEditCategoryCard(sel.value, '', []);
+    document.getElementById('edit-cat-list').appendChild(card);
+    refreshEditCategorySelect();
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const first = card.querySelector('input, textarea');
+    if (first) setTimeout(() => first.focus({ preventScroll: true }), 300);
+}
+
+function openEditSubmission(docId) {
+    const rec = allRegistrations.find(r => r.id === docId);
+    if (!rec) return;
+    editingSubId = docId;
+    const data = rec.formData || rec.details || {};
+    const sportsDeleg = isSportsDelegation(rec);
+
+    document.getElementById('edit-sub-meta').innerText =
+        `${rec.eventType} • ${rec.categoryOrCommittee || 'General'}` +
+        (isDelegationRecord(rec) ? ' • shared details (school, delegation, head delegate) also update its category / committee entries' : '');
+
+    const box = document.getElementById('edit-sub-fields');
+    box.innerHTML = '';
+    const entries = Object.entries(data);
+    if (!entries.length) box.innerHTML = '<p style="color: var(--text-muted);">This record has no form fields to edit.</p>';
+
+    const catEntries = [];
+    entries.forEach(([key, val]) => {
+        if (sportsDeleg && isCategoryField(rec, key, val)) catEntries.push([key, val]);
+        else box.appendChild(makeEditField(key, val));
+    });
+
+    // Sports Fest delegations: categories can be edited, removed and added
+    if (sportsDeleg) {
+        const section = document.createElement('div');
+        section.className = 'edit-cat-section';
+        section.innerHTML = '<h3>Categories</h3><div id="edit-cat-list"></div>' +
+            '<div class="edit-cat-add"><select id="edit-cat-select"></select>' +
+            '<button type="button" class="btn" onclick="addEditCategory()">+ Add Category</button></div>' +
+            '<p class="edit-cat-note">Removing a category also deletes its entry under Categories. A newly added category gets its own entry there too.</p>';
+        box.appendChild(section);
+        const list = section.querySelector('#edit-cat-list');
+        catEntries.forEach(([key, val]) => {
+            const parsed = parseTeamPlayers(val) || { team: '', players: String(val || '').split(',').map(x => x.trim()).filter(Boolean) };
+            list.appendChild(makeEditCategoryCard(key, parsed.team, parsed.players));
+        });
+        section.querySelector('#edit-cat-select').dataset.division = data['Division'] || '';
+        refreshEditCategorySelect();
+    }
+
+    const modal = document.getElementById('edit-sub-modal');
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
+    modal.style.display = 'flex';
+}
+
+async function saveSubmissionEdit(e) {
+    if (e) e.preventDefault();
+    const rec = allRegistrations.find(r => r.id === editingSubId);
+    if (!rec) return closeModal('edit-sub-modal');
+    const sportsDeleg = isSportsDelegation(rec);
+
+    const old = rec.formData || rec.details || {};
+    const updated = {};
+    document.querySelectorAll('#edit-sub-fields [data-key]').forEach(el => { updated[el.dataset.key] = el.value.trim(); });
+
+    // Categories from the editable cards
+    let cats = [], removedCats = [], addedCats = [];
+    if (sportsDeleg) {
+        cats = [...document.querySelectorAll('#edit-cat-list .edit-cat-card')].map(card => ({
+            category: card.dataset.cat,
+            teamName: (card.querySelector('.edit-cat-team')?.value || '').trim(),
+            players: (card.querySelector('.edit-cat-players')?.value || '').split(',').map(x => x.trim()).filter(Boolean)
+        }));
+        const empty = cats.find(c => !c.players.length);
+        if (empty) return alert(`Please enter at least one player for ${empty.category}, or remove that category.`);
+        const noTeam = cats.find(c => sportsCategoryConfigs[c.category]?.isTeam && !c.teamName);
+        if (noTeam) return alert(`Please enter a team name for ${noTeam.category}.`);
+
+        // Same 3-category limit as the registration form (admin can override)
+        const perPlayer = {};
+        cats.forEach(c => c.players.forEach(p => (perPlayer[normKey(p)] ||= new Set()).add(c.category)));
+        const over = Object.entries(perPlayer).find(([, set]) => set.size > 3);
+        if (over && !confirm(`"${over[0]}" is in ${over[1].size} categories (the limit is 3). Save anyway?`)) return;
+
+        cats.forEach(c => { updated[c.category] = (c.teamName ? `Team: ${c.teamName} | ` : '') + 'Players: ' + c.players.join(', '); });
+        const oldCats = Object.keys(old).filter(k => isCategoryField(rec, k, old[k]));
+        const newCats = cats.map(c => c.category);
+        removedCats = oldCats.filter(k => !newCats.includes(k));
+        addedCats = newCats.filter(k => !oldCats.includes(k));
+    }
+
+    const changed = Object.keys(updated).filter(k => updated[k] !== String(old[k] ?? '').trim());
+    if (!changed.length && !removedCats.length) return closeModal('edit-sub-modal');
+    if (removedCats.length && !confirm(`Remove ${removedCats.join(', ')} from this delegation? Their category entries will be deleted.`)) return;
+
+    const patch = { formData: updated, details: updated, lastEditedAt: firebase.firestore.FieldValue.serverTimestamp() };
+
+    if (isDelegationRecord(rec)) {
+        // Sports Fest: keep the player list (used by the unique delegate counter) in step with the categories
+        if (sportsDeleg) {
+            const prev = {};
+            (rec.categories || []).forEach(c => { prev[c.category] = c; });
+            patch.categories = cats.map(c => ({
+                ...(prev[c.category] || {}),
+                category: c.category, teamName: c.teamName, players: c.players,
+                division: (prev[c.category] && prev[c.category].division) || divisionForCategory(c.category, updated['Division'])
+            }));
+        }
+        // The delegation's listing name follows its edited name / tier
+        if (rec.eventType === 'Sports Fest' && changed.includes('Delegation Name') && updated['Delegation Name']) {
+            patch.categoryOrCommittee = updated['Delegation Name'];
+        }
+        if (rec.eventType === 'MUN' && rec.subType === 'Delegations' && changed.includes('Delegation Tier') &&
+            ['Junior Delegation', 'Senior Delegation'].includes(updated['Delegation Tier'])) {
+            patch.categoryOrCommittee = updated['Delegation Tier'];
+        }
+    }
+
+    const btn = document.getElementById('edit-sub-save');
+    if (btn) { btn.disabled = true; btn.innerText = 'Saving...'; }
+    try {
+        const batch = db.batch();
+        batch.update(db.collection('registrations').doc(rec.id), patch);
+
+        if (isDelegationRecord(rec)) {
+            getDelegationGroup(rec.id).filter(id => id !== rec.id).forEach(id => {
+                const child = allRegistrations.find(r => r.id === id);
+                if (!child) return;
+                // Category removed from the delegation -> delete its entry
+                if (removedCats.includes(child.categoryOrCommittee)) {
+                    batch.delete(db.collection('registrations').doc(id));
+                    return;
+                }
+                // Push shared details down to the remaining category / committee entries
+                const cd = { ...(child.formData || child.details || {}) };
+                let touched = false;
+                changed.forEach(k => {
+                    const ck = DELEGATION_LINK_FIELDS[k];
+                    if (!ck || !(ck in cd)) return;
+                    if (ck === 'Division' && cd[ck] === OPEN_DIVISION) return;   // open categories keep "Open (All Ages)"
+                    cd[ck] = updated[k];
+                    touched = true;
+                });
+                if (rec.eventType === 'Sports Fest' && changed.includes(child.categoryOrCommittee)) {
+                    const parsed = parseTeamPlayers(updated[child.categoryOrCommittee]);
+                    if (parsed) {
+                        if ('Team Name' in cd || parsed.team) cd['Team Name'] = parsed.team || '-';
+                        cd['Players'] = parsed.players.join(', ');
+                        touched = true;
+                    }
+                }
+                if (touched) batch.update(db.collection('registrations').doc(id), { formData: cd, details: cd });
+            });
+
+            // Newly added categories get their own entry, same shape as a normal registration
+            addedCats.forEach(catName => {
+                const c = cats.find(x => x.category === catName);
+                const cf = {
+                    'Team Name': c.teamName || '-',
+                    'Players': c.players.join(', '),
+                    'Delegation': updated['Delegation Name'] || '',
+                    'School': updated['School / Institution Name'] || '',
+                    'Division': divisionForCategory(catName, updated['Division']),
+                    'Head Delegate': updated['Head Delegate Name'] || '',
+                    'Head Delegate Email': updated['Head Delegate Email'] || '',
+                    'Head Delegate Contact': updated['Head Delegate Contact'] || ''
+                };
+                batch.set(db.collection('registrations').doc(), {
+                    eventType: 'Sports Fest',
+                    subType: 'Categories',
+                    registrationType: 'Categories',
+                    categoryOrCommittee: catName,
+                    parentDelegationId: rec.id,
+                    paymentStatus: rec.paymentStatus || 'unpaid',
+                    submittedAt: rec.submittedAt || firebase.firestore.FieldValue.serverTimestamp(),
+                    addedByAdmin: true,
+                    formData: cf,
+                    details: cf
+                });
+            });
+        }
+
+        await batch.commit();
+        closeModal('edit-sub-modal');
+    } catch (err) {
+        alert('Error saving changes: ' + (err.message || err));
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = 'Save Changes'; }
+    }
+}
+
+
+// ---- One-time import of the paper registrations (13 Oct 2026) ----
+// 20 Sports Fest delegations, all Under 15 and paid. Each delegation also gets one entry per category,
+// exactly like an online registration. Tagged with importBatch so it can never be imported twice.
+const PAPER_IMPORT_BATCH = 'paper-2026-10-13';
+const PAPER_IMPORT_DELEGATIONS = [
+ {
+  "name": "BJTC Chungus FC",
+  "hd": "Anas",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Futsal (Boys)",
+    "Chungus FC",
+    [
+     "Anas",
+     "M. Abdullah",
+     "Abdul Hadi",
+     "Ansar Ul Haq",
+     "Hussnain Yasir",
+     "Alyan Junaid Bajwa"
+    ]
+   ],
+   [
+    "Dodgeball (Boys)",
+    "Dodgers VIII",
+    [
+     "Anas",
+     "Ansar Ul Haq",
+     "Affan",
+     "Hussnain Yasir",
+     "Alyan Junaid Bajwa"
+    ]
+   ],
+   [
+    "Badminton - Doubles (Boys)",
+    "Anas & Ayan Imran",
+    [
+     "Anas",
+     "Ayan Imran"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "M. Abdullah"
+    ]
+   ],
+   [
+    "E-Gaming FC (Boys)",
+    "",
+    [
+     "M. Abdullah"
+    ]
+   ],
+   [
+    "Athletics - 50 Meters (Boys)",
+    "",
+    [
+     "Affan"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Rangers FC",
+  "hd": "Shezal Ali Khan",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Futsal (Boys)",
+    "Rangers FC",
+    [
+     "Shezal Ali Khan",
+     "Aalyan Najam",
+     "Mukarram Khan",
+     "Arham Grewal",
+     "Aaraiz Farooq"
+    ]
+   ],
+   [
+    "Cricket (Boys)",
+    "Elite XI",
+    [
+     "Muhammad Abdul Ahad"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Muhammad Abubakar Farhan"
+    ]
+   ],
+   [
+    "Table Tennis - Singles (Boys)",
+    "",
+    [
+     "Mukarram Khan"
+    ]
+   ],
+   [
+    "E-Gaming FC (Boys)",
+    "",
+    [
+     "Arham Grewal"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Prestige FC",
+  "hd": "Murtajiz Mehdi",
+  "email": "murtajizmehdi990@gmail.com",
+  "phone": "03281282249",
+  "entries": [
+   [
+    "Futsal (Boys)",
+    "Prestige FC",
+    [
+     "Murtajiz Mehdi",
+     "Bilal",
+     "Haziq",
+     "Sultan",
+     "Haider",
+     "Abdul Raheem",
+     "Abdullah Waqar"
+    ]
+   ],
+   [
+    "Cricket (Boys)",
+    "Super 8",
+    [
+     "Muhammad Rayyan Chaudhary",
+     "Muhammad Qasim",
+     "Muaz Ahmad Khan",
+     "Saim Ahmad Khan"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Murtajiz Mehdi"
+    ]
+   ],
+   [
+    "E-Gaming Tekken (Boys)",
+    "",
+    [
+     "Muhammad Rayyan Chaudhary"
+    ]
+   ],
+   [
+    "Chess (Boys)",
+    "",
+    [
+     "Muaz Ahmad Khan"
+    ]
+   ],
+   [
+    "Athletics - 50 Meters (Boys)",
+    "",
+    [
+     "Saim Ahmad Khan"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Crusaders",
+  "hd": "M. Arham Usman",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Futsal (Boys)",
+    "Crusaders",
+    [
+     "M. Arham Usman",
+     "Mohid Ahmed Khan",
+     "Hussain Shahid",
+     "Arham Nayyar",
+     "Abdul Rehman",
+     "Haider Abbas",
+     "Shaheer"
+    ]
+   ],
+   [
+    "Badminton - Doubles (Boys)",
+    "Mohid & Hamayoun",
+    [
+     "Mohid Ahmed Khan",
+     "M. Hamayoun Babar"
+    ]
+   ],
+   [
+    "Table Tennis - Doubles (Boys)",
+    "Rayan & Mohid",
+    [
+     "Rayan Bilal",
+     "Mohid Ahmed Khan"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Abdul Hadi"
+    ]
+   ],
+   [
+    "Table Tennis - Singles (Boys)",
+    "",
+    [
+     "Haider Abbas"
+    ]
+   ],
+   [
+    "E-Gaming FC (Boys)",
+    "",
+    [
+     "Haider Abbas"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Archemesis",
+  "hd": "Muhammad Hameez Ali",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Futsal (Boys)",
+    "Archemesis",
+    [
+     "Muhammad Hameez Ali",
+     "Rayyan Ali Khan",
+     "Muhammad Abdullah Zeeshan",
+     "Aaraiz Khan",
+     "Muhammad Sumama",
+     "Huzaifa Faisal",
+     "Abdul Hadi (345876)",
+     "Haziq Rehman Malik"
+    ]
+   ],
+   [
+    "Cricket (Boys)",
+    "No Sympathy",
+    [
+     "Abdul Hadi (345876)"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Salman"
+    ]
+   ],
+   [
+    "Ludo (Boys)",
+    "",
+    [
+     "M. Arshyan"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Knights FC",
+  "hd": "Muhammad Abdullah Adnan",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Futsal (Boys)",
+    "Knights FC",
+    [
+     "Muhammad Abdullah Adnan",
+     "Muhammad Ibrahim Qadir",
+     "Sebastian John",
+     "Zayyan Kashif",
+     "Muhammad Ayaan Kalair",
+     "Muhammad Arham Khan"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Muhammad Abdullah Adnan"
+    ]
+   ],
+   [
+    "E-Gaming FC (Boys)",
+    "",
+    [
+     "Muhammad Arham Khan"
+    ]
+   ],
+   [
+    "Ludo (Boys)",
+    "",
+    [
+     "Asad Ullah"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC FC Tigers",
+  "hd": "Rana Shahzaib Shakeel",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Futsal (Boys)",
+    "FC Tigers",
+    [
+     "Rana Shahzaib Shakeel"
+    ]
+   ],
+   [
+    "Cricket (Boys)",
+    "Cricketers XI",
+    [
+     "Muhammad Huzaifa Saeed",
+     "Muhammad Zeyan Malik",
+     "Sabeeh Ahsan",
+     "Shahabal Khan",
+     "M. Hamid Abbas",
+     "Muhammad Ismail",
+     "Hassaan",
+     "Syed Hateem Mehdi Bukhari",
+     "Muhammad Abdullah",
+     "Ghazi Ahmed"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Shahabal Khan"
+    ]
+   ],
+   [
+    "Chess (Boys)",
+    "",
+    [
+     "Shahabal Khan"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 8",
+  "hd": "Aabyan Haider",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Aabyan Haider"
+    ]
+   ],
+   [
+    "Table Tennis - Singles (Boys)",
+    "",
+    [
+     "Aabyan Haider"
+    ]
+   ],
+   [
+    "Ludo (Boys)",
+    "",
+    [
+     "Aabyan Haider"
+    ]
+   ],
+   [
+    "Chess (Boys)",
+    "",
+    [
+     "Ali Saif"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 9",
+  "hd": "Muhammad Azlaan Mubashir",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Doubles (Boys)",
+    "Azlaan & Zohaan",
+    [
+     "Muhammad Azlaan Mubashir",
+     "Zohaan Farrukh"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Ali Jan"
+    ]
+   ],
+   [
+    "Table Tennis - Singles (Boys)",
+    "",
+    [
+     "Hashir Irfan"
+    ]
+   ],
+   [
+    "E-Gaming FC (Boys)",
+    "",
+    [
+     "Muhammad Azlaan Mubashir"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 10",
+  "hd": "Abdullah Faisal",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Doubles (Boys)",
+    "Racket Creamers",
+    [
+     "Abdullah Faisal",
+     "Muhammad Omer Imran"
+    ]
+   ],
+   [
+    "Table Tennis - Doubles (Boys)",
+    "Racket Creamers",
+    [
+     "Abdullah Faisal",
+     "Muhammad Omer Imran"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Daud Azam"
+    ]
+   ],
+   [
+    "Athletics - 50 Meters (Boys)",
+    "",
+    [
+     "Talha Kamran"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 11",
+  "hd": "Muhammad Arham",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Doubles (Boys)",
+    "Arham & Saraan",
+    [
+     "Muhammad Arham",
+     "Saraan Bashir"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Aadyan Iftikhar"
+    ]
+   ],
+   [
+    "Chess (Boys)",
+    "",
+    [
+     "Muhammad Arham"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 12",
+  "hd": "Shaheer",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Doubles (Boys)",
+    "Shaheer & Haider Abbas",
+    [
+     "Shaheer",
+     "Haider Abbas"
+    ]
+   ],
+   [
+    "Foosball (Boys)",
+    "Ayaan Khan",
+    [
+     "Ayaan Khan",
+     "Ayaan Khan"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Shaarif Abid"
+    ]
+   ],
+   [
+    "E-Gaming FC (Boys)",
+    "",
+    [
+     "Ayaan Khan"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 13",
+  "hd": "Muhammad Nadeem",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Muhammad Nadeem"
+    ]
+   ],
+   [
+    "E-Gaming FC (Boys)",
+    "",
+    [
+     "Muhammad Rayyan Mirran"
+    ]
+   ],
+   [
+    "Ludo (Boys)",
+    "",
+    [
+     "Muhammad Nadeem"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 14",
+  "hd": "Abdul Nafay",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Abdul Nafay"
+    ]
+   ],
+   [
+    "E-Gaming FC (Boys)",
+    "",
+    [
+     "Abdullah Abid"
+    ]
+   ],
+   [
+    "Ludo (Boys)",
+    "",
+    [
+     "Abdul Nafay"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 15",
+  "hd": "Rayyan Aqeel",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Rayyan Aqeel"
+    ]
+   ],
+   [
+    "E-Gaming Tekken (Boys)",
+    "",
+    [
+     "Rayyan Aqeel"
+    ]
+   ],
+   [
+    "Ludo (Boys)",
+    "",
+    [
+     "Ali Gilani"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 16",
+  "hd": "Mashir Zafar",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Mashir Zafar"
+    ]
+   ],
+   [
+    "E-Gaming FC (Boys)",
+    "",
+    [
+     "Mashir Zafar"
+    ]
+   ],
+   [
+    "E-Gaming Tekken (Boys)",
+    "",
+    [
+     "Harram Aqeel"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 17",
+  "hd": "Labeeb Ahmed",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Labeeb Ahmed"
+    ]
+   ],
+   [
+    "E-Gaming FC (Boys)",
+    "",
+    [
+     "Umer Sikandar"
+    ]
+   ],
+   [
+    "Ludo (Boys)",
+    "",
+    [
+     "Umer Sikandar"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 18",
+  "hd": "Zulqarnain",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Zulqarnain"
+    ]
+   ],
+   [
+    "Table Tennis - Singles (Boys)",
+    "",
+    [
+     "M. Muaz Khan"
+    ]
+   ],
+   [
+    "Strongman - Pushups & Squats",
+    "",
+    [
+     "M. Muaz Khan"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 19",
+  "hd": "Abdullah Saqib",
+  "email": "hashimfowad.2010@gmail.com",
+  "phone": "03256921615",
+  "entries": [
+   [
+    "Badminton - Doubles (Boys)",
+    "Abdullah Saqib & Hussain Ali",
+    [
+     "Abdullah Saqib",
+     "Hussain Ali"
+    ]
+   ],
+   [
+    "Padel Tennis (Boys)",
+    "Raed & Musab",
+    [
+     "Raed Shoaib",
+     "Musab bin Umair"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Muhammad Abdullah (158101)"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "BJTC Delegation 20",
+  "hd": "Muhammad Hassan",
+  "email": "muhammadhassan144@gmail.com",
+  "phone": "03029007361",
+  "entries": [
+   [
+    "Badminton - Doubles (Boys)",
+    "Abdullah Khalid & Shaheer Usman",
+    [
+     "Muhammad Abdullah Khalid",
+     "Shaheer Usman Sabri"
+    ]
+   ],
+   [
+    "Badminton - Singles (Boys)",
+    "",
+    [
+     "Qeyyum"
+    ]
+   ],
+   [
+    "E-Gaming Tekken (Boys)",
+    "",
+    [
+     "Muhammad Hassan"
+    ]
+   ]
+  ]
+ }
+];
+
+async function importPaperRegistrations() {
+    if (!isAdmin) return alert('Please log in as admin first.');
+    if (allRegistrations.some(r => r.importBatch === PAPER_IMPORT_BATCH)) {
+        return alert('These paper registrations have already been imported.');
+    }
+    const total = PAPER_IMPORT_DELEGATIONS.length;
+    if (!confirm(`Import ${total} Sports Fest delegations (Under 15, paid) from the paper sheets?`)) return;
+
+    const btn = document.getElementById('paper-import-btn');
+    if (btn) { btn.disabled = true; btn.innerText = 'Importing...'; }
+    try {
+        const stamp = firebase.firestore.FieldValue.serverTimestamp();
+        const school = 'Beaconhouse Johar Town Boys Campus';
+        const division = 'Under 15';
+        const batch = db.batch();
+
+        PAPER_IMPORT_DELEGATIONS.forEach(d => {
+            const info = {
+                'School / Institution Name': school,
+                'Delegation Name': d.name,
+                'Head Delegate Name': d.hd,
+                'Head Delegate Email': d.email,
+                'Head Delegate Contact': d.phone,
+                'Chaperone Name': 'Sir Yousaf',
+                'Chaperone Contact': '03256921615',
+                'Division': division
+            };
+            const categories = d.entries.map(([category, teamName, players]) => ({
+                category, teamName, players, division: divisionForCategory(category, division)
+            }));
+            const fullForm = { ...info };
+            categories.forEach(c => {
+                fullForm[c.category] = (c.teamName ? `Team: ${c.teamName} | ` : '') + 'Players: ' + c.players.join(', ');
+            });
+
+            const delegationRef = db.collection('registrations').doc();
+            batch.set(delegationRef, {
+                eventType: 'Sports Fest', subType: 'Delegations', registrationType: 'Delegations',
+                categoryOrCommittee: d.name, paymentStatus: 'paid', submittedAt: stamp,
+                importBatch: PAPER_IMPORT_BATCH, formData: fullForm, details: fullForm, categories
+            });
+
+            categories.forEach(c => {
+                const cf = {
+                    'Team Name': c.teamName || '-',
+                    'Players': c.players.join(', '),
+                    'Delegation': d.name,
+                    'School': school,
+                    'Division': c.division,
+                    'Head Delegate': d.hd,
+                    'Head Delegate Email': d.email,
+                    'Head Delegate Contact': d.phone
+                };
+                batch.set(db.collection('registrations').doc(), {
+                    eventType: 'Sports Fest', subType: 'Categories', registrationType: 'Categories',
+                    categoryOrCommittee: c.category, parentDelegationId: delegationRef.id,
+                    paymentStatus: 'paid', submittedAt: stamp, importBatch: PAPER_IMPORT_BATCH,
+                    formData: cf, details: cf
+                });
+            });
+        });
+
+        await batch.commit();
+        alert(`Done: ${total} delegations imported.`);
+    } catch (err) {
+        alert('Import failed, nothing was saved: ' + (err.message || err));
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = 'Import Paper Registrations (13 Oct)'; }
+    }
+}
+
 async function deleteRegistration(docId) {
     const rec = allRegistrations.find(r => r.id === docId);
     const ids = (rec && isDelegationRecord(rec)) ? getDelegationGroup(docId) : [docId];
@@ -2865,30 +4107,59 @@ function isValidRegistration(r) {
     return /^[^\s@]+@gmail\.com$/i.test(email);
 }
 
-function getDuplicateDelegationIds() {
-    // Multiple entries = same delegation name submitted more than once for the same event.
-    // "TAC Team A" and "TAC Team B" are different names, so they are NOT duplicates.
+// Multiple entries = same delegation name submitted more than once for the same event.
+// "TAC Team A" and "TAC Team B" are different names, so they are NOT duplicates.
+// Returns a Map: delegation id -> array of all delegation ids in its duplicate group.
+function getDuplicateGroups() {
     const byName = {};
     allRegistrations.forEach(r => {
         if (!isDelegationRecord(r)) return;
         const name = normKey(regDelegationName(r));
         if (name) (byName[r.eventType + '|' + name] ||= []).push(r.id);
     });
-    const dup = new Set();
-    Object.values(byName).forEach(list => { if (list.length > 1) list.forEach(id => dup.add(id)); });
-    return dup;
+    const groups = new Map();
+    Object.values(byName).forEach(list => { if (list.length > 1) list.forEach(id => groups.set(id, list)); });
+    return groups;
+}
+function getDuplicateDelegationIds() { return new Set(getDuplicateGroups().keys()); }
+
+// Compares a row against the other entries in its duplicate group.
+// Returns null when the row is not part of a duplicate group, otherwise
+// { diffKeys: Set of fields whose value differs, missingKeys: fields other entries have but this one lacks, peers }
+function getDuplicateComparison(r, dupGroups) {
+    const delegationId = isDelegationRecord(r) ? r.id : r.parentDelegationId;
+    const group = delegationId && dupGroups.get(delegationId);
+    if (!group) return null;
+
+    const peers = isDelegationRecord(r)
+        ? allRegistrations.filter(x => x.id !== r.id && group.includes(x.id))
+        : allRegistrations.filter(x => x.id !== r.id && !isDelegationRecord(x) &&
+            x.categoryOrCommittee === r.categoryOrCommittee && group.includes(x.parentDelegationId));
+
+    const mine = regData(r);
+    const diffKeys = new Set(), missing = new Set();
+    peers.forEach(p => {
+        const theirs = regData(p);
+        Object.keys(mine).forEach(k => { if (normKey(mine[k]) !== normKey(theirs[k])) diffKeys.add(k); });
+        Object.keys(theirs).forEach(k => { if (!(k in mine)) missing.add(k); });
+    });
+    return { diffKeys, missingKeys: [...missing], peers };
 }
 
-function getRowStatus(r, dupIds) {
+function getRowStatus(r, dupGroups) {
     if (!isValidRegistration(r)) return 'invalid';
-    const delegationId = isDelegationRecord(r) ? r.id : r.parentDelegationId;
-    if (delegationId && dupIds.has(delegationId)) return 'dup';
+    const cmp = getDuplicateComparison(r, dupGroups);
+    if (cmp) {
+        const identical = cmp.peers.length > 0 && !cmp.diffKeys.size && !cmp.missingKeys.length;
+        return identical ? 'dup' : 'dupdiff';
+    }
     return (r.paymentStatus === 'paid') ? 'paid' : 'unpaid';
 }
 
 const ROW_FLAGS = {
     invalid: { text: 'INVALID EMAIL', color: '#ef4444' },
-    dup: { text: 'MULTIPLE ENTRIES', color: '#facc15' },
+    dup: { text: 'MULTIPLE ENTRIES · IDENTICAL', color: '#facc15' },
+    dupdiff: { text: 'MULTIPLE ENTRIES · DIFFERENCES HIGHLIGHTED', color: '#facc15' },
     paid: null,
     unpaid: null
 };
@@ -2953,7 +4224,7 @@ function renderRegistrationsTable(eventType, subType) {
         });
     }
 
-    const dupIds = getDuplicateDelegationIds();
+    const dupGroups = getDuplicateGroups();
 
     filtered.sort((a, b) => {
         const catA = (a.categoryOrCommittee || 'General').toLowerCase();
@@ -2971,12 +4242,20 @@ function renderRegistrationsTable(eventType, subType) {
     }
 
     filtered.forEach(data => {
+        // Multiple entries: highlight the lines that differ from the other entries of the same delegation
+        const dupCmp = getDuplicateComparison(data, dupGroups);
+        const peerOnly = dupCmp && dupCmp.peers.length === 0;
         let fieldText = '';
         if (data.formData) {
             for (const [key, val] of Object.entries(data.formData)) {
-                fieldText += `<strong>${escapeHtml(key)}:</strong> ${escapeHtml(val)}<br>`;
+                const line = `<strong>${escapeHtml(key)}:</strong> ${escapeHtml(val)}`;
+                fieldText += (dupCmp && dupCmp.diffKeys.has(key)) ? `<span class="diff-line">${line}</span><br>` : `${line}<br>`;
             }
         }
+        if (dupCmp) dupCmp.missingKeys.forEach(key => {
+            fieldText += `<span class="diff-line"><strong>${escapeHtml(key)}:</strong> <em>not in this entry</em></span><br>`;
+        });
+        if (peerOnly) fieldText = `<span class="diff-line"><em>Only one of the multiple entries has this ${data.eventType === 'MUN' ? 'committee' : 'category'}</em></span><br>` + fieldText;
         const dateStr = data.submittedAt && data.submittedAt.toDate ? data.submittedAt.toDate().toLocaleString() : 'N/A';
         const categoryDisplay = data.categoryOrCommittee || 'General';
 
@@ -3010,7 +4289,7 @@ function renderRegistrationsTable(eventType, subType) {
             </button>
         `;
 
-        const rowStatus = getRowStatus(data, dupIds);
+        const rowStatus = getRowStatus(data, dupGroups);
         const flag = ROW_FLAGS[rowStatus];
         const flagHtml = flag ? `<br><span class="row-flag" style="background:${flag.color}33; color:${flag.color}; border:1px solid ${flag.color};">${flag.text}</span>` : '';
         const allot = (data.allotment || '').trim();
@@ -3034,7 +4313,10 @@ function renderRegistrationsTable(eventType, subType) {
                     ${toggleBtn}
                 </td>
                 ${allotCell}
-                <td><button class="btn btn-danger" onclick="deleteRegistration('${data.id}')">Delete</button></td>
+                <td>
+                    <button class="btn" style="margin-bottom: 6px;" onclick="openEditSubmission('${data.id}')">Edit</button>
+                    <button class="btn btn-danger" onclick="deleteRegistration('${data.id}')">Delete</button>
+                </td>
             </tr>`;
     });
 }
@@ -3974,9 +5256,9 @@ function openCodeOfConduct(type) {
 
         rules: `
 
-        <p><strong>Divisions:</strong> Under 15 & Under 17 & Under 19 (Separate)</p>
+        <p><strong>Divisions:</strong> Boys: Under 15, Under 17 & Under 19 &bull; Girls: Under 15 & Under 19 only</p>
 
-        <p><strong>Eligibility:</strong> Boys & Girls</p>
+        <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
 
         <ul style="margin-top: 8px; padding-left: 20px;">
 
@@ -4010,7 +5292,7 @@ function openCodeOfConduct(type) {
 
             <p><strong>Divisions:</strong> Under 15 & Under 17 & Under 19 (Separate)</p>
 
-            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
 
             <ul style="margin-top: 8px; padding-left: 20px;">
 
@@ -4036,7 +5318,7 @@ function openCodeOfConduct(type) {
         img: "https://drive.google.com/file/d/1Q7dFEmC8NyGPtXQpHhh2B4cF_YqEeBAw/view?usp=drive_link",
         rules: `
             <p><strong>Divisions:</strong> Under 15 & Under 17 & Under 19 (Separate)</p>
-            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li>Under 15 & Under 17 & Under 19 will be separate.</li>
                 <li>Doubles format: 2 players per team.</li>
@@ -4062,6 +5344,7 @@ function openCodeOfConduct(type) {
 
                     rules: `
 
+                    <p><strong>Divisions:</strong> Under 15 & Under 19 only (no Under 17)</p>
                     <p><strong>Eligibility:</strong> Boys Only</p>
 
                     <ul style="margin-top: 8px; padding-left: 20px;">
@@ -4088,7 +5371,7 @@ function openCodeOfConduct(type) {
         img: "https://drive.google.com/file/d/1LnNlmnlLOYOGgTUdfPzOF-K_7zAwVv6M/view?usp=drive_link",
         rules: `
             <p><strong>Divisions:</strong> Under 15 & Under 17 & Under 19 (Separate)</p>
-            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li><strong>Singles:</strong> 1 Player per entry.</li>
                 <li><strong>Doubles:</strong> 2 Players per entry.</li>
@@ -4103,7 +5386,7 @@ function openCodeOfConduct(type) {
         img: "https://drive.google.com/file/d/1vL4ue5YERlS-IFPrJWAM8igBZUWanho2/view?usp=drive_link",
         rules: `
             <p><strong>Divisions:</strong> Under 15 & Under 17 & Under 19 (Separate)</p>
-            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li><strong>Singles:</strong> 1 Player per entry.</li>
                 <li><strong>Doubles:</strong> 2 Players per entry.</li>
@@ -4118,7 +5401,7 @@ function openCodeOfConduct(type) {
         img: "https://drive.google.com/file/d/1VIg-eGL4V9vViXvkCVYaxhmieMa2OpBQ/view?usp=drive_link",
         rules: `
             <p><strong>Divisions:</strong> Open For All Ages</p>
-            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li><strong>50 Meters Sprint:</strong> In 50 meter race there will be 2 HEATS. 1st heat will be for middle school (grade 6 to 8), and 2nd heat will be for highschool (grade 9 to fsc 2nd year/A2)</li>
                 <li><strong>Vertical Jump:</strong> Standing vertical jump test.</li>
@@ -4136,7 +5419,7 @@ function openCodeOfConduct(type) {
 
         <p><strong>Divisions:</strong> Under 15 & Under 17 & Under 19 (Separate)</p>
 
-        <p><strong>Eligibility:</strong> Boys & Girls</p>
+        <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
 
         <ul style="margin-top: 8px; padding-left: 20px;">
 
@@ -4169,7 +5452,7 @@ function openCodeOfConduct(type) {
                                                
        <p><strong>Divisions:</strong> Open For All Ages</p>
 
-        <p><strong>Eligibility:</strong> Boys & Girls</p>
+        <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
         <ul style="margin-top: 8px; padding-left: 20px;">
             <li>8 A-side.</li>
             <li>Best of three rounds format.</li>
@@ -4184,7 +5467,7 @@ function openCodeOfConduct(type) {
         img: "https://drive.google.com/file/d/1_96wZ0Wan5HChrhnEBzH27EErxZqbkJJ/view?usp=drive_link",
         rules: `
             <p><strong>Divisions:</strong> Under 15 & Under 17 & Under 19 (Separate)</p>
-            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li>Single-person individual category.</li>
                 <li>push-ups & squats:</li>
@@ -4208,7 +5491,8 @@ function openCodeOfConduct(type) {
         maxPlayers: 1,
         img: "https://drive.google.com/file/d/1LQ_mVR8krwBLd3zxyi39UO_jTl45TmDV/view?usp=drive_link",
         rules: `
-            <p><strong>Eligibility:</strong> Boys & Girls (Separate categories)</p>
+            <p><strong>Divisions:</strong> Open For All Ages</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li>Single-person individual category.</li>
                 <li>Game duration: 30 minutes total (Timed clock).</li>
@@ -4221,7 +5505,8 @@ function openCodeOfConduct(type) {
         maxPlayers: 1,
         img: "https://drive.google.com/file/d/1wCoIsnB8xb39ZMjJXgLgeh-jNH1Ep5CX/view?usp=drive_link",
         rules: `
-            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <p><strong>Divisions:</strong> Open For All Ages</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li>Single-person individual category.</li>
                 <li>FC 27 (FIFA):</li>
@@ -4241,7 +5526,7 @@ function openCodeOfConduct(type) {
         name: "Math Mystic",
         img: "https://drive.google.com/file/d/1km7CT2mLxST4FFrs7j30TH16JOc1_K_N/view?usp=drive_link",
         rules: `
-            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li>Solve complex mathematical logic puzzles under strict time limits.</li>
                 <li>Calculators, mobile phones, and external aids are strictly prohibited.</li>
@@ -4251,7 +5536,7 @@ function openCodeOfConduct(type) {
         name: "Foosball",
         img: "https://drive.google.com/file/d/1IM3zGBfTKhBb6yRlGw_ZndzTHL_MOwC0/view?usp=drive_link",
         rules: `
-            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li>1. GENERAL RULES</li>
                 <li>Game Format: Matches are played to 10 points (first to reach 10 wins).</li>
@@ -4273,7 +5558,8 @@ function openCodeOfConduct(type) {
         name: "Ludo",
         img: "https://drive.google.com/file/d/1hYdnclom7dhYvkcDRWmJ1Td80tKb11A6/view?usp=drive_link",
         rules: `
-            <p><strong>Eligibility:</strong> Boys & Girls</p>
+            <p><strong>Divisions:</strong> Open For All Ages</p>
+            <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li>Roll a 6 to release token.</li>
                 <li>Landing on an opponent's token grants an extra turn.</li>
