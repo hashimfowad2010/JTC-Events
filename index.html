@@ -1375,6 +1375,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <button id="paper-import-btn" class="btn" style="width: auto;" onclick="importPaperRegistrations('paper-2026-10-13', this)">Import Paper Registrations (13 Oct)</button>
         <button id="paper-import-btn-b" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('paper-2026-10-13b', this)">Import Arm Wrestling + Shadow Wolves</button>
         <button id="legacy-cat-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="migrateLegacySportsCategories(this)">Move Old Categories to Boys / Girls</button>
+        <button id="jtcg-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('jtcg-2026-10-14', this)">Import JTCG Girls (38 delegations)</button>
     </div>
 
     <!-- Unique delegates counter -->
@@ -4025,9 +4026,1038 @@ const PAPER_IMPORT_DELEGATIONS_B = [
     }
 ];
 
+// JTCG (girls campus) sheet, 14 Oct: 38 delegations. Ludo is a singles category (one player per delegation)
+// and 38 girls chose Ludo, so 38 is the fewest delegations possible. Team sports mix grades by playing up only.
+const JTCG_IMPORT_DELEGATIONS = [
+ {
+  "name": "JTCG Team 1",
+  "hd": "Dua Ahmad",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Athletics - 50 Meters (Girls)",
+    "",
+    [
+     "Dua Ahmad"
+    ]
+   ],
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Dua Ahmad"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Rubaiqa Saqib"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 2",
+  "hd": "Khamay Hussain",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Khamay Hussain"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Khamay Hussain"
+    ]
+   ],
+   [
+    "Math Mystic (Girls)",
+    "",
+    [
+     "Khamay Hussain"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 3",
+  "hd": "Marwa Hassnain",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Marwa Hassnain"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Marwa Hassnain"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 4",
+  "hd": "Maryam Ibba",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Anaya Haris"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Maryam Ibba"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 5",
+  "hd": "Musfirah Fatima",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Athletics - 50 Meters (Girls)",
+    "",
+    [
+     "Musfirah Fatima"
+    ]
+   ],
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Musfirah Fatima"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Arooba"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 6",
+  "hd": "Haniya Sheraz",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Hajra Gull"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Haniya Sheraz"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 7",
+  "hd": "Kiswa Jahanzaib",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Kiswa Jahanzaib"
+    ]
+   ],
+   [
+    "E-Gaming FC (Girls)",
+    "",
+    [
+     "Kiswa Jahanzaib"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Taniyat Fatima"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 8",
+  "hd": "Aibah Jamal",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Inaya Wasiif"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Aibah Jamal"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 9",
+  "hd": "Noor Bano",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Athletics - 50 Meters (Girls)",
+    "",
+    [
+     "Noor Bano"
+    ]
+   ],
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Noor Bano"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Eman Sajid"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 10",
+  "hd": "Areehsa Rai",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Arfa Amir"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Areehsa Rai"
+    ]
+   ],
+   [
+    "Math Mystic (Girls)",
+    "",
+    [
+     "Sakina Ali"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 11",
+  "hd": "Harmain Fatima",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Athletics - 50 Meters (Girls)",
+    "",
+    [
+     "Atika Zainab"
+    ]
+   ],
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Harmain Fatima"
+    ]
+   ],
+   [
+    "Futsal (Girls)",
+    "JTCG Futsal B",
+    [
+     "Mahroosh Fatima",
+     "Zara Ali Syed",
+     "Ayesha",
+     "Mahrosh Naqvi",
+     "Atika Zainab",
+     "Mahreen Jahanzaib",
+     "Harmain Fatima"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Harmain Fatima"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 12",
+  "hd": "Javeria Omer",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Eshaal Awais"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Javeria Omer"
+    ]
+   ],
+   [
+    "Math Mystic (Girls)",
+    "",
+    [
+     "Javeria Omer"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 13",
+  "hd": "Safa Butt",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Safa Butt"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Safa Butt"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 14",
+  "hd": "Fatima Faiza",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Affaf Fatima"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Arfa Javed"
+    ]
+   ],
+   [
+    "Table Tennis - Singles (Girls)",
+    "",
+    [
+     "Fatima Faiza"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 15",
+  "hd": "Ayesha",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Ayesha"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Tanisha"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 16",
+  "hd": "Hiba Bilal",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Mahrosh Naqvi"
+    ]
+   ],
+   [
+    "Chess (Girls)",
+    "",
+    [
+     "Fatima Asif"
+    ]
+   ],
+   [
+    "Dodgeball (Girls)",
+    "JTCG Dodgeball",
+    [
+     "Arfa Fatima",
+     "Shaiza Usman",
+     "Emaan Asim",
+     "Hiba Bilal",
+     "Mahroosh Fatima",
+     "Mahrosh Naqvi",
+     "Fatima Asif",
+     "Esha Hussan"
+    ]
+   ],
+   [
+    "Futsal (Girls)",
+    "JTCG Futsal A",
+    [
+     "Arfa Fatima",
+     "Hadiya Akhtar",
+     "Maryam Rizwan",
+     "Haniya Sheraz",
+     "Marwa Hassnain",
+     "Shaiza Usman",
+     "Emaan Asim",
+     "Hiba Bilal"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Hiba Bilal"
+    ]
+   ],
+   [
+    "Math Mystic (Girls)",
+    "",
+    [
+     "Hadiya Akhtar"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 17",
+  "hd": "Esha Hussan",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Esha Hussan"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Effaf Asif"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 18",
+  "hd": "Zeesat Arif",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Nashra Atif"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Zeesat Arif"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 19",
+  "hd": "Aiza Usman",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Minsa Awais"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Aiza Usman"
+    ]
+   ],
+   [
+    "Table Tennis - Singles (Girls)",
+    "",
+    [
+     "Nabeeha Shahid"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 20",
+  "hd": "Syeda Hadiya",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Nimsa Abbas"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Syeda Hadiya"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 21",
+  "hd": "Aiza Waqas",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Athletics - 50 Meters (Girls)",
+    "",
+    [
+     "Aiza Waqas"
+    ]
+   ],
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Hamna Talha"
+    ]
+   ],
+   [
+    "E-Gaming FC (Girls)",
+    "",
+    [
+     "Aiza Waqas"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Aiza Waqas"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 22",
+  "hd": "Daneen",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Daneen"
+    ]
+   ],
+   [
+    "E-Gaming FC (Girls)",
+    "",
+    [
+     "Daneen"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Shahzeen Quresi"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 23",
+  "hd": "Hira Shezad",
+  "division": "Under 15",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Hira Shezad"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Fajar Sarfraz"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 24",
+  "hd": "Rubab",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Rubab"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Rubab"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 25",
+  "hd": "Amsal Chaudry",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Umme Aiman"
+    ]
+   ],
+   [
+    "Foosball (Girls)",
+    "Aleena Alvi & Amsal Chaudry",
+    [
+     "Aleena Alvi",
+     "Amsal Chaudry"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Amsal Chaudry"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 26",
+  "hd": "Ayat Fatima",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Ayat Fatima"
+    ]
+   ],
+   [
+    "Foosball (Girls)",
+    "Aima Khuraam & Zainab Ahmer",
+    [
+     "Aima Khuraam",
+     "Zainab Ahmer"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Eshal Chaudry"
+    ]
+   ],
+   [
+    "Padel Tennis (Girls)",
+    "Ayat Fatima & Areesha Khan",
+    [
+     "Ayat Fatima",
+     "Areesha Khan"
+    ]
+   ],
+   [
+    "Tug Of War (Girls)",
+    "JTCG Tug Of War B",
+    [
+     "Minahil Zahra",
+     "Ayat Fatima",
+     "Aima Khuraam",
+     "Areesha Khan",
+     "Eshal Chaudry",
+     "Aiza Usman",
+     "Arfa Fatima",
+     "Amal Moeed"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 27",
+  "hd": "Ghania Mehmood",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Foosball (Girls)",
+    "Ghania Mehmood & Minahil Zahra",
+    [
+     "Ghania Mehmood",
+     "Minahil Zahra"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Ghania Mehmood"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 28",
+  "hd": "Meerab Faisal",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Meerab Faisal"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Meerab Faisal"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 29",
+  "hd": "Marfia Naeem",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Hooria Maqsood"
+    ]
+   ],
+   [
+    "Table Tennis - Singles (Girls)",
+    "",
+    [
+     "Marfia Naeem"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 30",
+  "hd": "Kashaf Rasool",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Kashaf Rasool"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Kashaf Rasool"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 31",
+  "hd": "Mariyam Ch",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Mariyam Ch"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Mariyam Ch"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 32",
+  "hd": "Zainab Ahmer",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Zainab Ahmer"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Faryal Farid"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 33",
+  "hd": "Halah Khan",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Basketball (Girls)",
+    "JTCG Basketball",
+    [
+     "Emaan Bilal",
+     "Darmana",
+     "Emaan Saif",
+     "Halah Khan",
+     "Amal Moeed",
+     "Atika Zainab"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Halah Khan"
+    ]
+   ],
+   [
+    "Tug Of War (Girls)",
+    "JTCG Tug Of War A",
+    [
+     "Ayesha Amir",
+     "Alina Haeider",
+     "Hania Javed",
+     "Amna Ihtasham",
+     "Zummer Amina",
+     "Aiman Waqas",
+     "Fiza Salman",
+     "Halah Khan"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 34",
+  "hd": "Falaq Fasial",
+  "division": "Under 17",
+  "entries": [
+   [
+    "E-Gaming FC (Girls)",
+    "",
+    [
+     "Falaq Fasial"
+    ]
+   ],
+   [
+    "Foosball (Girls)",
+    "Fiza Ali & Falaq Fasial",
+    [
+     "Fiza Ali",
+     "Falaq Fasial"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Falaq Fasial"
+    ]
+   ],
+   [
+    "Table Tennis - Singles (Girls)",
+    "",
+    [
+     "Fiza Ali"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 35",
+  "hd": "Fiza Salman",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Rumaysa Hasan"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Fiza Salman"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 36",
+  "hd": "Fatima Shamoon",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Fatima Shamoon"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Hira Usman"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 37",
+  "hd": "Aiman Waqas",
+  "division": "Under 17",
+  "entries": [
+   [
+    "Badminton - Singles (Girls)",
+    "",
+    [
+     "Maryam Ahmed"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Aiman Waqas"
+    ]
+   ]
+  ]
+ },
+ {
+  "name": "JTCG Team 38",
+  "hd": "Minahil Amir",
+  "division": "Under 19",
+  "entries": [
+   [
+    "Futsal (Girls)",
+    "JTCG Futsal Seniors",
+    [
+     "Amsal Chaudry",
+     "Ghania Mehmood",
+     "Zoya Asif",
+     "Emaan Zahra",
+     "Hareem Fatima",
+     "Zainab Ahmer",
+     "Minahil Amir"
+    ]
+   ],
+   [
+    "Ludo (Girls)",
+    "",
+    [
+     "Minahil Amir"
+    ]
+   ]
+  ]
+ }
+].map(d => ({ ...d, email: HD_DEFAULT_EMAIL, phone: HD_DEFAULT_PHONE }));
+
 const PAPER_IMPORTS = {
     [PAPER_IMPORT_BATCH]: { label: 'Import Paper Registrations (13 Oct)', chaperone: 'Sir Yousaf', chaperoneContact: '03256921615', delegations: PAPER_IMPORT_DELEGATIONS },
-    'paper-2026-10-13b': { label: 'Import Arm Wrestling + Shadow Wolves', chaperone: '', chaperoneContact: '', delegations: PAPER_IMPORT_DELEGATIONS_B }
+    'paper-2026-10-13b': { label: 'Import Arm Wrestling + Shadow Wolves', chaperone: '', chaperoneContact: '', delegations: PAPER_IMPORT_DELEGATIONS_B },
+    'jtcg-2026-10-14': { label: 'Import JTCG Girls (38 delegations)', chaperone: '', chaperoneContact: '', school: 'Beaconhouse Johar Town Girls Campus', askPaid: true, delegations: JTCG_IMPORT_DELEGATIONS }
 };
 
 async function importPaperRegistrations(batchKey, btn) {
@@ -4040,16 +5070,19 @@ async function importPaperRegistrations(batchKey, btn) {
     }
     const PAPER_IMPORT_DELEGATIONS = cfg.delegations;
     const total = PAPER_IMPORT_DELEGATIONS.length;
-    if (!confirm(`Import ${total} Sports Fest delegations (Under 15, paid)?`)) return;
+    if (!confirm(`Import ${total} Sports Fest delegations from ${cfg.school || 'Beaconhouse Johar Town Boys Campus'}?`)) return;
+    const payment = cfg.askPaid
+        ? (confirm('Mark these registrations as PAID?\n\nOK = Paid\nCancel = Unpaid') ? 'paid' : 'unpaid')
+        : 'paid';
 
     if (btn) { btn.disabled = true; btn.innerText = 'Importing...'; }
     try {
         const stamp = firebase.firestore.FieldValue.serverTimestamp();
-        const school = 'Beaconhouse Johar Town Boys Campus';
-        const division = 'Under 15';
+        const school = cfg.school || 'Beaconhouse Johar Town Boys Campus';
         const batch = db.batch();
 
         PAPER_IMPORT_DELEGATIONS.forEach(d => {
+            const division = d.division || 'Under 15';
             const info = {
                 'School / Institution Name': school,
                 'Delegation Name': d.name,
@@ -4071,7 +5104,7 @@ async function importPaperRegistrations(batchKey, btn) {
             const delegationRef = db.collection('registrations').doc();
             batch.set(delegationRef, {
                 eventType: 'Sports Fest', subType: 'Delegations', registrationType: 'Delegations',
-                categoryOrCommittee: d.name, paymentStatus: 'paid', submittedAt: stamp,
+                categoryOrCommittee: d.name, paymentStatus: payment, submittedAt: stamp,
                 importBatch: batchKey, formData: fullForm, details: fullForm, categories
             });
 
@@ -4089,7 +5122,7 @@ async function importPaperRegistrations(batchKey, btn) {
                 batch.set(db.collection('registrations').doc(), {
                     eventType: 'Sports Fest', subType: 'Categories', registrationType: 'Categories',
                     categoryOrCommittee: c.category, parentDelegationId: delegationRef.id,
-                    paymentStatus: 'paid', submittedAt: stamp, importBatch: batchKey,
+                    paymentStatus: payment, submittedAt: stamp, importBatch: batchKey,
                     formData: cf, details: cf
                 });
             });
