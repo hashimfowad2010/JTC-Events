@@ -1374,6 +1374,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button id="paper-import-btn" class="btn" style="width: auto;" onclick="importPaperRegistrations('paper-2026-10-13', this)">Import Paper Registrations (13 Oct)</button>
         <button id="paper-import-btn-b" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('paper-2026-10-13b', this)">Import Arm Wrestling + Shadow Wolves</button>
+        <button id="legacy-cat-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="migrateLegacySportsCategories(this)">Move Old Categories to Boys / Girls</button>
     </div>
 
     <!-- Unique delegates counter -->
@@ -1447,7 +1448,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <!-- Level 3: Sorted Submissions Table -->
     <div id="sub-table-view" class="hidden" style="margin-top: 20px;">
         <button class="btn btn-secondary" style="width: auto; margin-bottom: 15px;" onclick="backFromTableView()">&larr; Back to Selection</button>
-        <button class="btn" style="width: auto; background: linear-gradient(135deg, #10b981, #047857);" onclick="exportSubmissionsToCSV()">📥 Export to CSV</button>
+        <button class="btn" style="width: auto; background: linear-gradient(135deg, #10b981, #047857);" onclick="exportSubmissionsToPDF(this)">📄 Export PDF</button>
         <div id="sub-search-row" class="sub-search">
             <input type="text" id="sub-search-input" placeholder="Search delegations (delegation, school, delegate, email, phone...)" autocomplete="off"
                    oninput="applySubmissionSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();applySubmissionSearch();}">
@@ -4103,6 +4104,109 @@ async function importPaperRegistrations(batchKey, btn) {
     }
 }
 
+// ---- Move old Sports Fest category entries (from before the Boys / Girls split) into the new categories ----
+// Organisers' rule: every TAC delegation is Girls except TAC A (Boys); every other delegation is Boys.
+function legacyGenderFor(delegationName, school) {
+    const n = normKey(delegationName), s = normKey(school);
+    if (!/\btac\b/.test(n) && !/\btac\b/.test(s)) return 'Boys';
+    const tacA = /\btac\b[^a-z0-9]*(team[^a-z0-9]*)?a\b/;
+    return (tacA.test(n) || tacA.test(`${s} ${n}`)) ? 'Boys' : 'Girls';
+}
+
+// Old category name -> new Boys / Girls category name ('' = leave as is, null = no match found)
+const STRONG_EVENTS = ['Pushups & Squats', 'Arm Wrestling'];
+function mapLegacyCategory(oldName, gender) {
+    const cfg = sportsCategoryConfigs[oldName];
+    if (cfg) {
+        // Current names are left alone, except old Strongman entries of a girls delegation
+        return (gender === 'Girls' && /^strongman\b/i.test(oldName)) ? oldName.replace(/^Strongman/i, 'Strong Woman') : '';
+    }
+    const base = String(oldName || '').replace(/\s*\((boys|girls)\)\s*$/i, '').trim();
+    const strong = /^strong\s*(man|woman)(\s*\/\s*woman)?\s*-\s*(.+)$/i.exec(base);
+    if (strong) {
+        const ev = STRONG_EVENTS.find(e => normKey(e) === normKey(strong[3]));
+        return ev ? `${gender === 'Girls' ? 'Strong Woman' : 'Strongman'} - ${ev}` : null;
+    }
+    const want = normKey(`${base} (${gender})`);
+    return Object.keys(sportsCategoryConfigs).find(k => normKey(k) === want) || null;
+}
+
+async function migrateLegacySportsCategories(btn) {
+    if (!isAdmin) return alert('Please log in as admin first.');
+    const sf = allRegistrations.filter(r => r.eventType === 'Sports Fest');
+    const delegations = sf.filter(isDelegationRecord);
+    const genderOf = new Map(delegations.map(d => [d.id, legacyGenderFor(regDelegationName(d), regSchool(d))]));
+
+    const updates = [], unmapped = new Set(), summary = new Map();
+    const note = (name, gender, from, to) => {
+        const key = `${name || 'Unnamed delegation'} → ${gender}`;
+        if (!summary.has(key)) summary.set(key, new Set());
+        summary.get(key).add(`${from} → ${to}`);
+    };
+
+    // A) Delegation records: rename the category lines in the form + the categories list
+    delegations.forEach(d => {
+        const gender = genderOf.get(d.id), data = regData(d), renames = {};
+        const check = k => {
+            const to = mapLegacyCategory(k, gender);
+            if (to === null) unmapped.add(k);
+            else if (to) renames[k] = to;
+        };
+        Object.keys(data).forEach(k => { if (isCategoryField(d, k, data[k])) check(k); });
+        (d.categories || []).forEach(c => { if (!(c.category in renames)) check(c.category); });
+        if (!Object.keys(renames).length) return;
+
+        const newData = {};
+        Object.entries(data).forEach(([k, v]) => {
+            const nk = renames[k] || k;
+            newData[nk] = (nk in newData) ? `${newData[nk]} || ${v}` : v;
+        });
+        const patch = { formData: newData, details: newData };
+        if (Array.isArray(d.categories)) {
+            patch.categories = d.categories.map(c => renames[c.category]
+                ? { ...c, category: renames[c.category], division: divisionForCategory(renames[c.category], data['Division']) }
+                : c);
+        }
+        updates.push({ id: d.id, patch });
+        Object.entries(renames).forEach(([f, t]) => note(regDelegationName(d), gender, f, t));
+    });
+
+    // B) Category entries (what the Submissions > Categories tiles list)
+    sf.filter(r => !isDelegationRecord(r)).forEach(r => {
+        const parent = r.parentDelegationId && delegations.find(d => d.id === r.parentDelegationId);
+        const gender = parent ? genderOf.get(parent.id) : legacyGenderFor(regDelegationName(r), regSchool(r));
+        const from = r.categoryOrCommittee, to = mapLegacyCategory(from, gender);
+        if (to === null) { unmapped.add(from); return; }
+        if (!to) return;
+        const cd = { ...regData(r) };
+        if (sportsCategoryConfigs[to].open && 'Division' in cd) cd['Division'] = OPEN_DIVISION;
+        updates.push({ id: r.id, patch: { categoryOrCommittee: to, formData: cd, details: cd, migratedFrom: from } });
+        note(parent ? regDelegationName(parent) : regDelegationName(r), gender, from, to);
+    });
+
+    const unmappedNote = unmapped.size
+        ? `\n\nCould not match these old names (left unchanged):\n${[...unmapped].join('\n')}` : '';
+    if (!updates.length) return alert('No old categories left to move.' + unmappedNote);
+
+    const lines = [...summary.entries()].map(([k, set]) => `${k}: ${[...set].join(', ')}`);
+    const shown = lines.length > 30 ? [...lines.slice(0, 30), `...and ${lines.length - 30} more`] : lines;
+    if (!confirm(`Move ${updates.length} record(s) into the Boys / Girls categories?\n\n${shown.join('\n')}${unmappedNote}`)) return;
+
+    if (btn) { btn.disabled = true; btn.innerText = 'Moving...'; }
+    try {
+        for (let i = 0; i < updates.length; i += 400) {
+            const batch = db.batch();
+            updates.slice(i, i + 400).forEach(u => batch.update(db.collection('registrations').doc(u.id), u.patch));
+            await batch.commit();
+        }
+        alert(`Done: ${updates.length} record(s) moved.` + unmappedNote);
+    } catch (err) {
+        alert('Moving failed: ' + (err.message || err));
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = 'Move Old Categories to Boys / Girls'; }
+    }
+}
+
 async function deleteRegistration(docId) {
     const rec = allRegistrations.find(r => r.id === docId);
     const ids = (rec && isDelegationRecord(rec)) ? getDelegationGroup(docId) : [docId];
@@ -4347,6 +4451,224 @@ function renderRegistrationsTable(eventType, subType) {
 
 
     
+    // ---- PDF export of the list being viewed: valid, single entries only, marked paid / unpaid ----
+    let pdfLibPromise = null;
+    function loadPdfLibs() {
+        if (window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API.autoTable) return Promise.resolve();
+        if (!pdfLibPromise) {
+            const load = src => new Promise((res, rej) => {
+                const s = document.createElement('script');
+                s.src = src; s.onload = res;
+                s.onerror = () => rej(new Error('Could not load the PDF library. Check your internet connection.'));
+                document.head.appendChild(s);
+            });
+            pdfLibPromise = load('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js')
+                .then(() => load('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js'))
+                .catch(err => { pdfLibPromise = null; throw err; });
+        }
+        return pdfLibPromise;
+    }
+
+    // Same filter the table uses (event, type, category and the search box)
+    function getSubmissionsInView() {
+        const q = ((document.getElementById('sub-search-input') || {}).value || '').trim().toLowerCase();
+        return allRegistrations.filter(r => {
+            if (r.eventType !== currentSubEvent) return false;
+            let ok;
+            if (currentSubType === 'Junior Delegation' || currentSubType === 'Senior Delegation') {
+                ok = r.categoryOrCommittee === currentSubType || r.subType === currentSubType;
+            } else if (currentSubType === 'Private Delegates' || currentSubType === 'Committee Directors') {
+                ok = r.subType === currentSubType;
+            } else if (currentSubType === 'Delegations') {
+                ok = r.subType === 'Delegations' || r.registrationType === 'Delegations';
+            } else {
+                ok = r.subType === 'Categories' && (!currentSubCategory || r.categoryOrCommittee === currentSubCategory);
+            }
+            if (!ok) return false;
+            if (q && isDelegationSubType(currentSubType)) {
+                return [r.categoryOrCommittee, ...Object.values(regData(r))].join(' ').toLowerCase().includes(q);
+            }
+            return true;
+        });
+    }
+
+    // One PDF row: name, division, members, payment
+    function pdfRowFor(r) {
+        const d = regData(r), cat = !isDelegationRecord(r);
+        const join = (...v) => v.filter(Boolean).join('\n');
+        const nm = (main, ...rest) => ({ name: main || '-', sub: rest.filter(Boolean).join('\n') });
+        if (r.eventType === 'Sports Fest') {
+            if (cat) {
+                const team = d['Team Name'] && d['Team Name'] !== '-' ? d['Team Name'] : '';
+                return {
+                    ...nm(team || d['Delegation'] || '-', team ? d['Delegation'] : '', d['School']),
+                    division: d['Division'] || '-',
+                    members: d['Players'] || '-'
+                };
+            }
+            let lines;
+            if (Array.isArray(r.categories) && r.categories.length) {
+                lines = r.categories.map(c => `${c.category}${c.teamName ? ' (' + c.teamName + ')' : ''}: ${(c.players || []).join(', ')}`);
+            } else {
+                lines = Object.entries(d).filter(([k, v]) => isCategoryField(r, k, v)).map(([k, v]) => {
+                    const p = parseTeamPlayers(v);
+                    return p ? `${k}${p.team ? ' (' + p.team + ')' : ''}: ${p.players.join(', ')}` : `${k}: ${v}`;
+                });
+            }
+            return {
+                ...nm(d['Delegation Name'] || r.categoryOrCommittee, d['School / Institution Name']),
+                division: d['Division'] || '-',
+                members: lines.join('\n') || '-'
+            };
+        }
+        // MUN
+        if (r.subType === 'Private Delegates') {
+            return { ...nm(d['Full Name'], d['School / Institution Name']), division: d['Level'] || '-',
+                     members: join(d['Grade'] ? 'Grade: ' + d['Grade'] : '', 'Committee: ' + (d['Preferred Committee'] || '-')) };
+        }
+        if (r.subType === 'Committee Directors') {
+            return { ...nm(d['Director Name'], d['Institute']), division: d['Level'] || '-',
+                     members: join('Committee: ' + (d['Committee Preference'] || '-'), d['Teams They Can Bring'] ? 'Teams they can bring: ' + d['Teams They Can Bring'] : '') };
+        }
+        if (cat) {
+            return { ...nm(d['Delegation'] || '-', d['School']), division: d['Delegation Tier'] || '-',
+                     members: String(d['Delegates'] || '-').split(/,\s*(?![^()]*\))/).join('\n') };
+        }
+        const people = [];
+        const hd = d['Head Delegate Name'] || d['Full Name'];
+        if (hd) people.push(`${hd} (Head Delegate${d['Head Delegate Grade'] ? ', ' + d['Head Delegate Grade'] : ''})${d['Head Delegate Committee'] || d['Preferred Committee'] ? ' - ' + (d['Head Delegate Committee'] || d['Preferred Committee']) : ''}`);
+        for (let i = 2; i <= 7; i++) {
+            const n = d[`Delegate ${i} Name`] || d[`Delegate ${i} Full Name`];
+            if (!n) continue;
+            const g = d[`Delegate ${i} Grade`], c = d[`Delegate ${i} Committee`] || d[`Delegate ${i} Preferred Committee`];
+            people.push(`${n}${g ? ' (' + g + ')' : ''}${c ? ' - ' + c : ''}`);
+        }
+        return { ...nm(d['Delegation Name'] || '-', d['School / Institution Name']),
+                 division: d['Delegation Tier'] || r.categoryOrCommittee || '-', members: people.join('\n') || '-' };
+    }
+
+    // Draws the PDF (kept separate from the page so it only needs jsPDF + the rows)
+    function buildSubmissionsPdf(jsPDF, o) {
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const W = doc.internal.pageSize.getWidth(), M = 14;
+        doc.setFillColor(...o.accent); doc.rect(0, 0, W, 4, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(25, 25, 25);
+        doc.text(o.title, M, 18);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(70, 70, 70);
+        doc.text(o.subtitle, M, 25);
+        doc.setFontSize(9); doc.setTextColor(110, 110, 110);
+        doc.text(o.stats, M, 31);
+        let y = 36;
+        if (o.note) { doc.text(doc.splitTextToSize(o.note, W - 2 * M), M, y); y += 5; }
+
+        doc.autoTable({
+            startY: y + 1,
+            margin: { left: M, right: M, bottom: 16 },
+            head: [o.headers],
+            body: o.rows.map(r => [r.sub ? `${r.name}\n${r.sub}` : r.name, r.division, r.members, r.paid ? 'PAID' : 'UNPAID']),
+            theme: 'grid',
+            rowPageBreak: 'avoid',
+            styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5, valign: 'top', lineColor: [215, 215, 215], lineWidth: 0.2, textColor: [30, 30, 30] },
+            headStyles: { fillColor: o.accent, textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [248, 246, 242] },
+            columnStyles: {
+                0: { cellWidth: 46, fontStyle: 'bold' },
+                1: { cellWidth: 26 },
+                2: { cellWidth: 'auto' },
+                3: { cellWidth: 22, halign: 'center', fontStyle: 'bold' }
+            },
+            didParseCell: data => {
+                if (data.section === 'body' && data.column.index === 3) {
+                    data.cell.styles.textColor = data.cell.raw === 'PAID' ? [4, 120, 87] : [190, 30, 45];
+                }
+            },
+            // Name column: name stays bold, the school / delegation lines under it are drawn lighter
+            willDrawCell: data => {
+                if (data.section !== 'body' || data.column.index !== 0) return;
+                const row = o.rows[data.row.index];
+                if (!row || !row.sub) return;
+                const cell = data.cell;
+                const k = doc.splitTextToSize(row.name, cell.width - cell.padding('horizontal')).length;
+                cell._subLines = cell.text.slice(k);
+                cell.text = cell.text.slice(0, k);
+            },
+            didDrawCell: data => {
+                const cell = data.cell, lines = cell._subLines;
+                if (!lines || !lines.length) return;
+                const fs = doc.internal.getFontSize() / doc.internal.scaleFactor;
+                const lh = fs * doc.getLineHeightFactor();
+                const pos = cell.getTextPos();
+                const top = pos.y + fs * (2 - 1.15) + (cell.text.length) * lh;
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(115, 115, 115);
+                lines.forEach((t, i) => doc.text(t, pos.x, top + i * lh));
+            }
+        });
+
+        const pages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pages; i++) {
+            doc.setPage(i);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(140, 140, 140);
+            const h = doc.internal.pageSize.getHeight();
+            doc.text(o.footer, M, h - 8);
+            doc.text(`Page ${i} of ${pages}`, W - M, h - 8, { align: 'right' });
+        }
+        return doc;
+    }
+
+    async function exportSubmissionsToPDF(btn) {
+        const list = getSubmissionsInView();
+        const dupGroups = getDuplicateGroups();
+        let invalid = 0, dups = 0;
+        const rows = [];
+        list.forEach(r => {
+            const s = getRowStatus(r, dupGroups);
+            if (s === 'invalid') { invalid++; return; }
+            if (s === 'dup' || s === 'dupdiff') { dups++; return; }
+            rows.push({ ...pdfRowFor(r), paid: s === 'paid' });
+        });
+        if (!rows.length) {
+            return alert(list.length ? 'There are no valid entries to export in this list (all are invalid or multiple entries).' : 'No submissions to export.');
+        }
+        const divOrder = ['Under 15', 'Under 17', 'Under 19', OPEN_DIVISION, 'Junior Delegation', 'Senior Delegation', 'Junior', 'Senior'];
+        const rank = v => { const i = divOrder.indexOf(v); return i < 0 ? 99 : i; };
+        rows.sort((a, b) => rank(a.division) - rank(b.division) || a.name.localeCompare(b.name));
+
+        const label = btn ? btn.innerText : '';
+        if (btn) { btn.disabled = true; btn.innerText = 'Preparing PDF...'; }
+        try {
+            await loadPdfLibs();
+            const isMun = currentSubEvent === 'MUN';
+            const paid = rows.filter(r => r.paid).length;
+            const view = (document.getElementById('sub-category-title').innerText || '')
+                .replace(/ Submissions$/, '').split(' > ').slice(1).join(' / ') || currentSubType;
+            const left = [];
+            if (invalid) left.push(`${invalid} with an invalid email`);
+            if (dups) left.push(`${dups} multiple ${dups === 1 ? 'entry' : 'entries'}`);
+            const now = new Date();
+            const doc = buildSubmissionsPdf(window.jspdf.jsPDF, {
+                title: isMun ? 'JTC MUN' : 'JTC Sports Fest',
+                subtitle: `${view} - Valid Submissions`,
+                stats: `${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}   |   ${paid} paid   |   ${rows.length - paid} unpaid   |   Generated ${now.toLocaleString()}`,
+                note: left.length ? `Not included: ${left.join(' and ')}.` : '',
+                headers: [
+                    'Name',
+                    isMun ? 'Division' : 'Age Division',
+                    (currentSubType === 'Private Delegates' || currentSubType === 'Committee Directors') ? 'Details' : (isMun ? 'Delegates' : 'Team Members'),
+                    'Payment'
+                ],
+                rows,
+                accent: isMun ? [153, 27, 27] : [180, 83, 9],
+                footer: 'Beaconhouse Johar Town Campus - JTC Events'
+            });
+            const safe = s => String(s).replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
+            doc.save(`${safe((isMun ? 'JTC MUN ' : 'JTC Sports Fest ') + view)}.pdf`);
+        } catch (err) {
+            alert('Could not create the PDF: ' + (err.message || err));
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerText = label; }
+        }
+    }
+
     function exportSubmissionsToCSV() {
     
         let filtered = allRegistrations.filter(r => {
@@ -5562,19 +5884,19 @@ function openCodeOfConduct(type) {
             <p><strong>Eligibility:</strong> Boys & Girls (separate categories)</p>
             <ul style="margin-top: 8px; padding-left: 20px;">
                 <li>1. GENERAL RULES</li>
-                <li>Game Format: Matches are played to 10 points (first to reach 10 wins).</li>
                 <li>Doubles (2 vs 2) will be played in group stages.</li>
                 <li>Coin Toss: Decides which team serves first.</li>
-                <li>Fair Play: No spinning rods (complete 360° turns are notallowed).</li>
-                <li>Time Limit: If no goal is scored within 1 minute of possession, ball must be passed forward.</li>
-                <li>2:Scoring</li>
+                <li>Fair Play: No spinning rods (more than 360° turns are not allowed).</li>
+                <li>Possession is limited to 15 seconds on all rods, exceeding this limit forfeits the ball to the opponent.</li>
+                <li>2:SCORING</li>
                 <li>A ball is considered a goal when it enters the goal completely.</li>
                 <li>If the ball bounces out after entering, the goal still counts.</li>
                 <li>3:Doubles Rules Positions:</li>
                 <li>One player controls defense & goal rods; the other controls midfield & forwards.</li>
                 <li>Switching: Players may only switch positions during a time-out or between goals.</li>
-                <li>Final rules there will be best of 3 each of 10 points.interference (touching ball with hands, blocking table) = automatic goal for opponent.</li>
-                <li>In case of disputes, organizer/referee’s decision is final.</li>
+                <li>Final will be best of 3 sets each of 12 points.</li>
+                <li>Touching/interfering with the ball with hands, blocking the table = automatic goal for the opponent.</li>
+                <li>In case of disputes, referee’s decision is final.</li>
             </ul>`
     },
     {
