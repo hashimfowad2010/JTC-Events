@@ -234,6 +234,22 @@
 
     .hidden { display: none !important; }
 
+    /* Paid / unpaid institutes panel (Submissions page) */
+    .inst-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+    .inst-filter button { width: auto; padding: 7px 14px; font-size: 0.85rem; border-radius: 999px; background: rgba(255,255,255,.05); border: 1px solid var(--glass-border); color: var(--text-muted); cursor: pointer; }
+    .inst-filter button.active { background: var(--secondary); border-color: var(--secondary); color: #000; font-weight: 600; }
+    .inst-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 16px; }
+    .inst-col h4 { margin: 0 0 10px; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+    .inst-col h4 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .inst-item { border: 1px solid var(--glass-border); border-radius: 10px; margin-bottom: 8px; background: rgba(255,255,255,.03); }
+    .inst-item summary { list-style: none; cursor: pointer; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .inst-item summary::-webkit-details-marker { display: none; }
+    .inst-item .inst-name { font-weight: 600; overflow-wrap: anywhere; }
+    .inst-item .inst-meta { color: var(--text-muted); font-size: 0.8rem; white-space: nowrap; }
+    .inst-item .inst-dels { padding: 0 12px 10px; font-size: 0.85rem; color: var(--text-muted); }
+    .inst-item .inst-dels div { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; border-top: 1px dashed var(--glass-border); }
+    .inst-empty { color: var(--text-muted); font-size: 0.9rem; font-style: italic; }
+
     /* Submission row status shading */
     .status-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 6px 0 12px; font-size: .85rem; color: var(--text-muted); }
     .status-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
@@ -1389,6 +1405,35 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
             <div id="unique-delegates-count" style="font-size: 2.8rem; font-weight: 700; color: var(--secondary); line-height: 1.1;">0</div>
         </div>
         <div id="unique-delegates-breakdown" style="color: var(--text-muted); font-size: 0.9rem;"></div>
+    </div>
+
+    <!-- Paid / unpaid institutes -->
+    <div id="institutes-panel" style="margin-top: 20px; padding: 20px 25px; background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Institutes &middot; Paid / Unpaid</div>
+                <div id="inst-summary" style="margin-top: 6px; font-size: 1.05rem;"></div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <div class="inst-filter" id="inst-filter">
+                    <button data-ev="" class="active" onclick="setInstituteFilter('')">All Events</button>
+                    <button data-ev="Sports Fest" onclick="setInstituteFilter('Sports Fest')">Sports Fest</button>
+                    <button data-ev="MUN" onclick="setInstituteFilter('MUN')">MUN</button>
+                </div>
+                <button id="inst-toggle-btn" class="btn btn-secondary" style="width: auto;" onclick="toggleInstitutesList()">Show List</button>
+            </div>
+        </div>
+        <div id="inst-lists" class="inst-lists hidden">
+            <div class="inst-col">
+                <h4><span class="dot" style="background: #22c55e;"></span>Paid <span id="inst-paid-count" style="color: var(--text-muted); font-weight: 400;"></span></h4>
+                <div id="inst-paid-list"></div>
+            </div>
+            <div class="inst-col">
+                <h4><span class="dot" style="background: #ef4444;"></span>Unpaid <span id="inst-unpaid-count" style="color: var(--text-muted); font-weight: 400;"></span></h4>
+                <div id="inst-unpaid-list"></div>
+            </div>
+        </div>
+        <div id="inst-note" style="margin-top: 12px; color: var(--text-muted); font-size: 0.8rem;"></div>
     </div>
 
     <!-- Level 1: Select Event -->
@@ -2762,8 +2807,92 @@ async function handleSportsRegistrationSubmit(e) {
         if (bd) bd.innerText = `MUN: ${perEvent['MUN'].size}  \u2022  Sports Fest: ${perEvent['Sports Fest'].size}`;
     }
 
+    // ---- Paid / unpaid institutes ----
+    // One row per institute. Names are matched ignoring capitals, spaces and punctuation
+    // ("kims" = "KIMS" = "K.I.M.S"), but never by similarity, so KIMS and KIPS stay separate.
+    // Beaconhouse Johar Town (the host campus, boys and girls) is left out completely.
+    // An institute is Paid only when every one of its delegations is paid.
+    let instituteFilter = '';
+    function instituteKey(name) { return String(name || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+    function isHostCampus(name) {
+        const k = instituteKey(name);
+        if (['jtc', 'bjtc', 'jtcg', 'bjtcg', 'bssjtc', 'bssjtcg'].includes(k)) return true;
+        return /(beacon|bss)/.test(k) && /(johar|jtc)/.test(k);
+    }
+    function setInstituteFilter(ev) {
+        instituteFilter = ev;
+        document.querySelectorAll('#inst-filter button').forEach(b => b.classList.toggle('active', b.dataset.ev === ev));
+        renderInstitutesPanel();
+    }
+    function toggleInstitutesList() {
+        const box = document.getElementById('inst-lists'), btn = document.getElementById('inst-toggle-btn');
+        if (!box) return;
+        const show = box.classList.contains('hidden');
+        box.classList.toggle('hidden', !show);
+        if (btn) btn.innerText = show ? 'Hide List' : 'Show List';
+    }
+    function renderInstitutesPanel() {
+        const summary = document.getElementById('inst-summary');
+        if (!summary) return;
+        const groups = new Map();
+        let hostForms = 0;
+        allRegistrations.forEach(r => {
+            if (!isDelegationRecord(r) || r.subType === 'Committee Directors') return;
+            if (instituteFilter && r.eventType !== instituteFilter) return;
+            const school = String(regSchool(r) || '').trim();
+            if (isHostCampus(school)) { hostForms++; return; }
+            const key = instituteKey(school) || '__none__';
+            if (!groups.has(key)) groups.set(key, { spellings: new Map(), regs: [] });
+            const g = groups.get(key);
+            if (school) g.spellings.set(school, (g.spellings.get(school) || 0) + 1);
+            g.regs.push(r);
+        });
+
+        const list = [...groups.entries()].map(([key, g]) => {
+            // Display the spelling used most often; on a tie prefer one with capitals ("KIMS" over "kims")
+            const name = key === '__none__' ? 'No institute given' : [...g.spellings.entries()]
+                .sort((a, b) => b[1] - a[1] || (/[A-Z]/.test(b[0]) - /[A-Z]/.test(a[0])))[0][0];
+            const paid = g.regs.filter(r => r.paymentStatus === 'paid').length;
+            return { name, regs: g.regs, paid, allPaid: paid === g.regs.length };
+        }).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+        const paidList = list.filter(i => i.allPaid), unpaidList = list.filter(i => !i.allPaid);
+        summary.innerHTML = `<strong style="color:#22c55e;">${paidList.length} paid</strong>
+            <span style="color:var(--text-muted);">&nbsp;&bull;&nbsp;</span>
+            <strong style="color:#ef4444;">${unpaidList.length} unpaid</strong>
+            <span style="color:var(--text-muted);">&nbsp;&bull;&nbsp;${list.length} institute${list.length === 1 ? '' : 's'}</span>`;
+        document.getElementById('inst-paid-count').innerText = `(${paidList.length})`;
+        document.getElementById('inst-unpaid-count').innerText = `(${unpaidList.length})`;
+
+        const item = i => {
+            const n = i.regs.length;
+            const meta = i.allPaid || i.paid === 0
+                ? `${n} delegation${n === 1 ? '' : 's'}`
+                : `${i.paid} of ${n} paid`;
+            const dels = i.regs
+                .map(r => ({ name: regDelegationName(r) || regData(r)['Full Name'] || r.categoryOrCommittee || 'Unnamed', ev: r.eventType, paid: r.paymentStatus === 'paid' }))
+                .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+                .map(d => `<div><span>${escapeHtml(d.name)}${instituteFilter ? '' : ` <em style="opacity:.7;">(${escapeHtml(d.ev || '')})</em>`}</span>
+                    <span style="color:${d.paid ? '#22c55e' : '#ef4444'}; font-weight:600;">${d.paid ? 'Paid' : 'Unpaid'}</span></div>`)
+                .join('');
+            return `<details class="inst-item"><summary><span class="inst-name">${escapeHtml(i.name)}</span>
+                <span class="inst-meta">${meta}</span></summary><div class="inst-dels">${dels}</div></details>`;
+        };
+        const fill = (id, arr) => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = arr.length ? arr.map(item).join('') : '<div class="inst-empty">None</div>';
+        };
+        fill('inst-paid-list', paidList);
+        fill('inst-unpaid-list', unpaidList);
+
+        const note = document.getElementById('inst-note');
+        if (note) note.innerText = hostForms
+            ? `Beaconhouse Johar Town forms are not counted (${hostForms} hidden). Click an institute to see its delegations.`
+            : 'Click an institute to see its delegations.';
+    }
+
     function fetchRegistrations() {
-    
+
         db.collection("registrations").onSnapshot(snapshot => {
     
             allRegistrations = [];
@@ -2775,6 +2904,7 @@ async function handleSportsRegistrationSubmit(e) {
             });
 
             updateUniqueDelegateCount();
+            renderInstitutesPanel();
 
 
             
