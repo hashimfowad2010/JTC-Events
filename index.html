@@ -1378,6 +1378,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <button id="jtcg-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('jtcg-2026-10-14', this)">Import JTCG Girls (38 delegations)</button>
         <button id="sisa-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('sisa-2026-10-15', this)">Import SISA Beaconhouse (3 delegations)</button>
         <button id="bloomfield-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('bloomfield-2026-10-15', this)">Import Bloomfield (5 delegations)</button>
+        <button id="lacas-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('lacas-aljt-2026-10-16', this)">Import LACAS ALJT (3 delegations)</button>
         <button id="gender-fix-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="fixGenderByDelegationName(this)">Fix Boys / Girls by Delegation Name</button>
     </div>
 
@@ -5150,12 +5151,48 @@ const BLOOMFIELD_IMPORT_DELEGATIONS = [
     }
 ].map(d => ({ ...d, division: 'Under 15', email: HD_DEFAULT_EMAIL, phone: HD_DEFAULT_PHONE }));
 
+// LACAS ALJT sheet, 16 Oct. 2 futsal teams, 1 dodgeball (girls), 1 cricket, everything else singles.
+// 3 boys play badminton singles, so 3 delegations is the fewest possible. Each player stays inside one
+// delegation, each delegation has at most one entry per category, and no team is over its limit.
+// Cricket is 5 of 8 for now; the organiser will add the rest later.
+const LACAS_IMPORT_DELEGATIONS = [
+    {
+        name: 'LACAS ALJT Delegation 1', hd: 'Emad Faisal',
+        entries: [
+            ['Futsal (Boys)', 'LACAS ALJT Futsal A', ['Khuzaima', 'Musa', 'Abu Bakr', 'Taabish', 'Amaan', 'Emad Faisal', 'Noorullah']],
+            ['Cricket (Boys)', 'LACAS ALJT Cricket', ['Rayan', 'Faizan', 'Mustafa', 'Noorullah', 'Muzammil']],
+            ['Badminton - Singles (Boys)', '', ['Emad Faisal']],
+            ['E-Gaming FC (Boys)', '', ['Emad Faisal']],
+            ['Table Tennis - Singles (Boys)', '', ['Amaan']],
+            ['E-Gaming Tekken (Boys)', '', ['Ali Akbar']],
+            ['Chess (Boys)', '', ['Zaid Rana']],
+            ['Ludo (Boys)', '', ['Ahsan']],
+            ['Dodgeball (Girls)', 'LACAS ALJT Dodgeball', ['Saba', 'Fatima', 'Abiha', 'Aiza', 'Maryam Khan', 'Ayras', 'Inaya']]
+        ]
+    },
+    {
+        name: 'LACAS ALJT Delegation 2', hd: 'Moosa',
+        entries: [
+            ['Futsal (Boys)', 'LACAS ALJT Futsal B', ['Moosa', 'Faaiz', 'Salman', 'Aqib', 'Roshaan', 'Mohib']],
+            ['Badminton - Singles (Boys)', '', ['Hassam Ud Din']],
+            ['Chess (Boys)', '', ['Farhan Ali']]
+        ]
+    },
+    {
+        name: 'LACAS ALJT Delegation 3', hd: 'Ahmad Faisal',
+        entries: [
+            ['Badminton - Singles (Boys)', '', ['Ahmad Faisal']]
+        ]
+    }
+].map(d => ({ ...d, division: 'Under 15', email: HD_DEFAULT_EMAIL, phone: HD_DEFAULT_PHONE }));
+
 const PAPER_IMPORTS = {
     [PAPER_IMPORT_BATCH]: { label: 'Import Paper Registrations (13 Oct)', chaperone: 'Sir Yousaf', chaperoneContact: '03256921615', delegations: PAPER_IMPORT_DELEGATIONS },
     'paper-2026-10-13b': { label: 'Import Arm Wrestling + Shadow Wolves', chaperone: '', chaperoneContact: '', delegations: PAPER_IMPORT_DELEGATIONS_B },
     'jtcg-2026-10-14': { label: 'Import JTCG Girls (38 delegations)', chaperone: '', chaperoneContact: '', school: 'Beaconhouse Johar Town Girls Campus', askPaid: true, delegations: JTCG_IMPORT_DELEGATIONS },
     'sisa-2026-10-15': { label: 'Import SISA Beaconhouse (3 delegations)', chaperone: '', chaperoneContact: '', school: 'Beaconhouse (SISA)', askPaid: true, delegations: SISA_IMPORT_DELEGATIONS },
-    'bloomfield-2026-10-15': { label: 'Import Bloomfield (5 delegations)', chaperone: '', chaperoneContact: '', school: 'Bloomfield', askPaid: true, delegations: BLOOMFIELD_IMPORT_DELEGATIONS }
+    'bloomfield-2026-10-15': { label: 'Import Bloomfield (5 delegations)', chaperone: '', chaperoneContact: '', school: 'Bloomfield', askPaid: true, delegations: BLOOMFIELD_IMPORT_DELEGATIONS },
+    'lacas-aljt-2026-10-16': { label: 'Import LACAS ALJT (3 delegations)', chaperone: '', chaperoneContact: '', school: 'LACAS ALJT', askPaid: true, delegations: LACAS_IMPORT_DELEGATIONS }
 };
 
 async function importPaperRegistrations(batchKey, btn) {
