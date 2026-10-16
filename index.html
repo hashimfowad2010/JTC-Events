@@ -1388,6 +1388,9 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
 <div id="registrations" class="page">
     <h2>Registration Submissions</h2>
     <div class="admin-only hidden" style="margin-top: 12px;">
+        <button class="btn" style="width: auto; background: linear-gradient(135deg, #10b981, #047857);" onclick="exportSportsParticipantsPDF(this)">📄 Sports Fest Participants List (PDF)</button>
+    </div>
+    <div class="admin-only hidden" style="margin-top: 12px;">
         <button id="paper-import-btn" class="btn" style="width: auto;" onclick="importPaperRegistrations('paper-2026-10-13', this)">Import Paper Registrations (13 Oct)</button>
         <button id="paper-import-btn-b" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('paper-2026-10-13b', this)">Import Arm Wrestling + Shadow Wolves</button>
         <button id="legacy-cat-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="migrateLegacySportsCategories(this)">Move Old Categories to Boys / Girls</button>
@@ -1395,6 +1398,8 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <button id="sisa-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('sisa-2026-10-15', this)">Import SISA Beaconhouse (3 delegations)</button>
         <button id="bloomfield-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('bloomfield-2026-10-15', this)">Import Bloomfield (5 delegations)</button>
         <button id="lacas-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('lacas-aljt-2026-10-16', this)">Import LACAS ALJT (3 delegations)</button>
+        <button id="froebels-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('froebels-2026-10-16', this)">Import Froebel's (47 students)</button>
+        <button id="wapda-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('wapda-town-2026-10-16', this)">Import BSS Wapda Town (32 students)</button>
         <button id="gender-fix-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="fixGenderByDelegationName(this)">Fix Boys / Girls by Delegation Name</button>
     </div>
 
@@ -5316,13 +5321,129 @@ const LACAS_IMPORT_DELEGATIONS = [
     }
 ].map(d => ({ ...d, division: 'Under 15', email: HD_DEFAULT_EMAIL, phone: HD_DEFAULT_PHONE }));
 
+// Froebel's sheet, 16 Oct: 47 students, registered now, categories added later.
+// One registration per student (each student is their own head delegate), so the fee and paid / unpaid
+// on the sheet stay per student, and singles categories fit later without regrouping.
+// Year 7 / Year 8 -> Under 15, AS / A2 Level -> Under 19. "Games" is the number of games ticked on the sheet.
+const FROEBELS_GAME_FEES = { 1: 'PKR 1,500', 2: 'PKR 2,000', 3: 'PKR 2,500' };
+const FROEBELS_STUDENTS = [
+    ['C02014', 'Dania Ali', 'Year 7', 'S', 3],
+    ['C01247', 'Muhammad Shawaiz Asad', 'Year 7', 'F', 2],
+    ['C03341', 'Ayan Abid Khan', 'Year 7', 'F', 3],
+    ['C03237', 'Muhammad Zoraiz Faisal', 'Year 7', 'F', 1],
+    ['C01439', 'Muhammad Dawood Awais', 'Year 7', 'F', 2],
+    ['C03361', 'Muhammad Zayan Rao', 'Year 7', 'F', 3],
+    ['C03402', 'Muhammad Bin Azhar', 'Year 7', 'F', 3],
+    ['C02678', 'Raima Saqib', 'Year 7', 'I', 1],
+    ['C03135', 'Ennayah Bilal', 'Year 7', 'I', 1],
+    ['C01382', 'Zahra Sana', 'Year 7', 'I', 1],
+    ['C03778', 'Arfa Ayat Janjua', 'Year 7', 'I', 2],
+    ['C03103', 'Parishay Khan', 'Year 7', 'I', 1],
+    ['C02059', 'Mustafa Muhayuddin Butt', 'Year 7', 'I', 2],
+    ['C03142', 'Muhammad Shayan Umair', 'Year 7', 'I', 2, 'Rs. 500 noted beside this name on the sheet (check balance)'],
+    ['C02622', 'Musa Farhan', 'Year 7', 'I', 3],
+    ['C01560', 'Muhammad Zayyan Khan', 'Year 7', 'I', 1],
+    ['C03667', 'Muhammad Hussail Khokhar', 'Year 7', 'F', 1],
+    ['C02367', 'Mahnoor Salman', 'Year 7', 'I', 1],
+    ['C01323', 'Muhammad Azan Khalid', 'Year 7', 'F', 1],
+    ['C01304', 'Musa Hussam Qasmi', 'Year 7', 'S', 2],
+    ['C00808', 'Hassaan Khalid', 'A2 Level', 'CAIE', 1],
+    ['C00872', 'Ziyan Khalid', 'AS Level', 'CAIE', 1],
+    ['C02342', 'Zain Rehman Farooqi', 'Year 7', 'F', 2],
+    ['C02744', 'Hamza Rasool', 'AS Level', 'CAIE', 1],
+    ['C01708', 'Taha Mohammed Arshad', 'AS Level', 'CAIE', 2],
+    ['C00852', 'Muhammad Abu Bakar Akbar', 'AS Level', 'CAIE', 2],
+    ['C03366', 'Muhammad Abdullah Rao', 'Year 7', 'I', 2],
+    ['C01008', 'Muhammad Abdullah', 'AS Level', 'CAIE', 1],
+    ['C00837', 'Adeel Jamil Bhatti', 'AS Level', 'CAIE', 1],
+    ['C01595', 'Saif Ullah', 'AS Level', 'CAIE', 2],
+    ['C01538', 'Noor Arbish', 'Year 7', 'S', 2],
+    ['C01325', 'Huda Khurram', 'Year 7', 'S', 2],
+    ['C01359', 'Inaya Fatima', 'Year 7', 'S', 3],
+    ['C02085', 'Muhammad Ibraheem Khan', 'Year 8', 'F', 3],
+    ['C01515', 'Muhammad bin Kamran', 'Year 8', 'F', 3],
+    ['C02080', 'Muhammad Mahad Dar', 'Year 8', 'F', 3],
+    ['C03005', 'Inaya Nadeem Sheikh', 'Year 8', 'F', 2],
+    ['C01284', 'Syeda Hareem Zafar', 'Year 8', 'F', 2],
+    ['C01954', 'Maham Butt', 'Year 8', 'F', 2],
+    ['C01357', 'Fitrat Zaman', 'Year 7', 'F', 3],
+    ['C01246', 'Maaz Faraz', 'Year 8', 'F', 3],
+    ['C01398', 'Emaan Liaqat', 'Year 7', 'S', 2],
+    ['C03198', 'Ardah Arif', 'Year 7', 'S', 3],
+    ['C01335', 'Areeb Fatima', 'Year 7', 'S', 2],
+    ['C01324', 'Rana Noraiz Ahmed Khan', 'Year 7', 'S', 2],
+    ['C01674', 'Amna Amir Fahim', 'AS Level', 'CAIE', 1],
+    ['C02270', 'Naif Ullah Khan', 'Year 8', 'F', 3]
+];
+const FROEBELS_IMPORT_DELEGATIONS = FROEBELS_STUDENTS.map(([reg, name, cls, section, games, note]) => ({
+    name: `Froebel's - ${name}`, hd: name, email: HD_DEFAULT_EMAIL, phone: HD_DEFAULT_PHONE,
+    division: /level/i.test(cls) ? 'Under 19' : 'Under 15',
+    extra: {
+        'Reg #': reg,
+        'Class': cls,
+        'Section': section,
+        'Games Registered': `${games} (${FROEBELS_GAME_FEES[games]})`,
+        ...(note ? { 'Sheet Note': note } : {})
+    },
+    entries: []
+}));
+
+// BSS Wapda Town sheet, 16 Oct: 32 students, registered now, categories added later (same setup as Froebel's).
+// Grade 6-8 -> Under 15, Grade 9 -> Under 17. Anaya Khan has no class on the sheet, so Under 15 for now.
+const WAPDA_STUDENTS = [
+    ['392053', 'Bakhtawar', 7, 'Yellow'],
+    ['351078', 'Mishaal', 8, 'Red'],
+    ['328672', 'Zarasha', 8, 'Red'],
+    ['378623', 'Dayyan Qureshi', 8, 'Yellow'],
+    ['340983', 'Mohid', 8, 'Yellow'],
+    ['166131', 'Arham Jamal', 8, 'Red'],
+    ['389570', 'Arham Adil', 8, 'Red'],
+    ['325972', 'Ayan Khan', 7, 'Yellow'],
+    ['166094', 'Aadam', 9, 'R'],
+    ['272754', 'Mohid Khurram', 9, 'C'],
+    ['125354', 'Momin', 9, 'C'],
+    ['355624', 'Moizz', 9, 'C'],
+    ['145345', 'Arwan', 9, 'C'],
+    ['297998', 'Hadi', 9, 'C'],
+    ['125275', 'Muhammad Minhas', 9, 'C'],
+    ['299504', 'Muhammad', 8, 'Yellow'],
+    ['375621', 'Azan', 8, 'Red'],
+    ['338612', 'Arif', 9, 'C'],
+    ['347465', 'Anaya Khan', null, ''],
+    ['238696', 'Arsil', 8, 'Red'],
+    ['258918', 'Mahira', 7, 'Yellow'],
+    ['294833', 'Hareem', 7, 'Yellow'],
+    ['189291', 'Amna', 6, 'Aqua'],
+    ['192759', 'Zainab', 6, 'Aqua'],
+    ['316931', 'Fatima Danish', 8, 'Red'],
+    ['313774', 'Fizzaa', 9, 'C'],
+    ['358379', 'Shahzain', 8, 'Red'],
+    ['181425', 'Aimen', 8, 'Yellow'],
+    ['238695', 'Maleeha', 8, 'Red'],
+    ['327065', 'Affan', 7, 'Yellow'],
+    ['371039', 'Abdul Rehmen', 8, 'Yellow'],
+    ['147237', 'Mohid Usman', 8, 'Red']
+];
+const WAPDA_IMPORT_DELEGATIONS = WAPDA_STUDENTS.map(([id, name, grade, section]) => ({
+    name: `BSS Wapda Town - ${name}`, hd: name, email: HD_DEFAULT_EMAIL, phone: HD_DEFAULT_PHONE,
+    division: grade === 9 ? 'Under 17' : 'Under 15',
+    extra: {
+        'Student ID': id,
+        'Class': grade ? `Grade ${grade}` : 'Not given on sheet',
+        'Section': section || '-'
+    },
+    entries: []
+}));
+
 const PAPER_IMPORTS = {
     [PAPER_IMPORT_BATCH]: { label: 'Import Paper Registrations (13 Oct)', chaperone: 'Sir Yousaf', chaperoneContact: '03256921615', delegations: PAPER_IMPORT_DELEGATIONS },
     'paper-2026-10-13b': { label: 'Import Arm Wrestling + Shadow Wolves', chaperone: '', chaperoneContact: '', delegations: PAPER_IMPORT_DELEGATIONS_B },
     'jtcg-2026-10-14': { label: 'Import JTCG Girls (38 delegations)', chaperone: '', chaperoneContact: '', school: 'Beaconhouse Johar Town Girls Campus', askPaid: true, delegations: JTCG_IMPORT_DELEGATIONS },
     'sisa-2026-10-15': { label: 'Import SISA Beaconhouse (3 delegations)', chaperone: '', chaperoneContact: '', school: 'Beaconhouse (SISA)', askPaid: true, delegations: SISA_IMPORT_DELEGATIONS },
     'bloomfield-2026-10-15': { label: 'Import Bloomfield (5 delegations)', chaperone: '', chaperoneContact: '', school: 'Bloomfield', askPaid: true, delegations: BLOOMFIELD_IMPORT_DELEGATIONS },
-    'lacas-aljt-2026-10-16': { label: 'Import LACAS ALJT (3 delegations)', chaperone: '', chaperoneContact: '', school: 'LACAS ALJT', askPaid: true, delegations: LACAS_IMPORT_DELEGATIONS }
+    'lacas-aljt-2026-10-16': { label: 'Import LACAS ALJT (3 delegations)', chaperone: '', chaperoneContact: '', school: 'LACAS ALJT', askPaid: true, delegations: LACAS_IMPORT_DELEGATIONS },
+    'froebels-2026-10-16': { label: "Import Froebel's (47 students)", chaperone: '', chaperoneContact: '', school: "Froebel's", askPaid: true, noun: 'student registrations (categories to be added later)', delegations: FROEBELS_IMPORT_DELEGATIONS },
+    'wapda-town-2026-10-16': { label: 'Import BSS Wapda Town (32 students)', chaperone: '', chaperoneContact: '', school: 'BSS Wapda Town Campus', askPaid: true, noun: 'student registrations (categories to be added later)', delegations: WAPDA_IMPORT_DELEGATIONS }
 };
 
 async function importPaperRegistrations(batchKey, btn) {
@@ -5335,7 +5456,7 @@ async function importPaperRegistrations(batchKey, btn) {
     }
     const PAPER_IMPORT_DELEGATIONS = cfg.delegations;
     const total = PAPER_IMPORT_DELEGATIONS.length;
-    if (!confirm(`Import ${total} Sports Fest delegations from ${cfg.school || 'Beaconhouse Johar Town Boys Campus'}?`)) return;
+    if (!confirm(`Import ${total} Sports Fest ${cfg.noun || 'delegations'} from ${cfg.school || 'Beaconhouse Johar Town Boys Campus'}?`)) return;
     const payment = cfg.askPaid
         ? (confirm('Mark these registrations as PAID?\n\nOK = Paid\nCancel = Unpaid') ? 'paid' : 'unpaid')
         : 'paid';
@@ -5356,7 +5477,8 @@ async function importPaperRegistrations(batchKey, btn) {
                 'Head Delegate Contact': d.phone,
                 'Chaperone Name': cfg.chaperone,
                 'Chaperone Contact': cfg.chaperoneContact,
-                'Division': division
+                'Division': division,
+                ...(d.extra || {})
             };
             const categories = d.entries.map(([category, teamName, players]) => ({
                 category, teamName, players, division: divisionForCategory(category, division)
@@ -5394,7 +5516,7 @@ async function importPaperRegistrations(batchKey, btn) {
         });
 
         await batch.commit();
-        alert(`Done: ${total} delegations imported.`);
+        alert(`Done: ${total} ${cfg.noun ? 'students' : 'delegations'} imported.`);
     } catch (err) {
         alert('Import failed, nothing was saved: ' + (err.message || err));
     } finally {
@@ -6052,6 +6174,144 @@ function renderRegistrationsTable(eventType, subType) {
             });
             const safe = s => String(s).replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
             doc.save(`${safe((isMun ? 'JTC MUN ' : 'JTC Sports Fest ') + view)}.pdf`);
+        } catch (err) {
+            alert('Could not create the PDF: ' + (err.message || err));
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerText = label; }
+        }
+    }
+
+    // ---- Sports Fest participants list: one line per person per category, with school ----
+    // Built from the delegation records. Same person + category + school is listed once, so repeat
+    // submissions don't double anyone. Head delegates who play in nothing get a "Head Delegate" line;
+    // students registered without categories yet (Froebel's, Wapda Town) get "Categories to be added".
+    const PARTICIPANT_HEAD = 'Head Delegate', PARTICIPANT_PENDING = 'Categories to be added';
+
+    function sportsDelegationCategories(r) {
+        if (Array.isArray(r.categories) && r.categories.length) {
+            return r.categories.map(c => ({ category: c.category, players: (c.players || []).map(String) }));
+        }
+        // Older records keep players only inside the form text ("Team: X | Players: a, b")
+        const out = [];
+        Object.entries(regData(r)).forEach(([k, v]) => {
+            if (!isCategoryField(r, k, v)) return;
+            String(v).split(/\s*\|\|\s*/).forEach(part => {
+                const parsed = parseTeamPlayers(part);
+                if (parsed) out.push({ category: k, players: parsed.players });
+            });
+        });
+        return out;
+    }
+
+    function buildSportsParticipantRows() {
+        const delegations = allRegistrations.filter(r => r.eventType === 'Sports Fest' && isDelegationRecord(r));
+
+        // One spelling per school ("kims" / "KIMS" show the same way), the one used most often
+        const spellings = new Map();
+        delegations.forEach(r => {
+            const name = String(regSchool(r) || '').trim(), key = instituteKey(name);
+            if (!key) return;
+            if (!spellings.has(key)) spellings.set(key, new Map());
+            spellings.get(key).set(name, (spellings.get(key).get(name) || 0) + 1);
+        });
+        const schoolName = raw => {
+            const m = spellings.get(instituteKey(raw));
+            if (!m) return String(raw || '').trim() || 'School not given';
+            return [...m.entries()].sort((a, b) => b[1] - a[1] || (/[A-Z]/.test(b[0]) - /[A-Z]/.test(a[0])))[0][0];
+        };
+
+        const clean = v => String(v || '').replace(/\s+/g, ' ').trim();
+        const rows = [], seen = new Set(), people = new Set(), heads = [];
+        const add = (name, category, school) => {
+            name = clean(name);
+            if (!name) return;
+            const key = `${normKey(name)}|${normKey(category)}|${instituteKey(school)}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+            people.add(`${normKey(name)}|${instituteKey(school)}`);
+            rows.push({ name, category, school });
+        };
+
+        delegations.forEach(r => {
+            const school = schoolName(regSchool(r));
+            const cats = sportsDelegationCategories(r);
+            cats.forEach(c => c.players.forEach(p => add(p, c.category, school)));
+            const hd = clean(regData(r)['Head Delegate Name']);
+            if (hd) heads.push({ name: hd, school, hasCategories: cats.some(c => c.players.length) });
+        });
+        // Head delegates (and students with no categories yet) who aren't already listed
+        heads.sort((a, b) => a.hasCategories - b.hasCategories).forEach(h => {
+            if (people.has(`${normKey(h.name)}|${instituteKey(h.school)}`)) return;
+            add(h.name, h.hasCategories ? PARTICIPANT_HEAD : PARTICIPANT_PENDING, h.school);
+        });
+
+        const order = Object.keys(sportsCategoryConfigs);
+        const rank = c => { const i = order.indexOf(c); return i >= 0 ? i : (c === PARTICIPANT_HEAD ? 900 : c === PARTICIPANT_PENDING ? 901 : 800); };
+        const cmp = (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
+        rows.sort((a, b) => cmp(a.school, b.school) || cmp(a.name, b.name) || rank(a.category) - rank(b.category) || cmp(a.category, b.category));
+        return { rows, people: people.size, schools: new Set(rows.map(r => instituteKey(r.school))).size };
+    }
+
+    function buildParticipantsPdf(jsPDF, o) {
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const W = doc.internal.pageSize.getWidth(), M = 14, accent = [180, 83, 9];
+        doc.setFillColor(...accent); doc.rect(0, 0, W, 4, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(25, 25, 25);
+        doc.text('JTC Sports Fest', M, 18);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(70, 70, 70);
+        doc.text('Participants List', M, 25);
+        doc.setFontSize(9); doc.setTextColor(110, 110, 110);
+        doc.text(o.stats, M, 31);
+
+        doc.autoTable({
+            startY: 36,
+            margin: { left: M, right: M, bottom: 16 },
+            head: [['#', 'Name', 'Category', 'School']],
+            body: o.rows.map((r, i) => [i + 1, r.name, r.category, r.school]),
+            theme: 'grid',
+            rowPageBreak: 'avoid',
+            styles: { font: 'helvetica', fontSize: 9, cellPadding: 1.8, valign: 'middle', lineColor: [215, 215, 215], lineWidth: 0.2, textColor: [30, 30, 30] },
+            headStyles: { fillColor: accent, textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [248, 246, 242] },
+            columnStyles: {
+                0: { cellWidth: 11, halign: 'right', textColor: [130, 130, 130] },
+                1: { cellWidth: 46, fontStyle: 'bold' },
+                2: { cellWidth: 54 },
+                3: { cellWidth: 'auto' }
+            },
+            didParseCell: data => {
+                if (data.section === 'body' && data.column.index === 2 &&
+                    (data.cell.raw === PARTICIPANT_HEAD || data.cell.raw === PARTICIPANT_PENDING)) {
+                    data.cell.styles.textColor = [120, 120, 120];
+                    data.cell.styles.fontStyle = 'italic';
+                }
+            }
+        });
+
+        const pages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pages; i++) {
+            doc.setPage(i);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(140, 140, 140);
+            const h = doc.internal.pageSize.getHeight();
+            doc.text('Beaconhouse Johar Town Campus - JTC Events', M, h - 8);
+            doc.text(`Page ${i} of ${pages}`, W - M, h - 8, { align: 'right' });
+        }
+        return doc;
+    }
+
+    async function exportSportsParticipantsPDF(btn) {
+        const { rows, people, schools } = buildSportsParticipantRows();
+        if (!rows.length) return alert('No Sports Fest delegations to list yet.');
+        const label = btn ? btn.innerText : '';
+        if (btn) { btn.disabled = true; btn.innerText = 'Preparing PDF...'; }
+        try {
+            await loadPdfLibs();
+            const now = new Date();
+            const doc = buildParticipantsPdf(window.jspdf.jsPDF, {
+                rows,
+                stats: `${rows.length} lines   |   ${people} people   |   ${schools} ${schools === 1 ? 'school' : 'schools'}   |   Generated ${now.toLocaleString()}`
+            });
+            doc.save(`JTC_Sports_Fest_Participants_${now.toISOString().slice(0, 10)}.pdf`);
         } catch (err) {
             alert('Could not create the PDF: ' + (err.message || err));
         } finally {
