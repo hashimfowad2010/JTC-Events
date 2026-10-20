@@ -1400,6 +1400,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <button id="lacas-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('lacas-aljt-2026-10-16', this)">Import LACAS ALJT (3 delegations)</button>
         <button id="froebels-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('froebels-2026-10-16', this)">Import Froebel's (47 students)</button>
         <button id="wapda-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importPaperRegistrations('wapda-town-2026-10-16', this)">Import BSS Wapda Town (32 students)</button>
+        <button id="sheets-import-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="importDelegateSheets(this)">Import Delegate Sheets (17 Oct: 42 entries, 527 delegates)</button>
         <button id="gender-fix-btn" class="btn" style="width: auto; margin-left: 8px;" onclick="fixGenderByDelegationName(this)">Fix Boys / Girls by Delegation Name</button>
     </div>
 
@@ -1462,6 +1463,10 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
                 <h2>Delegations</h2>
                 <p>View delegation registration submissions</p>
             </div>
+            <div class="big-tile sports-only-sub hidden" onclick="handleSubTypeSelect('Delegates')">
+                <h2>Delegates</h2>
+                <p>Every registered person, with school, delegation and categories</p>
+            </div>
             <div class="big-tile" onclick="handleSubTypeSelect('Categories')">
                 <h2 id="sub-categories-type-label">Committees</h2>
                 <p id="sub-categories-type-desc">View committee / category registration submissions</p>
@@ -1511,7 +1516,11 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
             <button class="btn btn-secondary" onclick="clearSubmissionSearch()">Clear</button>
         </div>
         <h3 id="sub-category-title">Submissions</h3>
-        <div class="status-legend">
+        <p id="delegates-note" class="hidden" style="color: var(--text-muted); font-size: .85rem; margin: 6px 0 12px; line-height: 1.5;">
+            One row per person, from online forms and paper sheets. The same name at the same school is shown once, with all their delegations and categories.
+            Paper-sheet categories are shown as written on the sheet. Payment comes from the delegation; change it from Delegations.
+        </p>
+        <div id="sub-status-legend" class="status-legend">
             <span><i style="background:#10b981"></i>Paid</span>
             <span><i style="background:#9ca3af"></i>Valid, unpaid</span>
             <span><i style="background:#facc15"></i>Multiple entries (identical)</span>
@@ -1521,7 +1530,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <div class="table-responsive">
             <table>
                 <thead>
-                    <tr>
+                    <tr id="sub-table-head">
                         <th>Category / Committee</th>
                         <th>Submitted At</th>
                         <th>Form Details</th>
@@ -2792,20 +2801,24 @@ async function handleSportsRegistrationSubmit(e) {
         const all = new Set();
         const perEvent = { 'MUN': new Set(), 'Sports Fest': new Set() };
 
+        // MUN: as before. The total matches MUN and Sports Fest people the same way (name + school,
+        // school ignoring capitals / punctuation) so someone in both events is counted once.
         allRegistrations.forEach(r => {
+            if (r.eventType !== 'MUN') return;
             // "Categories" records repeat people already stored in the delegation record, so skip them
             if (r.subType === 'Categories' || r.registrationType === 'Categories') return;
             if (r.subType === 'Committee Directors') return;
             const data = r.formData || r.details || {};
-            const school = normalizeDelegateText(data['School / Institution Name'] || data['School'] || '');
+            const rawSchool = data['School / Institution Name'] || data['School'] || '';
             extractDelegateNames(r).forEach(n => {
                 const name = normalizeDelegateText(n);
                 if (!name) return;
-                const key = name + '|' + school;
-                all.add(key);
-                if (perEvent[r.eventType]) perEvent[r.eventType].add(key);
+                perEvent['MUN'].add(name + '|' + normalizeDelegateText(rawSchool));
+                all.add(name + '|' + instituteKey(rawSchool));
             });
         });
+        // Sports Fest: exactly the people in the Delegates list (online + paper sheets)
+        buildSportsDelegateRows().forEach(p => { all.add(p.key); perEvent['Sports Fest'].add(p.key); });
 
         countEl.innerText = all.size;
         const bd = document.getElementById('unique-delegates-breakdown');
@@ -2943,6 +2956,7 @@ async function handleSportsRegistrationSubmit(e) {
         
         document.getElementById('sub-type-title').innerText = `${eventType} Submissions`;
         document.querySelectorAll('.mun-only-sub').forEach(el => el.classList.toggle('hidden', eventType !== 'MUN'));
+        document.querySelectorAll('.sports-only-sub').forEach(el => el.classList.toggle('hidden', eventType !== 'Sports Fest'));
 
 
         
@@ -3004,7 +3018,7 @@ async function handleSportsRegistrationSubmit(e) {
         });
     }
 
-    function isDelegationSubType(t) { return t === 'Delegations' || t === 'Junior Delegation' || t === 'Senior Delegation' || t === 'Private Delegates' || t === 'Committee Directors'; }
+    function isDelegationSubType(t) { return t === 'Delegations' || t === 'Junior Delegation' || t === 'Senior Delegation' || t === 'Private Delegates' || t === 'Committee Directors' || t === 'Delegates'; }
     function applySubmissionSearch() { renderRegistrationsTable(currentSubEvent, currentSubType); }
     function clearSubmissionSearch() {
         const i = document.getElementById('sub-search-input');
@@ -3022,8 +3036,14 @@ async function handleSportsRegistrationSubmit(e) {
 
         // Search box is only for delegation lists; start each list with a clean search
         const searchRow = document.getElementById('sub-search-row'), searchInput = document.getElementById('sub-search-input');
-        if (searchInput) searchInput.value = '';
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.placeholder = subType === 'Delegates'
+                ? 'Search delegates (name, school, delegation, category, team...)'
+                : 'Search delegations (delegation, school, delegate, email, phone...)';
+        }
         if (searchRow) searchRow.style.display = isDelegationSubType(subType) ? 'flex' : 'none';
+        setSubTableMode(subType === 'Delegates');
 
         const typeLabel = (currentSubEvent === 'MUN' && subType === 'Categories') ? 'Committees' : subType;
         document.getElementById('sub-category-title').innerText =
@@ -5435,6 +5455,772 @@ const WAPDA_IMPORT_DELEGATIONS = WAPDA_STUDENTS.map(([id, name, grade, section])
     entries: []
 }));
 
+// ---- Delegate sheets (38 scanned pages, 17 Oct): one paper entry per sheet / school ----
+// People are stored as "Delegate 01", "Delegate 02"... lines with their categories as written on the sheet
+// (Boys / Girls, singles / doubles and teams are not on the sheets, so they are not guessed here).
+// Left out because they are already in the system: the Froebel's and Wapda Town printouts (imported 16 Oct),
+// sheet #18 (its clean copy is used), sheet #12 (its clean copy is used), Bloomfield rows 1-21 (imported 15 Oct)
+// and 5 of the 6 KIPS strongmen (imported 13 Oct as "BJTC Arm Wrestling 1-5"). Crossed-out rows are left out.
+const SHEETS_IMPORT_BATCH = 'delegate-sheets-2026-10-17';
+const SHEET_HOST_BOYS = 'Beaconhouse Johar Town Boys Campus', SHEET_HOST_GIRLS = 'Beaconhouse Johar Town Girls Campus';
+const SHEET_IMPORT_GROUPS = [
+    { name: "KIMS Gulberg (Sheet #1)", school: "KIMS Gulberg Campus", sheet: "#1", received: "Rs 12,000",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Hussnain Tahir", "Futsal", 1500],
+        ["Ibrahim Mudassar", "Futsal", 1500],
+        ["Eman", "Badminton", 1500, "Futsal crossed out, Badminton written"],
+        ["Ibrahim Akhtar", "Futsal", 1500],
+        ["Abdul Hai Khan", "Futsal", 1500],
+        ["Abbas Ali", "Futsal", 1500],
+        ["Dawood", "Futsal", 1500],
+        ["Mashal", "Futsal", 1500]
+    ] },
+    { name: "Beaconhouse Valencia (Sheet #22)", school: "Beaconhouse Valencia Town", sheet: "#22", received: "Rs 32,000 (cheques)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Taha Jawad", "Futsal, E-Gaming", 2000],
+        ["Shaharyar Zahid", "E-Gaming, Math Mystic", 2000],
+        ["Hadi Akhtar", "Futsal", 1500],
+        ["Asad Ahmed", "Futsal", 1500],
+        ["Mirbakht Khurram", "E-Gaming, Futsal", 2000],
+        ["Rao Ahmed", "Badminton", 1500],
+        ["Asad Shahbaz", "Futsal, Badminton", 2000],
+        ["Ahmed Rashid", "E-Gaming", 1500],
+        ["Kumail Haider", "E-Gaming, Padel Tennis", 2000],
+        ["Hanan Asif", "Math Mystic, Table Tennis", 2000, "E-Gaming crossed out"],
+        ["Abdul Rafay", "Badminton", 1500],
+        ["Abdullah Yasir", "Arm Wrestling", 1500],
+        ["Mahrukh Adil", "Ludo", 1500],
+        ["Eshaal Kashif", "Math Mystic, Ludo", 2000],
+        ["Hema Waqar", "Ludo", 1500],
+        ["Minaal Khan", "Math Mystic, Ludo", 2000],
+        ["Huda Kazmi", "Ludo, Math Mystic", 2000],
+        ["Adan Ahmed", "Ludo, Math Mystic", 2000]
+    ] },
+    { name: "JTCB (Sheet #24)", school: SHEET_HOST_BOYS, sheet: "#24", received: "Rs 31,500 for the whole sheet (marked online)",
+      paid: true, division: "Not on sheet",
+      note: "Sheet total Rs 31,500; the fees written add up to Rs 32,500.",
+      people: [
+        ["Abu Hurraira", "", 1500, "\"GD-3\" written beside the school"],
+        ["M. Rehan", "Football, Badminton", 2000],
+        ["Areez Asad", "Futsal", 1500, "Team: Invincibles"],
+        ["Abdullah Gul", "Futsal, Padel Tennis, Badminton", 2000, "3 categories but Rs 2,000 on sheet"],
+        ["Sultan Chan", "E-Gaming Tekken", 1500, "surname hard to read"],
+        ["Rohaan Tahir", "Futsal", 1500, "Team: Invincibles"],
+        ["Muneeb Sabir", "Badminton, E-Gaming Tekken", 2000],
+        ["Ibad ur Rehman", "Badminton, Athletics", 0, "no fee written"],
+        ["Yousuf Nadeem", "E-Gaming FC", 1500, "written \"FC 27\""],
+        ["Ayan Azhar", "E-Gaming Tekken", 1500],
+        ["Arfeen", "Futsal, Dodgeball, E-Gaming", 2000, "Team: Jungle FC; 3 categories but Rs 2,000"],
+        ["Abdur Rehman", "Futsal", 1500, "Team: Jungle FC"],
+        ["Abyan", "Futsal", 1500, "Team: Jungle FC"],
+        ["Saad Farooq", "Futsal, Foosball", 2000, "Team: Invincible FC"],
+        ["Abu Baker Javaid", "", 0, "Team: Cheema XI; no category or fee written"],
+        ["Abdul Rehman", "Dodgeball", 1500, "Team: Galacticos"],
+        ["Arham Aleem", "E-Gaming Tekken", 1500, "school written \"BSS JTC\""],
+        ["Ibrahim Qavi", "Cricket", 1500, "Team: Cheema XI"],
+        ["Ahmed Yasir", "Chess", 1500]
+    ] },
+    { name: "BSS Bahria (Sheet #24)", school: "BSS Bahria Town", sheet: "#24", received: "Paid as part of sheet #24 (sheet total Rs 31,500, fees marked \"online\")",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["M. Ali", "Athletics - 50 Meters", 1500]
+    ] },
+    { name: "Beaconhouse Canal Side - Abdul Rafay (Sheet #24)", school: "Beaconhouse Canal Side", sheet: "#24", received: "Paid as part of sheet #24 (sheet total Rs 31,500, fees marked \"online\")",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Abdul Rafay", "Table Tennis Singles", 1500]
+    ] },
+    { name: "LACAS JT (Sheet #24)", school: "LACAS JT", sheet: "#24", received: "Paid as part of sheet #24 (sheet total Rs 31,500, fees marked \"online\")",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Nehan Asad", "Ludo", 0, "no fee written"],
+        ["Ayaan Imran", "Badminton Singles", 1500]
+    ] },
+    { name: "KIPS College - Abdul Hadi (Sheet #7)", school: "KIPS College", sheet: "#7", received: "Part of Rs 6,000 for 6 KIPS strongmen (sheet #7, Rs 30,000 cash)",
+      paid: true, division: "Under 19",
+      note: "The other 5 KIPS strongmen on this sheet (Sikander Nadeem, M. Abdullah, Hassan Amir, Talal Khattak, Anzal Asad) were already imported on 13 Oct as \"BJTC Arm Wrestling 1-5\", so they are not added again.",
+      people: [
+        ["Abdul Hadi", "Strongman", 0, "Under 19"]
+    ] },
+    { name: "LGS Johar Town - Muhammad Hassaan (Sheet #7)", school: "LGS Johar Town", sheet: "#7", received: "Paid as part of sheet #7 (Rs 30,000 cash)",
+      paid: true, division: "Under 15",
+      people: [
+        ["Muhammad Hassaan", "", 1500, "Under 15"]
+    ] },
+    { name: "Kaizen (Sheet #7)", school: "Kaizen", sheet: "#7", received: "Paid as part of sheet #7 (Rs 30,000 cash)",
+      paid: true, division: "Under 17 / Under 19",
+      people: [
+        ["Musa Afzal", "", 1500, "Under 17 written by name, Under 19 at the top"],
+        ["Hassan Butt", "", 1500],
+        ["Musa", "", 1500],
+        ["Ahmed Ibrahim", "", 1500],
+        ["Yousaf", "", 1500],
+        ["Hamza", "", 1500],
+        ["Kabeer", "", 1500, "Under 17"],
+        ["Ayesha Khan", "", 1500],
+        ["Faseeh", "", 1500],
+        ["Ali Shaikh", "", 1500],
+        ["Khubaib", "", 1500, "Under 19"],
+        ["Abdul Basit", "", 1500, "Under 19"],
+        ["Ayaan Khan", "", 1500, "Under 19"],
+        ["Ibrahim Sajid", "", 1500, "Under 19"],
+        ["Ryan Khawaja", "", 1500, "Under 19"]
+    ] },
+    { name: "ISL Pine Avenue (Sheet #6)", school: "ISL Pine Avenue", sheet: "#6", received: "Rs 30,000 cash (received by Salman)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Ehan Adnan", "E-Gaming", 1500],
+        ["Musa Bin Usman", "E-Gaming", 1500],
+        ["Hussain Zaidi", "Futsal", 1500, "Team B"],
+        ["Muneeb Waqar", "Futsal", 1500, "Team B"],
+        ["Ayan Shahnawaz", "Futsal", 1500, "Team B"],
+        ["M. Azlaan", "Futsal", 1500, "Team B"],
+        ["Kabeer Awan", "Futsal", 1500, "Team B"],
+        ["Hassan Raza", "Futsal", 1500, "Team B"],
+        ["Abdul Rafay", "Futsal", 1500, "Team A"],
+        ["Zaid Dar", "Futsal", 1500, "Team A"],
+        ["Hassan Khan", "Futsal", 1500, "Team A"],
+        ["Anas Khan", "Futsal", 1500, "Team A"],
+        ["M. Tehami", "Futsal", 1500, "Team A"],
+        ["Nisa Nadeem", "Basketball", 1500],
+        ["Shanzay Shirazi", "Dodgeball", 1500],
+        ["Manat Fatima", "Dodgeball", 1500],
+        ["Ayoun Farhan", "Basketball", 1500],
+        ["Ayesha Khawar", "Basketball", 1500],
+        ["Anaya Hassan", "Basketball", 1500],
+        ["Dua-e-Mustafa", "Basketball", 1500]
+    ] },
+    { name: "Beaconhouse Defence (Sheet #5)", school: "Beaconhouse Defence Campus", sheet: "#5", received: "Rs 24,000",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Abdul Rafeh", "Basketball", 1500, "Under 19"],
+        ["Ali Imran", "Basketball", 1500, "Under 19"],
+        ["Nael Nabeel", "Basketball", 1500, "Under 19"],
+        ["Samaryar Aziz", "Basketball", 1500, "Under 19"],
+        ["Muhammad Hamza", "Basketball", 1500, "Under 19"],
+        ["Mahad Ali", "Basketball", 1500, "Under 19"],
+        ["Abdullah Irfan", "Basketball", 1500, "Under 19"],
+        ["Abdul Samy", "Basketball", 1500, "Under 19"],
+        ["Ahmed Imran", "Basketball", 1500, "Under 19"],
+        ["Syed Haseeb", "Table Tennis", 1500],
+        ["Muhammad Danial Baig", "Table Tennis", 1500],
+        ["Muhammad Musa", "E-Gaming FC", 1500, "written \"FIFA\""],
+        ["Abdullah Wasif", "Padel Tennis", 1500],
+        ["Reyaan Chaudhry", "Padel Tennis", 1500],
+        ["Ardsher Ayaz Saleem", "Padel Tennis", 1500],
+        ["Muhammad Abdul Hadi", "Padel Tennis", 1500]
+    ] },
+    { name: "ISL (Sheet #11)", school: "ISL", sheet: "#11", received: "Rs 84,000 (56 x 1,500, includes the 2 crossed-out names)",
+      paid: true, division: "Not on sheet",
+      note: "Burhan and Mehar are crossed out on the sheet and left out here, but the Rs 84,000 total counts them.",
+      people: [
+        ["Abdul Hadi", "", 1500],
+        ["Mubarak Abbas", "", 1500],
+        ["Abdul Wasey", "", 1500],
+        ["Shavez", "", 1500],
+        ["Mustafa Bilal", "", 1500],
+        ["Ayan Farooq", "", 1500],
+        ["Adil Irfan", "", 1500, "\"Farooq\" crossed out, \"Irfan\" written"],
+        ["Arham Yasir", "", 1500],
+        ["Yahya Rehman", "", 1500],
+        ["Yahya Warraich", "", 1500],
+        ["Mustafa Ali Zia", "", 1500],
+        ["Abdul Wali", "", 1500],
+        ["Selina", "", 1500],
+        ["Airah", "", 1500],
+        ["Ayat", "", 1500],
+        ["Maheen", "", 1500],
+        ["Azka", "", 1500],
+        ["Uswa", "", 1500],
+        ["Abeerah", "", 1500],
+        ["Eman", "", 1500],
+        ["Anaya", "", 1500],
+        ["Insiya", "", 1500],
+        ["Abdullah Asif", "", 1500],
+        ["Abdullah Khawaja", "", 1500],
+        ["Safwan Nauman", "", 1500],
+        ["Taha Shahid", "", 1500],
+        ["Hassan Khan", "", 1500],
+        ["Arham Ghani", "", 1500],
+        ["M. Mohiuddin", "", 1500],
+        ["Abdullah Kamran", "", 1500],
+        ["Saad Ijaz", "", 1500],
+        ["Salaar Nasir", "", 1500],
+        ["Hussain Iqbal Khan", "", 1500],
+        ["Salman Shahid", "", 1500],
+        ["Ibrahim Armaghan", "", 1500],
+        ["Nabeel Ahmed", "", 1500],
+        ["Ayaan Dar", "", 1500],
+        ["M. Sharjeel Aslam", "", 1500],
+        ["Murtaza Zulfiqar", "", 1500],
+        ["Ali Hammad", "", 1500],
+        ["Sheyan Atif", "", 1500],
+        ["Abdul Rehman", "", 1500],
+        ["M. Shan", "", 1500],
+        ["Hastam Ali", "", 1500, "spelled as written"],
+        ["Mohid", "", 1500],
+        ["Waleed Faisal", "", 1500],
+        ["Malika", "", 1500, "written \"Malka\""],
+        ["Jannat Tariq", "", 1500],
+        ["Eraya Hassan", "", 1500],
+        ["Anayah Khan", "", 1500],
+        ["Marush", "", 1500],
+        ["Abdul Mohaiman", "", 1500],
+        ["Usman Khan", "", 1500],
+        ["Abdullah Shan", "", 1500]
+    ] },
+    { name: "BCP JT (Sheet #3)", school: "BCP JT", sheet: "#3", received: "Rs 30,000 received 16/10/26",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Hashir Ghani", "Badminton", 1500],
+        ["Ayan Saeed", "Futsal", 1500],
+        ["Rana Sheyan", "Futsal", 1500],
+        ["Rayeed Adnan", "Ludo", 1500],
+        ["Haris", "Futsal", 1500],
+        ["Sufyan", "Futsal", 1500],
+        ["Hussnain Akhter", "Futsal", 1500],
+        ["Shahjahan", "Futsal", 1500],
+        ["Sulaiman Asif", "Table Tennis", 1500],
+        ["Sualeh", "Padel Tennis", 1500],
+        ["Arfam", "Futsal", 1500],
+        ["Haider Ali", "Padel Tennis", 1500],
+        ["Hadi Iqbal", "Futsal", 1500],
+        ["M. Khizer", "Futsal", 1500],
+        ["Ayan Najam", "Futsal", 1500],
+        ["Abdul Rafay Khidr", "Futsal", 1500],
+        ["Ahsan", "Futsal", 1500],
+        ["Arham Waseem", "Padel Tennis", 1500],
+        ["Ayan Adeel", "Ludo", 1500],
+        ["Ali Sheikh", "Padel Tennis", 1500]
+    ] },
+    { name: "Beaconhouse S.A Garden (Sheet #13)", school: "Beaconhouse S.A Garden", sheet: "#13", received: "Rs 41,500 received 16/10/26",
+      paid: true, division: "Mixed (grades 7-9)",
+      people: [
+        ["Shahzaib", "Basketball", 1500, "Grade 9"],
+        ["Shahzaib", "Basketball, Badminton", 2000, "Grade 8 (a second Shahzaib)"],
+        ["Rana Tallal", "Basketball, Futsal", 2000, "Grade 8"],
+        ["Nawab", "Futsal, Basketball", 2000, "Grade 8"],
+        ["Iqtadaar", "Futsal, Basketball", 2000, "Grade 8"],
+        ["Rana Abdullah", "Badminton, Basketball", 2000, "Grade 8"],
+        ["Hassan Hamza", "Basketball, Futsal, Cricket", 2500, "Grade 7; \"Dodgeball\" also written above Cricket"],
+        ["Arham Khan", "Athletics, Futsal", 2000, "Grade 7; written \"Race\""],
+        ["Ibad Khan", "Futsal, Basketball, Cricket", 2500, "Grade 7"],
+        ["Muneeb-ul-Rehman", "Futsal, Basketball, Cricket", 2500, "Grade 7"],
+        ["Hussain Khan", "Futsal, Basketball, Athletics, Cricket", 3000, "Grade 7; 4 categories (limit is 3)"],
+        ["Hassan Khan", "Futsal, Basketball, Cricket", 2500, "Grade 7"],
+        ["Malik Dawood", "Cricket, Futsal", 2000, "Grade 7"],
+        ["M. Ibrahim", "Basketball, Cricket", 2000, "Grade 7"],
+        ["Hamza Waheed", "Badminton, Basketball", 2000, "Grade 9"],
+        ["Ali Haider", "Futsal, Basketball, Foosball", 2500, "Grade 7; Cricket crossed out"],
+        ["Mamoon", "Futsal, Cricket, Basketball", 2500, "Grade 7"],
+        ["Ameer", "Basketball, Futsal", 2500, "Grade 8; 2 categories but Rs 2,500"],
+        ["Jaffar Haider", "Athletics", 1500, "written \"Race\""]
+    ] },
+    { name: "City Ravi (sheet, no number)", school: "City Ravi", sheet: "not numbered", received: "Rs 18,000",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Murtaza", "", 1500],
+        ["Mohib", "", 1500],
+        ["Muneeb", "", 1500],
+        ["Musab", "", 1500],
+        ["Yahya", "", 1500],
+        ["Bajwa", "", 1500],
+        ["Habib", "", 1500],
+        ["Sultan", "", 1500],
+        ["Ahmed", "", 1500],
+        ["Abdullah Shahid", "", 1500],
+        ["M. Hassan", "", 1500],
+        ["Yousaf", "", 1500]
+    ] },
+    { name: "BSS JTB (Sheets #18 + #4)", school: SHEET_HOST_BOYS, sheet: "#18 (clean copy) + #4", received: "Rs 28,500 (clean list) and Rs 13,500 (#4 cricket sheet)",
+      paid: true, division: "Not on sheet",
+      note: "The clean list and sheet #4 both list the cricket team; each player is entered once here.",
+      people: [
+        ["Shahzain", "Futsal", 1500],
+        ["Ahmed Qureshi", "Futsal", 1500],
+        ["Eisa", "Futsal, Athletics", 2000],
+        ["Azan", "Futsal", 1500],
+        ["Abdullah", "Futsal, E-Gaming FC", 2000, "written \"FIFA\""],
+        ["Rayyan Imran", "E-Gaming FC", 1500, "written \"FIFA\""],
+        ["M. Abdullah Imran", "E-Gaming FC, Ludo", 2000],
+        ["Abdullah Mahmood", "Cricket", 1500, "Under 15"],
+        ["Adil Zaman", "Cricket", 1500, "Under 15; also written \"Adil Zameen\""],
+        ["Ayaan Mubashir", "Cricket", 1500, "Under 15"],
+        ["Ayaan Rasheed", "Cricket", 1500, "Under 15; only on sheet #4"],
+        ["Ashar Imran", "Cricket", 1500, "Under 15"],
+        ["Zaim Bilal", "Cricket", 1500, "Under 15; also written \"Zaeem Bilal\" (listed twice on the clean copy); #4 says payment done"],
+        ["Malik Hashir Ali", "Cricket", 1500, "Under 15"]
+    ] },
+    { name: "Kaizen (BSS JTB list)", school: "Kaizen", sheet: "#18 (clean copy)", received: "Part of the BSS JTB list (Rs 28,500)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Ibrahim", "Futsal", 1500],
+        ["Abdullah", "Futsal", 1500],
+        ["Jarrar", "Futsal", 1500],
+        ["Abdul Basit", "Futsal", 1500, "an Abdul Basit (Kaizen) is also on sheet #7"]
+    ] },
+    { name: "ISL (Sheet #16)", school: "ISL", sheet: "#16", received: "Rs 48,000 (32 x 1,500); \"46,500\" also written at the bottom",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Jadeel", "", 1500],
+        ["Rajeel", "", 1500],
+        ["Rana Haris", "", 1500],
+        ["Salman Hakim", "", 1500],
+        ["Rehan Malik", "", 1500],
+        ["Abdul Rafay", "", 1500],
+        ["Shaheek Suleman", "", 1500],
+        ["Shurabeel", "", 1500],
+        ["Aun Ali", "", 1500],
+        ["Awais Khan", "", 1500],
+        ["Shaheer Mahar", "", 1500],
+        ["Musa Saeed", "", 1500],
+        ["Hasnain Bilal", "", 1500],
+        ["Minahil Mansoor", "", 1500],
+        ["Muhammad Ali Khan", "", 1500],
+        ["Sehar", "", 1500],
+        ["Mahnoor", "", 1500],
+        ["Ayda", "", 1500],
+        ["Rameen", "", 1500],
+        ["Fajr", "", 1500],
+        ["Umer Haqeeq", "", 1500],
+        ["Qaim", "", 1500],
+        ["Mati", "", 1500],
+        ["Abbas", "", 1500],
+        ["Sudais", "", 1500],
+        ["Hashim", "", 1500],
+        ["Doggar", "", 1500],
+        ["Mahad", "", 1500],
+        ["Samar Bajwa", "", 1500],
+        ["Talha", "", 1500],
+        ["Hassanat Manzoor", "", 1500],
+        ["Haniya", "", 1500]
+    ] },
+    { name: "IS1 / IS2 list (school not named)", school: "School not named on sheet", sheet: "printed list, no number", received: "Fees written per student; no \"received\" on the sheet",
+      paid: false, division: "Not on sheet",
+      note: "School is not named on this printed list. Please set the school with Edit.",
+      people: [
+        ["Muhammad Nouman Khan", "Padel Tennis, Table Tennis, Chess", 2500, "Class IS1-B"],
+        ["Hussain Saqib", "Badminton, Ludo", 2200, "Class IS2-B; written 2000 + 200"],
+        ["Hussain Hashim", "E-Gaming, Futsal", 2000, "Class IS1-D"],
+        ["Muhammad Abdullah", "Cricket", 1700, "Class IS1-A; written 1500 + 200"],
+        ["Ali Azizudin", "Football", 1500, "Class IS1-A"],
+        ["Hussain Afzal", "Futsal", 1500, "Class IS1-B"],
+        ["Zaka Azizudin", "Football", 1500, "Class IS1-A"],
+        ["Abdul Hadi Toqeer", "Futsal", 1500, "Class IS1-C"],
+        ["Muhammad Fehr Rashid", "Futsal", 1700, "Class IS1-B; written 1500 + 200"],
+        ["Muhammad Ibrahim Khan Mamdot", "Futsal", 1700, "Class IS1-B; written 1500 + 200"],
+        ["Asher Asif", "Futsal", 1500, "Class IS1-A"],
+        ["Rayan Umair", "Padel Tennis, E-Gaming", 2200, "Class IS2-B; written 2000 + 200"],
+        ["Hassan Manzoor", "Padel Tennis, Football", 2200, "Class IS1-C; written 2000 + 200"],
+        ["Haider Waqas", "Futsal", 1700, "Class IS1-B; written 1500 + 200"],
+        ["Muhammad Abu Bakar", "Football, E-Gaming", 2200, "Class IS1-A; written 2000 + 200"],
+        ["Muhammad Umer", "Football, E-Gaming", 2200, "Class IS1-A; written 2000 + 200"],
+        ["Shahzaib Ali", "Cricket", 1700, "Class IS1-A; written 1500 + 200"],
+        ["Altamish", "Badminton, Cricket, E-Gaming Tekken", 2500, "Class IS1-C"],
+        ["Shahnawaz", "Futsal", 0, "handwritten at the bottom"]
+    ] },
+    { name: "LGS 308-C Johar Town (2 sheets, 15 Oct)", school: "LGS Johar Town", sheet: "LGS forms (2 pages)", received: "Rs 62,500 for 39 students (\"85,000 received, 1,500 return\" also noted)",
+      paid: true, division: "Under 15",
+      people: [
+        ["Abdul Nafay", "Basketball, Table Tennis", 2000, "Class 7C"],
+        ["Ibrahim", "Futsal, Badminton", 2000, "Class 8G"],
+        ["M. Jalal Khan", "Futsal", 1500, "Class 8D"],
+        ["Muzammil Akmal", "Badminton", 1500, "Class 8J"],
+        ["Hadi Imran", "Badminton", 1500, "Class 8J"],
+        ["Wali Khan", "Badminton", 1500, "Class 8H"],
+        ["M. Haziq", "Athletics", 1500, "Class 8E"],
+        ["Ayaan Mustafa", "Chess", 1500, "Class 8G"],
+        ["Ameer Hamza", "Chess", 1500, "Class 8G"],
+        ["Rafay Ahmar", "Table Tennis", 1500, "Class 6E; surname hard to read"],
+        ["Jawad Naseem", "Table Tennis", 1500, "Class 6E"],
+        ["M. Shazil", "Futsal", 1500, "Class 8G"],
+        ["M. Hassan Naveed", "Athletics - 50 Meters", 1500, "Class 8E"],
+        ["Zain-ul-Abideen", "Table Tennis", 1500, "Class 6F"],
+        ["Ahmed Shehzad", "Table Tennis", 1500, "Class 7G"],
+        ["Ibrahim Safi", "Chess", 1500, "Class 7H"],
+        ["Zohan Rehman", "Table Tennis", 1500, "Class 6E"],
+        ["Hashim Sheikh", "Futsal", 1500, "Class 8D"],
+        ["Rohan", "Table Tennis", 1500, "Class 6D"],
+        ["M. Ayan", "Cricket", 1500, "Class 8B"],
+        ["Keyaan", "Cricket", 1500, "Class 8H"],
+        ["Rahim", "Cricket, Athletics", 2000, "Class 8H"],
+        ["Yousaf Ali", "Cricket, Futsal", 2000, "Class 8G"],
+        ["Arham Yasir", "Cricket", 1500, "Class 8D"],
+        ["Shasheer Sadiq", "Cricket", 1500, "Class 7D"],
+        ["Asjid Usman", "E-Gaming", 1500, "Class 7D"],
+        ["Zaid Haris", "E-Gaming", 1500, "Class 7B"],
+        ["Mustafa Sajjad", "E-Gaming, Chess", 2000, "Class 7A"],
+        ["Huzaifa Yasir", "E-Gaming", 1500, "Class 7D"],
+        ["Hashir Murtaza", "E-Gaming", 1500, "Class 7G"],
+        ["Muhammad Shees", "E-Gaming", 1500, "Class 7B"],
+        ["M. Hassan Farhan", "E-Gaming", 1500, "Class 7B"],
+        ["M. Yahya Rahim", "Basketball, Badminton", 2000, "Class 7F"],
+        ["Ahmad Iqbal", "Basketball", 1500, "Class 7F"],
+        ["Dawood Ahmad", "Basketball", 1500, "Class 7G"],
+        ["M. Ilhan Chaudhry", "Basketball", 1500, "Class 7H"],
+        ["M. Ahmad Siddique", "Basketball", 1500, "Class 7C"],
+        ["Dewan Faiq", "Basketball, Badminton", 2000, "Class 7C"],
+        ["Shees bin Yahya", "Basketball, Table Tennis", 2000, "Class 7C"]
+    ] },
+    { name: "BSS JTB (Sheet #12)", school: SHEET_HOST_BOYS, sheet: "#12 + clean copy", received: "Rs 37,500 (clean copy); #12 says Rs 25,500, 16 Oct",
+      paid: true, division: "Not on sheet",
+      note: "Sheet #12 crossed out Abdullah Gul and Muhammad Rehan as \"already paid\" (they are on sheet #24).",
+      people: [
+        ["Abdullah Ali", "", 2000, "Class 10C"],
+        ["Husnain Bhangoo", "", 1500, "Class 9C; \"500 return\" noted"],
+        ["Zohain Kashif", "", 1500, "Class 9C"],
+        ["Abdan Rehman", "", 1500, "Class 9C; #12 writes \"Abdur Rehman Atif\""],
+        ["Ali Javed", "", 1500, "Class 10C"],
+        ["Rayyan Farooq", "", 1500, "Class 10C"],
+        ["Zaid Nadeem", "", 2000, "Class 11C; #12 says Rs 2,500"],
+        ["Daniyal Umer", "", 1500, "Class 9C"],
+        ["Ezyan Ahmed", "", 2000, "Class 7; #12 writes \"Zyan Ahmed\""],
+        ["Malik Abdullah", "", 1500, "Class 10"],
+        ["Aaraiz", "", 1500, "Class 10C"],
+        ["Ali Musa", "", 1500, "Class 11C"],
+        ["Ahmed Raza", "", 1500, "Class 9C"],
+        ["Zain", "", 1500, "Class 9C; #12 writes \"Zaim\""],
+        ["Ayyan", "Futsal", 1500],
+        ["Hasnat", "", 1500],
+        ["Sher Khan", "", 1500],
+        ["Shahmeer Tariq", "Futsal", 1500],
+        ["Shahnawaz", "", 1500],
+        ["Zaryab", "", 1500],
+        ["Burhan", "", 1500],
+        ["Daud", "", 1500],
+        ["Talha", "", 1500],
+        ["Ayan", "", 1500]
+    ] },
+    { name: "LGS Model Town (sheet, no number)", school: "LGS Model Town", sheet: "not numbered", received: "Rs 10,000 (Rs 15,000 less Rs 5,000 discount)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Hassan Butt", "Arm Wrestling", 1500],
+        ["Ahmed Butt", "Arm Wrestling", 1500],
+        ["Hamza", "Ludo", 1500],
+        ["Umer", "Badminton", 1500],
+        ["Zain", "Ludo", 1500],
+        ["Hanzala", "Ludo", 1500],
+        ["Reyan", "Futsal", 1500],
+        ["Hamza", "Futsal", 1500, "a second Hamza"],
+        ["M. Ali", "Ludo", 1500],
+        ["Ayyan Ahmed", "Ludo", 1500]
+    ] },
+    { name: "BGTL (Sheet #23)", school: "BGTL", sheet: "#23", received: "Rs 15,500",
+      paid: true, division: "Not on sheet", hd: "Syed Mohtashim Ali",
+      people: [
+        ["Syed Mohtashim Ali", "Tug Of War, Futsal", 2000, "Head delegate"],
+        ["Syed Subhan", "Tug Of War, Futsal, Foosball", 2000],
+        ["Aroz Awan", "Futsal, Chess, E-Gaming FC", 2000],
+        ["Ibrahim Kashif", "Futsal, Tug Of War", 2000],
+        ["Azaan Kashif", "Futsal, Tug Of War", 2000],
+        ["Anas Khan", "Futsal", 1500],
+        ["Talha Yousaf", "Futsal, Tug Of War", 2000],
+        ["Abdul Raheem", "Futsal, Tug Of War", 2000, "\"Badminton\" also written on the next line"]
+    ] },
+    { name: "Beaconhouse Canal Side (Sheet #19)", school: "Beaconhouse Canal Side", sheet: "#19", received: "Rs 31,000",
+      paid: true, division: "Not on sheet",
+      note: "The two FC College rows at the top of this sheet are crossed out.",
+      people: [
+        ["Arha", "Basketball, Football", 2000, "Group 1"],
+        ["Raya", "Basketball", 1500, "Group 1"],
+        ["Meerab", "Basketball, Football", 2000, "Group 1"],
+        ["Hareem Meerab", "Ludo", 1500, "Group 1"],
+        ["Anfal", "Basketball, Throwball", 2000, "Group 1"],
+        ["Mareen", "Throwball, Basketball", 2000, "Group 2"],
+        ["Seemab", "Throwball, Basketball", 2000, "Group 2"],
+        ["Fatima", "Throwball, Basketball", 2000, "Group 2"],
+        ["Armeer", "Basketball", 1500, "Group 2"],
+        ["Walia", "Basketball", 1500, "Group 2"],
+        ["Zainab Ali", "Football, Throwball, Basketball", 2500, "Group 2"],
+        ["Ayesha", "Basketball", 1500, "Group 3"],
+        ["Eshal", "Basketball", 1500, "Group 3"],
+        ["Maryam", "Throwball", 1500, "Group 3"],
+        ["Dua Umer", "Basketball, Football", 2000, "Group 3"],
+        ["Naura", "Basketball, Football", 2000, "Group 3"],
+        ["Zainab", "Football, Basketball", 2000, "Group 3"]
+    ] },
+    { name: "BSS AITC (Sheet #20)", school: "BSS AITC", sheet: "#20", received: "Rs 15,000 received 16/10/26 (Rs 18,000 less discount)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Fozan Kaleem", "Basketball", 1500],
+        ["Ibrahim Waseem", "Basketball", 1500],
+        ["Husnain Tariq", "Basketball", 1500],
+        ["Abdul Moiz", "Basketball", 1500],
+        ["Abdullah Saqib", "Basketball", 1500],
+        ["Hamza Khan", "Basketball", 1500],
+        ["Ayaan Kaleem", "Basketball", 1500],
+        ["Abdul Rehman", "Basketball", 1500],
+        ["Mustafa", "Basketball", 1500],
+        ["Moiz Hassan", "Basketball", 1500],
+        ["Saim", "Basketball", 1500],
+        ["Faizan Khan", "Badminton", 1500]
+    ] },
+    { name: "BSS JT New Registration (Sheet #29)", school: SHEET_HOST_BOYS, sheet: "#29", received: "Rs 30,000 (Rs 34,000 crossed out), 16/10/26",
+      paid: true, division: "Not on sheet",
+      note: "Crossed out on the sheet: Azlaan Mubashir (\"2,500 paid to class teacher\"), Saad Arshad and one more name.",
+      people: [
+        ["Hannan Haider", "", 1500],
+        ["M. Rayan", "Ludo", 1500, "Ludo written in the margin"],
+        ["Musab Hassan", "Padel Tennis, E-Gaming FC", 2000, "margin also mentions Table Tennis"],
+        ["Zayan Sajid", "E-Gaming FC, Badminton", 2000, "margin also mentions Padel"],
+        ["Zain Kashif", "E-Gaming Tekken", 1500],
+        ["Shahzain Taj", "Badminton Singles, Chess", 2000],
+        ["Zohan Farrukh", "Padel Tennis, Badminton", 1500, "\"add\" written next to the fee"],
+        ["Syed Ibrahim", "E-Gaming FC, Futsal", 2000],
+        ["Abdul Rehman", "Cricket, Dodgeball, Ludo", 2000],
+        ["Ahmad Nawaz", "Strongman, Futsal, Dodgeball", 2000],
+        ["Usayd", "E-Gaming", 1500],
+        ["Aarish Abbas", "E-Gaming FC", 1500, "written \"FIFA\""],
+        ["Abdullah Waqar", "Futsal", 1500],
+        ["Maaviya", "Futsal", 1500, "name hard to read"],
+        ["Abdul Hadi", "Ludo", 1500],
+        ["Mustaqi", "Futsal, Cricket", 2000, "name hard to read (Mustafa / Mushtaq?)"],
+        ["Abdullah Rashid", "Futsal, Athletics, Chess", 2000, "3 categories but Rs 2,000"],
+        ["Rayyan Ali", "Futsal, E-Gaming FC", 2000],
+        ["Saad", "Futsal", 1500],
+        ["Hashir Ali", "Badminton", 1500],
+        ["Aryan Bajwa", "Futsal", 1500]
+    ] },
+    { name: "BJT (Sheet #2)", school: SHEET_HOST_BOYS, sheet: "#2", received: "Part of sheet #2 (Rs 19,000 total)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Darab Shah", "E-Gaming Tekken, Badminton", 2000],
+        ["Rawasia", "Foosball", 1500]
+    ] },
+    { name: "Head Office - Hashir Saeed (Sheet #2)", school: "Beaconhouse Head Office", sheet: "#2", received: "Part of sheet #2 (Rs 19,000 total)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Hashir Saeed", "Cricket", 1500]
+    ] },
+    { name: "BMTL (Sheet #2)", school: "BMTL", sheet: "#2", received: "Rs 14,000 received (Rs 2,000 each, Maam Nabeela)",
+      paid: true, division: "Not on sheet",
+      note: "Crossed out: M. Rehaan (E-Gaming, Chess) and Abdul Saboor (Ludo).",
+      people: [
+        ["Mushab Khan", "Futsal, Cricket, Throwball", 2000],
+        ["Daud", "Futsal, Throwball, Padel Tennis", 2000, "Cricket crossed out"],
+        ["Abdullah", "Futsal, Throwball, Padel Tennis", 2000, "Cricket crossed out"],
+        ["Shuraim", "Futsal, Cricket, Badminton, Throwball", 2000, "4 categories (limit is 3)"],
+        ["Mujtaba", "Futsal, Cricket, Throwball", 2000],
+        ["Rao", "Futsal, Cricket, Throwball", 2000],
+        ["Ayaan Ali", "Futsal, Cricket, Badminton, Throwball", 2000, "4 categories (limit is 3)"]
+    ] },
+    { name: "CSBC (Sheet #8)", school: "CSBC", sheet: "#8", received: "Rs 32,000 received, 21 students",
+      paid: true, division: "Under 15",
+      note: "Crossed out: Waleed (Ludo), Saim (Table Tennis) and one Badminton row.",
+      people: [
+        ["M. Arham Bhatti", "Basketball", 1500],
+        ["Bilal Babar", "Basketball", 1500],
+        ["Ali Murtaza", "Futsal", 1500],
+        ["Ali Turab", "Basketball", 1500],
+        ["Hussain Sultan", "Basketball", 1500],
+        ["Anas bin Faisal", "Futsal", 1500],
+        ["Abdul Rafay", "Basketball", 1500],
+        ["Abdul Rehman", "Futsal", 1500],
+        ["Qasim Hashmi", "Futsal", 1500],
+        ["Tayyab Tahir", "Futsal", 1500],
+        ["Furqan Bajwa", "Futsal", 1500],
+        ["Saad Sarwar", "Futsal", 1500],
+        ["Moosa", "Futsal", 1500],
+        ["Zayan", "Futsal", 1500],
+        ["Zunair", "Futsal", 1500],
+        ["Hussain Ali", "Futsal", 1500],
+        ["Abdullah Babar", "Futsal", 1500],
+        ["Ali Asif", "Basketball", 1500],
+        ["Danish", "Futsal, E-Gaming FC", 2000],
+        ["Wasiullah", "Futsal", 1500],
+        ["Abdullah Saad", "Futsal", 1500]
+    ] },
+    { name: "LACAS JTC (Sheet #21)", school: "LACAS JTC", sheet: "#21", received: "Received Rs 39,000 (first digit overwritten - please check), 16/10/26",
+      paid: true, division: "Not on sheet",
+      note: "\"3 games each\". Fees written add up to Rs 37,500, plus Rs 1,000 in Badminton Doubles add-ons from the walk-in sheet.",
+      people: [
+        ["Abdul Hadi Shafique", "Futsal, Padel Tennis, Cricket", 3000],
+        ["Hussain Tiwana", "Futsal, Table Tennis, Padel Tennis", 1500],
+        ["M. Ahmad", "Cricket, Badminton, Table Tennis", 1500],
+        ["Musa Masood", "Futsal, Athletics - 50 Meters, Ludo", 1500],
+        ["Mohid Ejaz", "Futsal, E-Gaming FC, Ludo", 1500],
+        ["M. Azaan", "Futsal, Cricket, Badminton", 1500],
+        ["Ahmad Mustafa", "Futsal, E-Gaming FC, Chess", 1500],
+        ["Musa Khalid", "Futsal, Cricket, E-Gaming FC", 1500],
+        ["Hashim Zaman", "Futsal, Padel Tennis, Cricket", 1500],
+        ["Faizan ul Haq", "Futsal, Badminton, Padel Tennis", 1500],
+        ["Basim Adnan", "Futsal, Table Tennis, Padel Tennis", 1500, "\"Tennis\" taken as Table Tennis"],
+        ["Shahzain Shaikh", "Badminton, Ludo, Table Tennis", 1500],
+        ["Abdul Hadi", "Football, Chess, Ludo", 1500],
+        ["M. Umar Habib", "Badminton, Ludo, E-Gaming Tekken", 1500],
+        ["Essa Faisal", "E-Gaming FC, Futsal, Cricket, Badminton Doubles", 2000, "Rs 1,500 on sheet #21 + Rs 500 add-on for Badminton Doubles (walk-in sheet, with Aroz Alwan); 4 categories"],
+        ["Shahzaman Sardar", "Futsal, E-Gaming FC, Ludo", 1500],
+        ["Raja M. Ibrahim", "Futsal, Badminton, Ludo", 1500],
+        ["Rayyan Khan", "Futsal, Badminton, Ludo", 1500],
+        ["Arham Shahzad", "Futsal, Badminton, Ludo", 1500],
+        ["Ayan Hashim", "Padel Tennis, Table Tennis, Badminton", 1500, "\"Tennis\" taken as Table Tennis"],
+        ["Ayyan Sarwar", "Cricket, Table Tennis, Badminton", 1500, "\"Tennis\" taken as Table Tennis"],
+        ["Abdul Qadeer", "E-Gaming Tekken, Ludo, Badminton", 1500],
+        ["Abdullah Basit", "Futsal, Cricket, Table Tennis", 1500],
+        ["Mustafa Mudassir", "E-Gaming FC, Badminton, Ludo", 1500],
+        ["Aroz Alwan", "Badminton Doubles", 500, "Rs 500 add-on (walk-in sheet, with Essa Faisal)"]
+    ] },
+    { name: "Walk-ins 16 Oct - BJT (Sheet #17)", school: SHEET_HOST_BOYS, sheet: "#17", received: "Part of sheet #17 (Rs 21,500 total)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Ayan Nawaz", "Badminton", 1500],
+        ["Ahmad Majid", "Futsal", 1500, "Team: The Invincibles"],
+        ["Hashir Ahmed", "Football, Cricket", 2000],
+        ["Rehan Sajjad", "Futsal", 1500],
+        ["M. Ahmed", "Futsal, Cricket", 2000],
+        ["Abdul Rehman", "E-Gaming Tekken", 1500],
+        ["Abdullah Zia", "E-Gaming Tekken", 1500],
+        ["Saad", "Badminton", 1500],
+        ["Aaz Hila", "E-Gaming Tekken", 1500, "name hard to read"],
+        ["Mahad Malik", "E-Gaming Tekken", 1500]
+    ] },
+    { name: "Beaconhouse Canal Side - Ali Nasir (Sheet #17)", school: "Beaconhouse Canal Side", sheet: "#17", received: "Part of sheet #17 (Rs 21,500 total)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Ali Nasir", "Cricket", 1500]
+    ] },
+    { name: "Beaconhouse Valencia - Daim Tariq (Sheet #17)", school: "Beaconhouse Valencia Town", sheet: "#17", received: "Part of sheet #17 (Rs 21,500 total)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Daim Tariq", "Padel Tennis", 500, "Rs 500 \"add\" - adding a category to an existing registration"]
+    ] },
+    { name: "Beaconhouse Defence - Zainab Wasif (Sheet #17)", school: "Beaconhouse Defence Campus", sheet: "#17", received: "Part of sheet #17 (Rs 21,500 total)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Zainab Wasif", "Foosball, Ludo", 2000, "school written \"B. (Wap) Defence\""]
+    ] },
+    { name: "JTCG - Anaya Farooq (Sheet #17)", school: SHEET_HOST_GIRLS, sheet: "#17", received: "Part of sheet #17 (Rs 21,500 total)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Anaya Farooq", "Badminton", 1500]
+    ] },
+    { name: "FC College (Sheet #15)", school: "FC College", sheet: "#15", received: "Rs 31,500 received",
+      paid: true, division: "Not on sheet",
+      note: "\"F.S\" on the sheet is read as Futsal. Crossed out: Hasnat, Ayan.",
+      people: [
+        ["Musa Piracha", "Futsal", 1500],
+        ["Moeez Haider", "Futsal", 1500],
+        ["Syed Ali", "Futsal", 1500],
+        ["Mustafa", "Futsal", 1500],
+        ["Nihal", "Futsal", 1500],
+        ["Zakwan", "Table Tennis, Futsal", 1500, "Rs 2,000 crossed out, Rs 1,500 kept"],
+        ["Wasam", "Futsal", 1500],
+        ["Abdullah", "Table Tennis", 1500],
+        ["Roman", "Futsal", 1500],
+        ["Abubaker", "Badminton", 1500],
+        ["Abdullah Arshad", "Arm Wrestling", 1500],
+        ["Rahim", "Ludo", 1500],
+        ["Abdullah Mansoor", "Basketball", 1500],
+        ["Salman Nazir", "Basketball", 1500],
+        ["Moeez Mohsin", "Basketball", 1500],
+        ["Aaron Ramzan", "Basketball", 1500],
+        ["Ahmed Faheem", "Basketball", 1500],
+        ["Eddie Smith", "Basketball", 1500],
+        ["Ahmed Ghumman", "Basketball", 1500],
+        ["Awais", "Futsal", 1500],
+        ["Musab Piracha", "Table Tennis", 1500]
+    ] },
+    { name: "Bloomfield - added from sheet #14", school: "Bloomfield", sheet: "#14", received: "Part of Rs 39,000 (Rs 37,000 cash + Rs 2,000 online)",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Ali Ghazi", "Dodgeball", 1500, "not in the earlier Bloomfield import"],
+        ["Salman", "Dodgeball, Cricket", 2000, "not in the earlier Bloomfield import"]
+    ] },
+    { name: "BJTC Crusaders - Dodgeball (2nd day sheet)", school: SHEET_HOST_BOYS, sheet: "not numbered (2nd day)", received: "No fee written",
+      paid: false, division: "Not on sheet",
+      note: "Same team as the BJTC Crusaders delegation (13 Oct import), adding Dodgeball on day 2. No fee written on the sheet.",
+      people: [
+        ["Haider Abbas", "Dodgeball", 0, "Team: Crusader's"],
+        ["Shawaiz Shaukat", "Dodgeball", 0, "Team: Crusader's"],
+        ["Rayan Akeel", "Dodgeball", 0, "Team: Crusader's"],
+        ["Mohid Ahmed Khan", "Dodgeball", 0, "Team: Crusader's; written \"Mohid Ahmed\""],
+        ["M. Hamayoun Babar", "Dodgeball", 0, "Team: Crusader's; written \"Humayun Babar\""],
+        ["Hussain Shahid", "Dodgeball", 0, "Team: Crusader's"],
+        ["Rayan Bilal", "Dodgeball", 0, "Team: Crusader's; written \"Rayan Billal\""],
+        ["Chaudhry Shahzaib", "Dodgeball", 0, "Team: Crusader's"]
+    ] },
+    { name: "BSS Wapda Town - walk-ins", school: "BSS Wapda Town Campus", sheet: "walk-in sheet, no number", received: "Rs 13,500 of the sheet",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Zain", "Futsal, Badminton", 1500],
+        ["Ayan", "Futsal, Ludo", 1500, "may be Ayan Khan from the earlier Wapda Town import"],
+        ["Shaharyar", "", 1500],
+        ["Ibrahim Saqib", "", 1500],
+        ["Asfand", "", 1500],
+        ["Ibrahim Iqbal", "", 1500],
+        ["Aasib", "", 1500],
+        ["Abdul Hadi", "", 1500],
+        ["Shaheer", "", 1500]
+    ] },
+    { name: "LGS Johar Town - walk-ins", school: "LGS Johar Town", sheet: "walk-in sheet, no number", received: "Rs 12,000 of the sheet",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Zain Khokhar", "", 1500],
+        ["Mehar Ayan", "", 1500],
+        ["Ehtesham Cheema", "", 1500],
+        ["Mustafa Bin Fakhir", "", 1500],
+        ["Ayan Kamran", "", 1500],
+        ["Abdullah Munawar", "", 1500],
+        ["Abdul Hadi", "", 1500],
+        ["Hussain", "", 1500]
+    ] },
+    { name: "Beaconhouse Valencia - walk-ins", school: "Beaconhouse Valencia Town", sheet: "walk-in sheet, no number", received: "Rs 3,000 of the sheet",
+      paid: true, division: "Not on sheet",
+      people: [
+        ["Dua Fatima", "", 1500],
+        ["Mehrish Ali", "", 1500]
+    ] }
+];
+
+async function importDelegateSheets(btn) {
+    if (!isAdmin) return alert('Please log in as admin first.');
+    if (allRegistrations.some(r => r.importBatch === SHEETS_IMPORT_BATCH)) {
+        return alert('The delegate sheets have already been imported.');
+    }
+    const groups = SHEET_IMPORT_GROUPS;
+    const people = groups.reduce((n, g) => n + g.people.length, 0);
+    const unpaid = groups.filter(g => !g.paid);
+    if (!confirm(`Import ${groups.length} paper entries with ${people} delegates from the delegate sheets?\n\n` +
+        `Payment is set from the sheets: ${groups.length - unpaid.length} paid, ${unpaid.length} unpaid ` +
+        `(${unpaid.map(g => g.name).join('; ')}).`)) return;
+
+    const label = btn ? btn.innerText : '';
+    if (btn) { btn.disabled = true; btn.innerText = 'Importing...'; }
+    try {
+        const stamp = firebase.firestore.FieldValue.serverTimestamp();
+        const batch = db.batch();
+        groups.forEach(g => {
+            const form = {
+                'School / Institution Name': g.school,
+                'Delegation Name': g.name,
+                'Head Delegate Name': g.hd || '',
+                'Head Delegate Email': HD_DEFAULT_EMAIL,
+                'Head Delegate Contact': HD_DEFAULT_PHONE,
+                'Division': g.division,
+                'Paper Sheet': g.sheet,
+                'Amount on Sheet': g.received,
+                ...(g.note ? { 'Sheet Note': g.note } : {})
+            };
+            g.people.forEach(([name, cats, fee, note], i) => {
+                form[`Delegate ${String(i + 1).padStart(2, '0')}`] = paperDelegateLine(name, cats, fee, note);
+            });
+            batch.set(db.collection('registrations').doc(), {
+                eventType: 'Sports Fest', subType: 'Delegations', registrationType: 'Delegations',
+                categoryOrCommittee: g.name, paymentStatus: g.paid ? 'paid' : 'unpaid', submittedAt: stamp,
+                importBatch: SHEETS_IMPORT_BATCH, formData: form, details: form, categories: []
+            });
+        });
+        await batch.commit();
+        alert(`Done: ${groups.length} entries (${people} delegates) imported. See Sports Fest > Delegates.`);
+    } catch (err) {
+        alert('Import failed, nothing was saved: ' + (err.message || err));
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = label; }
+    }
+}
+
 const PAPER_IMPORTS = {
     [PAPER_IMPORT_BATCH]: { label: 'Import Paper Registrations (13 Oct)', chaperone: 'Sir Yousaf', chaperoneContact: '03256921615', delegations: PAPER_IMPORT_DELEGATIONS },
     'paper-2026-10-13b': { label: 'Import Arm Wrestling + Shadow Wolves', chaperone: '', chaperoneContact: '', delegations: PAPER_IMPORT_DELEGATIONS_B },
@@ -5831,6 +6617,10 @@ function renderRegistrationsTable(eventType, subType) {
     if (!tbody) return;
     tbody.innerHTML = '';
 
+    // Sports Fest > Delegates: one row per person instead of per submission
+    setSubTableMode(subType === 'Delegates');
+    if (subType === 'Delegates') return renderDelegatesTable(tbody);
+
     // Allotment column is only for MUN delegation lists (typed per delegation, like payment status)
     const showAllot = eventType === 'MUN' && isDelegationSubType(subType);
     const allotTh = document.getElementById('allotment-th');
@@ -6027,6 +6817,8 @@ function renderRegistrationsTable(eventType, subType) {
                     return p ? `${k}${p.team ? ' (' + p.team + ')' : ''}: ${p.players.join(', ')}` : `${k}: ${v}`;
                 });
             }
+            // Paper-sheet entries list their people instead
+            if (!lines.length) lines = paperDelegatesOf(r).map(p => p.name + (p.categories.length ? ': ' + p.categories.join(', ') : ''));
             return {
                 ...nm(d['Delegation Name'] || r.categoryOrCommittee, d['School / Institution Name']),
                 division: d['Division'] || '-',
@@ -6128,6 +6920,7 @@ function renderRegistrationsTable(eventType, subType) {
     }
 
     async function exportSubmissionsToPDF(btn) {
+        if (currentSubType === 'Delegates') return exportDelegatesPDF(btn);
         const list = getSubmissionsInView();
         const dupGroups = getDuplicateGroups();
         let invalid = 0, dups = 0;
@@ -6203,10 +6996,8 @@ function renderRegistrationsTable(eventType, subType) {
         return out;
     }
 
-    function buildSportsParticipantRows() {
-        const delegations = allRegistrations.filter(r => r.eventType === 'Sports Fest' && isDelegationRecord(r));
-
-        // One spelling per school ("kims" / "KIMS" show the same way), the one used most often
+    // One spelling per school ("kims" / "KIMS" show the same way), the one used most often
+    function makeSchoolNamer(delegations) {
         const spellings = new Map();
         delegations.forEach(r => {
             const name = String(regSchool(r) || '').trim(), key = instituteKey(name);
@@ -6214,21 +7005,27 @@ function renderRegistrationsTable(eventType, subType) {
             if (!spellings.has(key)) spellings.set(key, new Map());
             spellings.get(key).set(name, (spellings.get(key).get(name) || 0) + 1);
         });
-        const schoolName = raw => {
+        return raw => {
             const m = spellings.get(instituteKey(raw));
             if (!m) return String(raw || '').trim() || 'School not given';
             return [...m.entries()].sort((a, b) => b[1] - a[1] || (/[A-Z]/.test(b[0]) - /[A-Z]/.test(a[0])))[0][0];
         };
+    }
+
+    function buildSportsParticipantRows() {
+        const delegations = allRegistrations.filter(r => r.eventType === 'Sports Fest' && isDelegationRecord(r));
+        const schoolName = makeSchoolNamer(delegations);
 
         const clean = v => String(v || '').replace(/\s+/g, ' ').trim();
         const rows = [], seen = new Set(), people = new Set(), heads = [];
-        const add = (name, category, school) => {
+        // tag: keeps two different people with the same name on one paper sheet apart
+        const add = (name, category, school, tag = '') => {
             name = clean(name);
             if (!name) return;
-            const key = `${normKey(name)}|${normKey(category)}|${instituteKey(school)}`;
+            const key = `${normKey(name)}|${normKey(category)}|${instituteKey(school)}${tag}`;
             if (seen.has(key)) return;
             seen.add(key);
-            people.add(`${normKey(name)}|${instituteKey(school)}`);
+            people.add(`${normKey(name)}|${instituteKey(school)}${tag}`);
             rows.push({ name, category, school });
         };
 
@@ -6238,11 +7035,18 @@ function renderRegistrationsTable(eventType, subType) {
             cats.forEach(c => c.players.forEach(p => add(p, c.category, school)));
             const hd = clean(regData(r)['Head Delegate Name']);
             if (hd) heads.push({ name: hd, school, hasCategories: cats.some(c => c.players.length) });
+            // Paper-sheet delegates: categories as written; people with none yet are listed after, like head delegates
+            const times = {};
+            paperDelegatesOf(r).forEach(pd => {
+                const n = normKey(pd.name), tag = (times[n] = (times[n] || 0) + 1) > 1 ? `#${times[n]}` : '';
+                if (pd.categories.length) pd.categories.forEach(c => add(pd.name, c, school, tag));
+                else heads.push({ name: pd.name, school, hasCategories: false, tag });
+            });
         });
         // Head delegates (and students with no categories yet) who aren't already listed
         heads.sort((a, b) => a.hasCategories - b.hasCategories).forEach(h => {
-            if (people.has(`${normKey(h.name)}|${instituteKey(h.school)}`)) return;
-            add(h.name, h.hasCategories ? PARTICIPANT_HEAD : PARTICIPANT_PENDING, h.school);
+            if (people.has(`${normKey(h.name)}|${instituteKey(h.school)}${h.tag || ''}`)) return;
+            add(h.name, h.hasCategories ? PARTICIPANT_HEAD : PARTICIPANT_PENDING, h.school, h.tag || '');
         });
 
         const order = Object.keys(sportsCategoryConfigs);
@@ -6250,6 +7054,226 @@ function renderRegistrationsTable(eventType, subType) {
         const cmp = (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
         rows.sort((a, b) => cmp(a.school, b.school) || cmp(a.name, b.name) || rank(a.category) - rank(b.category) || cmp(a.category, b.category));
         return { rows, people: people.size, schools: new Set(rows.map(r => instituteKey(r.school))).size };
+    }
+
+    // ---- Paper-sheet delegates ----
+    // A paper entry keeps each person as one form line, so the normal Edit button can fix it:
+    //   "Delegate 01": "Name | Categories: Futsal, Ludo | Fee: Rs 1,500 | Note: Team B"
+    const PAPER_DELEGATE_KEY = /^Delegate \d+$/;
+    function paperDelegateLine(name, cats, fee, note) {
+        return `${name} | Categories: ${cats || 'none on sheet'} | Fee: ${fee ? 'Rs ' + Number(fee).toLocaleString('en-US') : 'not written'}` +
+            (note ? ` | Note: ${note}` : '');
+    }
+    function paperDelegatesOf(r) {
+        if (r.eventType !== 'Sports Fest') return [];
+        const out = [];
+        Object.keys(regData(r)).filter(k => PAPER_DELEGATE_KEY.test(k.trim())).sort().forEach(k => {
+            const parts = String(regData(r)[k] || '').split('|').map(s => s.trim());
+            const name = (parts.shift() || '').replace(/\s+/g, ' ');
+            if (!name) return;
+            const p = { name, categories: [], fee: '', note: '' };
+            parts.forEach(part => {
+                const m = /^(categories|category|fee|note)\s*:\s*(.*)$/i.exec(part);
+                const val = m ? m[2].trim() : part;
+                const label = m ? m[1].toLowerCase() : 'note';
+                if (label.startsWith('categor')) {
+                    if (!/^(-|none|none on sheet|not on sheet)?$/i.test(val)) p.categories = val.split(',').map(s => s.trim()).filter(Boolean);
+                } else if (label === 'fee') {
+                    if (!/^(-|none|not written)?$/i.test(val)) p.fee = val;
+                } else if (val) {
+                    p.note = p.note ? `${p.note}; ${val}` : val;
+                }
+            });
+            out.push(p);
+        });
+        return out;
+    }
+
+    // ---- Delegates list: one row per person across every Sports Fest delegation (online + paper) ----
+    // Same name + same school = one person (the rule the unique delegates counter uses). Inside one paper
+    // sheet, two lines with the same name are two people (e.g. two "Hamza"s on the LGS Model Town sheet).
+    function buildSportsDelegateRows() {
+        const delegations = allRegistrations.filter(r => r.eventType === 'Sports Fest' && isDelegationRecord(r));
+        const schoolName = makeSchoolNamer(delegations);
+        const clean = v => String(v || '').replace(/\s+/g, ' ').trim();
+        const byKey = new Map();
+
+        delegations.forEach(r => {
+            const school = schoolName(regSchool(r));
+            const paper = !!r.importBatch;
+            const local = new Map();   // this delegation's people
+            const get = (name, fromSheet) => {
+                name = clean(name);
+                const base = normalizeDelegateText(name);
+                if (!base) return null;
+                let k = base, n = 1;
+                // a repeated name on the same paper sheet is a different person
+                while (fromSheet && local.has(k) && local.get(k).sheetLine) k = `${base}#${++n}`;
+                if (!local.has(k)) local.set(k, { name, key: k, categories: [], fees: [], notes: [], head: false, sheetLine: false });
+                const p = local.get(k);
+                if (fromSheet) p.sheetLine = true;
+                return p;
+            };
+            sportsDelegationCategories(r).forEach(c => c.players.forEach(n => {
+                const p = get(n, false);
+                if (p && !p.categories.includes(c.category)) p.categories.push(c.category);
+            }));
+            const hd = get(regData(r)['Head Delegate Name'], false);
+            if (hd) hd.head = true;
+            paperDelegatesOf(r).forEach(pd => {
+                const p = get(pd.name, true);
+                if (!p) return;
+                pd.categories.forEach(c => { if (!p.categories.includes(c)) p.categories.push(c); });
+                if (pd.fee) p.fees.push(pd.fee);
+                if (pd.note) p.notes.push(pd.note);
+            });
+
+            const del = { id: r.id, name: regDelegationName(r) || r.categoryOrCommittee || 'Unnamed delegation', paid: r.paymentStatus === 'paid', paper };
+            local.forEach(p => {
+                const key = `${p.key}|${instituteKey(school)}`;
+                if (!byKey.has(key)) byKey.set(key, { key, name: p.name, school, categories: [], fees: [], notes: [], delegations: [], head: false });
+                const row = byKey.get(key);
+                p.categories.forEach(c => { if (!row.categories.includes(c)) row.categories.push(c); });
+                row.fees.push(...p.fees);
+                row.notes.push(...p.notes);
+                if (p.head && !p.categories.length) row.head = true;
+                if (!row.delegations.some(d => d.id === del.id)) row.delegations.push(del);
+            });
+        });
+
+        const cmp = (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
+        return [...byKey.values()].map(row => {
+            const paid = row.delegations.filter(d => d.paid).length;
+            row.status = paid === row.delegations.length ? 'paid' : (paid ? 'partial' : 'unpaid');
+            if (row.categories.length) row.head = false;
+            return row;
+        }).sort((a, b) => cmp(a.school, b.school) || cmp(a.name, b.name));
+    }
+
+    const DELEGATE_STATUS = {
+        paid: { text: 'PAID', color: '#10b981', pdf: [4, 120, 87] },
+        partial: { text: 'PART PAID', color: '#f59e0b', pdf: [180, 100, 0] },
+        unpaid: { text: 'UNPAID', color: '#ef4444', pdf: [190, 30, 45] }
+    };
+    function delegateCategoryText(p) { return p.categories.length ? p.categories.join(', ') : (p.head ? 'Head delegate only' : 'Not given yet'); }
+    function delegatesInView() {
+        const q = ((document.getElementById('sub-search-input') || {}).value || '').trim().toLowerCase();
+        const all = buildSportsDelegateRows();
+        const rows = !q ? all : all.filter(p => [p.name, p.school, ...p.delegations.map(d => d.name), ...p.categories, ...p.notes]
+            .join(' ').toLowerCase().includes(q));
+        return { all, rows, q };
+    }
+
+    // The table header / legend change between the normal lists and the Delegates list
+    const DELEGATES_HEAD = '<th>#</th><th>Delegate</th><th>Delegation</th><th>Categories</th><th>Payment</th><th>Actions</th>';
+    let defaultSubHead = null, delegatesMode = false;
+    function setSubTableMode(delegates) {
+        const head = document.getElementById('sub-table-head');
+        if (head && defaultSubHead === null) defaultSubHead = head.innerHTML;
+        if (head && delegates !== delegatesMode) head.innerHTML = delegates ? DELEGATES_HEAD : defaultSubHead;
+        delegatesMode = delegates;
+        const legend = document.getElementById('sub-status-legend'), note = document.getElementById('delegates-note');
+        if (legend) legend.style.display = delegates ? 'none' : '';
+        if (note) note.classList.toggle('hidden', !delegates);
+    }
+
+    function renderDelegatesTable(tbody) {
+        const { all, rows, q } = delegatesInView();
+        const paidCount = all.filter(p => p.status === 'paid').length;
+        const title = document.getElementById('sub-category-title');
+        if (title) title.innerText = `Sports Fest > Delegates (${all.length} people, ${paidCount} paid)` +
+            (q ? ` - ${rows.length} match "${q}"` : '');
+
+        if (!rows.length) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">${q
+                ? `No delegates match "${escapeHtml(q)}".` : 'No Sports Fest delegates yet.'}</td></tr>`;
+            return;
+        }
+        const muted = t => `<span style="color: var(--text-muted); font-size: .85rem;">${t}</span>`;
+        tbody.innerHTML = rows.map((p, i) => {
+            const st = DELEGATE_STATUS[p.status];
+            const many = p.delegations.length > 1;
+            const extra = [p.fees.length ? 'Fee on sheet: ' + p.fees.join(' + ') : '', ...p.notes].filter(Boolean);
+            const dels = p.delegations.map((d, j) => `<div style="margin-bottom:3px;">${many ? (j + 1) + '. ' : ''}${escapeHtml(d.name)}
+                <span class="row-flag" style="background:${d.paper ? '#6366f122' : '#0ea5e922'}; color:${d.paper ? '#a5b4fc' : '#7dd3fc'}; border:1px solid ${d.paper ? '#6366f1' : '#0ea5e9'};">${d.paper ? 'PAPER' : 'ONLINE'}</span></div>`).join('');
+            const cats = p.categories.length ? escapeHtml(delegateCategoryText(p)) : `<em style="color: var(--text-muted);">${delegateCategoryText(p)}</em>`;
+            const check = p.categories.length > 3
+                ? `<br><span class="row-flag" style="background:#facc1533; color:#facc15; border:1px solid #facc15;">${p.categories.length} CATEGORIES: CHECK, MAY BE 2 PEOPLE WITH THIS NAME</span>` : '';
+            const edits = p.delegations.map((d, j) => `<button class="btn" style="width:auto; margin: 0 6px 6px 0;" title="${escapeHtml(d.name)}"
+                onclick="openEditSubmission('${d.id}')">Edit${many ? ' ' + (j + 1) : ''}</button>`).join('');
+            return `<tr class="${p.status === 'paid' ? 'row-paid' : 'row-unpaid'}">
+                <td style="color: var(--text-muted);">${i + 1}</td>
+                <td><strong>${escapeHtml(p.name)}</strong><br>${muted(escapeHtml(p.school))}${extra.length ? '<br>' + muted(escapeHtml(extra.join(' · '))) : ''}</td>
+                <td>${dels}</td>
+                <td>${cats}${check}</td>
+                <td style="text-align:center;"><span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.8rem; display: inline-block;
+                    background:${st.color}22; color:${st.color}; border:1px solid ${st.color};">${st.text}</span></td>
+                <td>${edits}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function exportDelegatesPDF(btn) {
+        const { rows, q } = delegatesInView();
+        if (!rows.length) return alert(q ? 'No delegates match the search.' : 'No Sports Fest delegates yet.');
+        const label = btn ? btn.innerText : '';
+        if (btn) { btn.disabled = true; btn.innerText = 'Preparing PDF...'; }
+        try {
+            await loadPdfLibs();
+            const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            const W = doc.internal.pageSize.getWidth(), M = 12, accent = [180, 83, 9];
+            const paid = rows.filter(p => p.status === 'paid').length, now = new Date();
+            doc.setFillColor(...accent); doc.rect(0, 0, W, 4, 'F');
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(25, 25, 25);
+            doc.text('JTC Sports Fest', M, 17);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(70, 70, 70);
+            doc.text(q ? `Delegates matching "${q}"` : 'Delegates List', M, 24);
+            doc.setFontSize(9); doc.setTextColor(110, 110, 110);
+            doc.text(`${rows.length} people   |   ${paid} paid   |   ${rows.length - paid} unpaid or part paid   |   Generated ${now.toLocaleString()}`, M, 30);
+            doc.autoTable({
+                startY: 35,
+                margin: { left: M, right: M, bottom: 14 },
+                head: [['#', 'Name', 'School', 'Delegation', 'Categories', 'Payment']],
+                body: rows.map((p, i) => [i + 1, p.name, p.school, p.delegations.map(d => d.name).join('\n'), delegateCategoryText(p), DELEGATE_STATUS[p.status].text]),
+                theme: 'grid',
+                rowPageBreak: 'avoid',
+                styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 1.8, valign: 'middle', lineColor: [215, 215, 215], lineWidth: 0.2, textColor: [30, 30, 30] },
+                headStyles: { fillColor: accent, textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [248, 246, 242] },
+                columnStyles: {
+                    0: { cellWidth: 11, halign: 'right', textColor: [130, 130, 130] },
+                    1: { cellWidth: 46, fontStyle: 'bold' },
+                    2: { cellWidth: 52 },
+                    3: { cellWidth: 62 },
+                    4: { cellWidth: 'auto' },
+                    5: { cellWidth: 22, halign: 'center', fontStyle: 'bold' }
+                },
+                didParseCell: data => {
+                    if (data.section !== 'body') return;
+                    if (data.column.index === 5) {
+                        const st = Object.values(DELEGATE_STATUS).find(s => s.text === data.cell.raw);
+                        if (st) data.cell.styles.textColor = st.pdf;
+                    }
+                    if (data.column.index === 4 && !rows[data.row.index].categories.length) {
+                        data.cell.styles.textColor = [120, 120, 120];
+                        data.cell.styles.fontStyle = 'italic';
+                    }
+                }
+            });
+            const pages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pages; i++) {
+                doc.setPage(i);
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(140, 140, 140);
+                const h = doc.internal.pageSize.getHeight();
+                doc.text('Beaconhouse Johar Town Campus - JTC Events', M, h - 7);
+                doc.text(`Page ${i} of ${pages}`, W - M, h - 7, { align: 'right' });
+            }
+            doc.save(`JTC_Sports_Fest_Delegates_${now.toISOString().slice(0, 10)}.pdf`);
+        } catch (err) {
+            alert('Could not create the PDF: ' + (err.message || err));
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerText = label; }
+        }
     }
 
     function buildParticipantsPdf(jsPDF, o) {
