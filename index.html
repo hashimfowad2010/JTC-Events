@@ -272,6 +272,10 @@
     .edit-cat-add select option, .edit-cat-add select optgroup { background: #121012; }
     .edit-cat-add .btn { width: auto; }
     .edit-cat-note { margin-top: 8px; font-size: .8rem; color: var(--text-muted); }
+    .edit-del-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .edit-del-grid .edit-del-wide { grid-column: span 2; }
+    .edit-del-grid .form-group { margin-bottom: 10px; }
+    @media (max-width: 560px) { .edit-del-grid { grid-template-columns: 1fr; } .edit-del-grid .edit-del-wide { grid-column: span 1; } }
     .diff-line { display: inline-block; margin: 1px 0; padding: 1px 6px; border-radius: 4px; background: rgba(250, 204, 21, 0.32); color: #fef9c3; box-shadow: inset 2px 0 0 #facc15; }
     tr.row-invalid td:first-child { box-shadow: inset 4px 0 0 #ef4444; }
     .row-flag { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 10px; font-size: .72rem; font-weight: 700; }
@@ -3296,12 +3300,112 @@ function addEditCategory() {
     if (first) setTimeout(() => first.focus({ preventScroll: true }), 300);
 }
 
+// ---- MUN delegations: delegates (head + others) are edited as cards, and more can be added ----
+function isMunDelegation(rec) { return rec && rec.eventType === 'MUN' && rec.subType === 'Delegations'; }
+// Per-delegate form fields; these are rebuilt from the cards on save
+const MUN_DELEGATE_KEY = /^(Head Delegate (Name|Grade|Committee)|Delegate \d+ (Name|Full Name|Grade|Committee|Preferred Committee))$/;
+
+function munDelegatesFromRecord(rec) {
+    const d = regData(rec), out = [];
+    if (d['Head Delegate Name'] || d['Head Delegate Grade'] || d['Head Delegate Committee']) {
+        out.push({ name: d['Head Delegate Name'] || '', grade: d['Head Delegate Grade'] || '', committee: d['Head Delegate Committee'] || '', head: true });
+    }
+    const slots = [...new Set(Object.keys(d).map(k => (k.match(/^Delegate (\d+) /) || [])[1]).filter(Boolean))].sort((a, b) => a - b);
+    slots.forEach(i => {
+        const name = d[`Delegate ${i} Name`] || d[`Delegate ${i} Full Name`] || '';
+        const committee = d[`Delegate ${i} Committee`] || d[`Delegate ${i} Preferred Committee`] || '';
+        if (name || committee) out.push({ name, grade: d[`Delegate ${i} Grade`] || '', committee, head: false });
+    });
+    // Records that only kept the `delegates` array
+    if (out.length <= 1 && Array.isArray(rec.delegates) && rec.delegates.length > out.length) {
+        return rec.delegates.map((x, i) => ({ name: x.name || '', grade: x.grade || '', committee: x.committee || '', head: !!x.head || i === 0 }));
+    }
+    if (!out.length) out.push({ name: '', grade: '', committee: '', head: true });
+    return out;
+}
+
+function munEditTier() {
+    const t = document.querySelector('#edit-sub-fields [data-key="Delegation Tier"]');
+    const rec = allRegistrations.find(r => r.id === editingSubId);
+    const v = (t && t.value) || (rec && rec.categoryOrCommittee) || '';
+    return MUN_GRADES[v] ? v : '';
+}
+
+function selectHtml(cls, placeholder, options, current) {
+    const opts = [...options];
+    if (current && !opts.includes(current)) opts.push(current);   // keep an old value instead of losing it
+    return `<select class="${cls}"><option value="">${placeholder}</option>` +
+        opts.map(o => `<option value="${escapeHtml(o)}"${o === current ? ' selected' : ''}>${escapeHtml(o)}</option>`).join('') + '</select>';
+}
+
+function makeEditDelegateCard(p) {
+    const card = document.createElement('div');
+    card.className = 'edit-cat-card edit-del-card';
+    if (p.head) card.dataset.head = '1';
+    const grades = MUN_GRADES[munEditTier()] || [...MUN_GRADES['Junior Delegation'], ...MUN_GRADES['Senior Delegation']];
+    card.innerHTML = `
+        <div class="edit-cat-head"><strong class="edit-del-title"></strong>${p.head ? '' : '<button type="button" class="btn btn-danger">Remove</button>'}</div>
+        <div class="edit-del-grid">
+            <div class="form-group"><label>Full Name</label><input type="text" class="edit-del-name" placeholder="Delegate full name"></div>
+            <div class="form-group"><label>Grade</label>${selectHtml('edit-del-grade', 'Select Grade', grades, p.grade)}</div>
+            <div class="form-group edit-del-wide"><label>Committee</label>${selectHtml('edit-del-committee', 'Select Committee', munCommittees, p.committee)}</div>
+        </div>`;
+    card.querySelector('.edit-del-name').value = p.name || '';
+    const rm = card.querySelector('.btn-danger');
+    if (rm) rm.onclick = () => { card.remove(); renumberEditDelegates(); };
+    return card;
+}
+
+function renumberEditDelegates() {
+    let n = 1;
+    document.querySelectorAll('#edit-del-list .edit-del-card').forEach(c => {
+        c.querySelector('.edit-del-title').textContent = c.dataset.head ? 'Head Delegate' : `Delegate ${++n}`;
+    });
+    const count = document.getElementById('edit-del-count');
+    if (count) count.textContent = `(${n})`;
+}
+
+function addEditDelegate() {
+    const card = makeEditDelegateCard({ name: '', grade: '', committee: '', head: false });
+    document.getElementById('edit-del-list').appendChild(card);
+    renumberEditDelegates();
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => card.querySelector('.edit-del-name').focus({ preventScroll: true }), 300);
+}
+
+// Grade lists follow the Delegation Tier typed in the popup
+function refreshEditDelegateGrades() {
+    const grades = MUN_GRADES[munEditTier()];
+    if (!grades) return;
+    document.querySelectorAll('#edit-del-list .edit-del-grade').forEach(sel => {
+        const keep = sel.value;
+        sel.outerHTML = selectHtml('edit-del-grade', 'Select Grade', grades, keep);
+    });
+}
+
+function readEditDelegates() {
+    return [...document.querySelectorAll('#edit-del-list .edit-del-card')].map(c => ({
+        name: c.querySelector('.edit-del-name').value.trim(),
+        grade: c.querySelector('.edit-del-grade').value,
+        committee: c.querySelector('.edit-del-committee').value,
+        head: !!c.dataset.head
+    }));
+}
+
+// Same text the registration form writes into a committee entry's "Delegates" field
+function munCommitteeDelegates(delegates) {
+    const byCommittee = {};
+    delegates.forEach(d => { if (d.name && d.committee) (byCommittee[d.committee] ||= []).push(d.name + (d.head ? ' (Head Delegate, ' : ' (') + d.grade + ')'); });
+    return Object.fromEntries(Object.entries(byCommittee).map(([c, names]) => [c, names.join(', ')]));
+}
+
 function openEditSubmission(docId) {
     const rec = allRegistrations.find(r => r.id === docId);
     if (!rec) return;
     editingSubId = docId;
     const data = rec.formData || rec.details || {};
     const sportsDeleg = isSportsDelegation(rec);
+    const munDeleg = isMunDelegation(rec);
 
     document.getElementById('edit-sub-meta').innerText =
         `${rec.eventType} • ${rec.categoryOrCommittee || 'General'}` +
@@ -3315,8 +3419,24 @@ function openEditSubmission(docId) {
     const catEntries = [];
     entries.forEach(([key, val]) => {
         if (sportsDeleg && isCategoryField(rec, key, val)) catEntries.push([key, val]);
+        else if (munDeleg && MUN_DELEGATE_KEY.test(key)) return;   // shown as delegate cards below
         else box.appendChild(makeEditField(key, val));
     });
+
+    // MUN delegations: delegates can be edited, removed and added
+    if (munDeleg) {
+        const section = document.createElement('div');
+        section.className = 'edit-cat-section';
+        section.innerHTML = '<h3>Delegates <span id="edit-del-count" style="color: var(--text-muted); font-weight: 400;"></span></h3><div id="edit-del-list"></div>' +
+            '<div class="edit-cat-add"><button type="button" class="btn" onclick="addEditDelegate()">+ Add Delegate</button></div>' +
+            '<p class="edit-cat-note">Committee lists follow these delegates: a new committee gets its own entry, and a committee with nobody left in it is removed from this delegation.</p>';
+        box.appendChild(section);
+        const list = section.querySelector('#edit-del-list');
+        munDelegatesFromRecord(rec).forEach(p => list.appendChild(makeEditDelegateCard(p)));
+        renumberEditDelegates();
+        const tierInput = box.querySelector('[data-key="Delegation Tier"]');
+        if (tierInput) tierInput.addEventListener('change', refreshEditDelegateGrades);
+    }
 
     // Sports Fest delegations: categories can be edited, removed and added
     if (sportsDeleg) {
@@ -3377,9 +3497,47 @@ async function saveSubmissionEdit(e) {
         addedCats = newCats.filter(k => !oldCats.includes(k));
     }
 
+    // MUN delegations: per-delegate fields are rebuilt from the delegate cards
+    const munDeleg = isMunDelegation(rec);
+    let munDelegates = null, munByCommittee = null, munAdded = [], munDelegatesChanged = false;
+    if (munDeleg) {
+        munDelegates = readEditDelegates();
+        const bad = munDelegates.findIndex(d => !d.name || !d.committee);
+        if (bad >= 0) return alert(`Please enter a name and a committee for ${bad === 0 ? 'the Head Delegate' : 'Delegate ' + (bad + 1)}, or remove that delegate.`);
+        const tier = MUN_GRADES[updated['Delegation Tier']] ? updated['Delegation Tier'] : rec.categoryOrCommittee;
+        const allowed = MUN_GRADES[tier];
+        const off = allowed ? munDelegates.filter(d => !allowed.includes(d.grade)) : [];
+        if (off.length && !confirm(`${off.map(d => `${d.name} (${d.grade || 'no grade'})`).join(', ')} ${off.length === 1 ? 'is' : 'are'} outside the ${tier} grades (${allowed.join(', ')}). Save anyway?`)) return;
+
+        // Same field names as the registration form, in the original order
+        const rebuilt = {}, [head, ...others] = munDelegates;
+        Object.keys(old).forEach(k => {
+            if (k === 'Head Delegate Name') rebuilt[k] = head.name;
+            else if (!MUN_DELEGATE_KEY.test(k) && k in updated) rebuilt[k] = updated[k];
+        });
+        Object.keys(updated).forEach(k => { if (!(k in rebuilt)) rebuilt[k] = updated[k]; });
+        if (!('Head Delegate Name' in rebuilt)) rebuilt['Head Delegate Name'] = head.name;
+        rebuilt['Head Delegate Grade'] = head.grade;
+        rebuilt['Head Delegate Committee'] = head.committee;
+        others.forEach((d, i) => {
+            rebuilt[`Delegate ${i + 2} Name`] = d.name;
+            rebuilt[`Delegate ${i + 2} Grade`] = d.grade;
+            rebuilt[`Delegate ${i + 2} Committee`] = d.committee;
+        });
+        Object.keys(updated).forEach(k => delete updated[k]);
+        Object.assign(updated, rebuilt);
+
+        munDelegatesChanged = JSON.stringify(munDelegatesFromRecord(rec)) !== JSON.stringify(munDelegates);
+        munByCommittee = munCommitteeDelegates(munDelegates);
+        const childCommittees = new Set(getDelegationGroup(rec.id).map(id => allRegistrations.find(r => r.id === id))
+            .filter(r => r && !isDelegationRecord(r)).map(r => r.categoryOrCommittee));
+        removedCats = [...childCommittees].filter(c => !(c in munByCommittee));
+        munAdded = Object.keys(munByCommittee).filter(c => !childCommittees.has(c));
+    }
+
     const changed = Object.keys(updated).filter(k => updated[k] !== String(old[k] ?? '').trim());
-    if (!changed.length && !removedCats.length) return closeModal('edit-sub-modal');
-    if (removedCats.length && !confirm(`Remove ${removedCats.join(', ')} from this delegation? Their category entries will be deleted.`)) return;
+    if (!changed.length && !removedCats.length && !munDelegatesChanged) return closeModal('edit-sub-modal');
+    if (removedCats.length && !confirm(`Remove ${removedCats.join(', ')} from this delegation? Their ${munDeleg ? 'committee' : 'category'} entries will be deleted.`)) return;
 
     const patch = { formData: updated, details: updated, lastEditedAt: firebase.firestore.FieldValue.serverTimestamp() };
 
@@ -3402,6 +3560,7 @@ async function saveSubmissionEdit(e) {
             ['Junior Delegation', 'Senior Delegation'].includes(updated['Delegation Tier'])) {
             patch.categoryOrCommittee = updated['Delegation Tier'];
         }
+        if (munDeleg) patch.delegates = munDelegates;
     }
 
     const btn = document.getElementById('edit-sub-save');
@@ -3429,6 +3588,11 @@ async function saveSubmissionEdit(e) {
                     cd[ck] = updated[k];
                     touched = true;
                 });
+                // MUN: each committee entry lists the delegates now in that committee
+                if (munByCommittee && (child.categoryOrCommittee in munByCommittee) && cd['Delegates'] !== munByCommittee[child.categoryOrCommittee]) {
+                    cd['Delegates'] = munByCommittee[child.categoryOrCommittee];
+                    touched = true;
+                }
                 if (rec.eventType === 'Sports Fest' && changed.includes(child.categoryOrCommittee)) {
                     const parsed = parseTeamPlayers(updated[child.categoryOrCommittee]);
                     if (parsed) {
@@ -3464,6 +3628,24 @@ async function saveSubmissionEdit(e) {
                     addedByAdmin: true,
                     formData: cf,
                     details: cf
+                });
+            });
+
+            // MUN: a committee that only the edit brought in gets its own entry, same shape as a registration
+            munAdded.forEach(committee => {
+                const cf = {
+                    'Delegates': munByCommittee[committee],
+                    'School': updated['School / Institution Name'] || '',
+                    'Delegation': updated['Delegation Name'] || '',
+                    'Delegation Tier': updated['Delegation Tier'] || rec.categoryOrCommittee || '',
+                    'Head Delegate Email': updated['Head Delegate Email'] || ''
+                };
+                batch.set(db.collection('registrations').doc(), {
+                    eventType: 'MUN', subType: 'Categories', registrationType: 'Categories',
+                    categoryOrCommittee: committee, parentDelegationId: rec.id,
+                    paymentStatus: rec.paymentStatus || 'unpaid',
+                    submittedAt: rec.submittedAt || firebase.firestore.FieldValue.serverTimestamp(),
+                    addedByAdmin: true, formData: cf, details: cf
                 });
             });
         }
