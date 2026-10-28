@@ -1406,7 +1406,8 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     </div>
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button id="mun-tier-btn" class="btn" style="width: auto; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="regradeMunDelegations(this)">Move MUN Submissions by Grade: Junior (Grade 6 – O2) / Senior (O3 – A2)</button>
-        <button id="mun-list-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunList(this)">Import MUN List (28 Oct: 5 teams, 27 O3 delegates)</button>
+        <button id="mun-list-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunList(this)">Import MUN List (28 Oct: 5 teams, 27 O2 delegates)</button>
+        <button id="mun-list-junior-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="moveMunListToJunior(this)">Move 28 Oct MUN List to Junior (O2, BSS AITC)</button>
     </div>
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button id="paper-import-btn" class="btn" style="width: auto;" onclick="importPaperRegistrations('paper-2026-10-13', this)">Import Paper Registrations (13 Oct)</button>
@@ -6574,10 +6575,12 @@ async function importPaperRegistrations(batchKey, btn) {
     }
 }
 
-// ---- MUN list (sheet of 28 Oct): 5 teams, every delegate O3, so all Senior Delegation ----
-// The sheet has no school, emails or phone numbers: the school (and an optional contact Gmail) are asked on import.
+// ---- MUN list (sheet of 28 Oct): 5 teams, all Junior Delegation, every delegate O2 ----
+// (First imported as Senior / O3 by mistake; moveMunListToJunior() fixes records saved that way.)
+// All teams are from BSS AITC. The sheet has no emails or phone numbers: an optional contact Gmail is asked on import.
 // "Team A" on the sheet is Team 1 (allotted Russia). The first name of each team is taken as its head delegate.
 const MUN_LIST_IMPORT_BATCH = 'mun-list-2026-10-28';
+const MUN_LIST_TIER = 'Junior Delegation', MUN_LIST_GRADE = 'O2', MUN_LIST_SCHOOL = 'BSS AITC';
 const MUN_LIST_IMPORT = [
     { team: 'Team 1', allotment: 'Russia', delegates: [
         ['Ghulam Zahra', 'WHO'], ['Syed Ali Zoraiz', 'UNSC'], ['Khadeeja Umair', 'DISEC'], ['Aliana Taha', 'UNW'], ['Hassun Mehmood', 'UNHRC']] },
@@ -6596,14 +6599,13 @@ async function importMunList(btn) {
     if (!isAdmin) return alert('Please log in as admin first.');
     if (allRegistrations.some(r => r.importBatch === MUN_LIST_IMPORT_BATCH)) return alert('This MUN list has already been imported.');
     const fullCommittee = short => munCommittees.find(c => c === short || c.startsWith(short + ' ')) || short;
-    const tier = 'Senior Delegation', grade = 'O3';
+    const tier = MUN_LIST_TIER, grade = MUN_LIST_GRADE;
     const people = MUN_LIST_IMPORT.reduce((n, t) => n + t.delegates.length, 0);
 
-    const school = (prompt(`Import ${MUN_LIST_IMPORT.length} MUN teams (${people} delegates, all O3, Senior Delegation).\n\nSchool / institution name for these teams:`) || '').trim();
-    if (!school) return;
+    const school = MUN_LIST_SCHOOL;
     const email = (prompt('Contact Gmail for these teams (used as the head delegate email).\nLeave blank if there is none; the rows will then show as "invalid email".') || '').trim();
     const payment = confirm('Mark these teams as PAID?\n\nOK = Paid\nCancel = Unpaid') ? 'paid' : 'unpaid';
-    if (!confirm(`Import ${MUN_LIST_IMPORT.length} teams from ${school} as Senior Delegations (${payment.toUpperCase()})?\n\n` +
+    if (!confirm(`Import ${MUN_LIST_IMPORT.length} teams from ${school} as ${tier}s (${payment.toUpperCase()})?\n\n` +
         MUN_LIST_IMPORT.map(t => `${school} ${t.team}${t.allotment ? ' (' + t.allotment + ')' : ''}: ${t.delegates.map(d => d[0]).join(', ')}`).join('\n'))) return;
 
     const label = btn ? btn.innerText : '';
@@ -6645,9 +6647,51 @@ async function importMunList(btn) {
             });
         });
         await batch.commit();
-        alert(`Done: ${MUN_LIST_IMPORT.length} teams (${people} delegates) registered as Senior Delegations.`);
+        alert(`Done: ${MUN_LIST_IMPORT.length} teams (${people} delegates) registered as ${tier}s.`);
     } catch (err) {
         alert('Import failed, nothing was saved: ' + (err.message || err));
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = label; }
+    }
+}
+
+// Teams from this list already saved as Senior / O3 -> Junior / O2, school BSS AITC
+// (delegation, its delegates and its committee entries)
+async function moveMunListToJunior(btn) {
+    if (!isAdmin) return alert('Please log in as admin first.');
+    const toGrade = g => (g === 'O3' ? MUN_LIST_GRADE : g);
+    const updates = [], names = [];
+    allRegistrations.filter(r => r.importBatch === MUN_LIST_IMPORT_BATCH && r.subType === 'Delegations').forEach(d => {
+        const data = regData(d);
+        const people = munDelegatesFromRecord(d);
+        const team = (regDelegationName(d).match(/Team \d+$/) || [''])[0];
+        const name = team ? `${MUN_LIST_SCHOOL} ${team}` : regDelegationName(d);
+        if (d.categoryOrCommittee === MUN_LIST_TIER && !people.some(p => p.grade === 'O3') &&
+            regSchool(d) === MUN_LIST_SCHOOL && regDelegationName(d) === name) return;   // already moved
+        const form = { ...data, 'Delegation Tier': MUN_LIST_TIER, 'School / Institution Name': MUN_LIST_SCHOOL, 'Delegation Name': name };
+        Object.keys(form).forEach(k => { if (/^(Head Delegate|Delegate \d+) Grade$/.test(k)) form[k] = toGrade(form[k]); });
+        const delegates = (Array.isArray(d.delegates) && d.delegates.length ? d.delegates : people).map(p => ({ ...p, grade: toGrade(p.grade) }));
+        updates.push({ id: d.id, patch: { categoryOrCommittee: MUN_LIST_TIER, formData: form, details: form, delegates, tierMovedFrom: d.categoryOrCommittee || '' } });
+        const byCommittee = munCommitteeDelegates(delegates);
+        getDelegationGroup(d.id).map(id => allRegistrations.find(r => r.id === id)).filter(c => c && !isDelegationRecord(c)).forEach(c => {
+            const cd = { ...regData(c), 'Delegation Tier': MUN_LIST_TIER, 'School': MUN_LIST_SCHOOL, 'Delegation': name };
+            cd['Delegates'] = byCommittee[c.categoryOrCommittee] || String(cd['Delegates'] || '').replace(/\bO3\)/g, MUN_LIST_GRADE + ')');
+            updates.push({ id: c.id, patch: { formData: cd, details: cd, tierMovedFrom: regData(c)['Delegation Tier'] || '' } });
+        });
+        names.push(`${regDelegationName(d)} → ${name} (${delegates.length} delegates)`);
+    });
+    if (!names.length) return alert(`Nothing to move: the 28 Oct MUN list is ${allRegistrations.some(r => r.importBatch === MUN_LIST_IMPORT_BATCH) ? `already ${MUN_LIST_SCHOOL}, ${MUN_LIST_TIER} / ${MUN_LIST_GRADE}` : 'not imported yet'}.`);
+    if (!confirm(`Move ${names.length} team(s) to ${MUN_LIST_TIER} (${MUN_LIST_SCHOOL}), every O3 delegate becoming ${MUN_LIST_GRADE}?\n\n${names.join('\n')}`)) return;
+
+    const label = btn ? btn.innerText : '';
+    if (btn) { btn.disabled = true; btn.innerText = 'Moving...'; }
+    try {
+        const batch = db.batch();
+        updates.forEach(u => batch.update(db.collection('registrations').doc(u.id), u.patch));
+        await batch.commit();
+        alert(`Done: ${names.length} team(s) moved to ${MUN_LIST_TIER} (${MUN_LIST_GRADE}).`);
+    } catch (err) {
+        alert('Moving failed, nothing was saved: ' + (err.message || err));
     } finally {
         if (btn) { btn.disabled = false; btn.innerText = label; }
     }
