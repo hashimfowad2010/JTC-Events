@@ -7136,11 +7136,82 @@ const ROW_FLAGS = {
     unpaid: null
 };
 
+function showsAllotment(eventType, subType) {
+    return eventType === 'MUN' && (isDelegationSubType(subType) || subType === 'Categories');
+}
+
+// Where an allotment must be unique: committee rows and private delegates per committee + tier,
+// delegations per tier, committee directors per tier
+function allotmentScope(r) {
+    if (r.eventType !== 'MUN') return '';
+    const committee = munCommitteeOf(r);
+    if (committee) return `committee|${munTierOf(r)}|${normKey(committee)}`;
+    if (r.subType === 'Committee Directors') return `director|${munTierOf(r)}`;
+    return `delegation|${munTierOf(r)}`;
+}
+// "UNW - Russia", "russia", "Russia." -> "russia" (committee name / code in front or behind is ignored)
+function normAllotment(v, committee) {
+    let s = String(v || '').toLowerCase();
+    if (committee) {
+        const c = String(committee).toLowerCase(), code = (c.match(/\(([^)]+)\)/) || [])[1];
+        [c, c.replace(/\s*\([^)]*\)\s*/, '').trim(), code].filter(Boolean).forEach(w => {
+            const e = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            s = s.replace(new RegExp(`^\\s*${e}\\s*[-:–,/]?\\s*`), '').replace(new RegExp(`\\s*[-:–,/(]?\\s*${e}\\s*\\)?\\s*$`), '');
+        });
+    }
+    return s.replace(/[^a-z0-9]/g, '');
+}
+function editDistance(a, b) {
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+        const cur = [i];
+        for (let j = 1; j <= b.length; j++)
+            cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        prev = cur;
+    }
+    return prev[b.length];
+}
+function allotmentHolder(r) {
+    const d = regData(r);
+    if (r.subType === 'Private Delegates') return `${d['Full Name'] || '-'} (Private Delegate)`;
+    if (r.subType === 'Committee Directors') return `${d['Director Name'] || '-'} (Committee Director)`;
+    if (isDelegationRecord(r)) return regDelegationName(r) || 'a delegation';
+    const people = splitPeople(d['Delegates']).join(', ');
+    return `${people || '-'}${regDelegationName(r) ? ' – ' + regDelegationName(r) : ''}`;
+}
+// Same allotment (any caps / spacing) -> 'same'; a likely misspelling of one -> 'similar'
+function findAllotmentClash(rec, value) {
+    const scope = allotmentScope(rec);
+    if (!scope) return null;
+    const committee = munCommitteeOf(rec);
+    const mine = normAllotment(value, committee);
+    if (!mine) return null;
+    const allowed = mine.length >= 8 ? 2 : mine.length >= 4 ? 1 : 0;
+    let similar = null;
+    for (const r of allRegistrations) {
+        if (r.id === rec.id || !(r.allotment || '').trim() || allotmentScope(r) !== scope) continue;
+        const theirs = normAllotment(r.allotment, committee);
+        if (!theirs) continue;
+        if (theirs === mine) return { kind: 'same', rec: r };
+        if (!similar && allowed && editDistance(mine, theirs) <= allowed) similar = { kind: 'similar', rec: r };
+    }
+    return similar;
+}
+
 async function saveAllotment(docId) {
     const input = document.getElementById('allot-' + docId);
     if (!input) return;
+    const value = input.value.trim();
+    const rec = allRegistrations.find(r => r.id === docId);
+    const clash = rec && value ? findAllotmentClash(rec, value) : null;
+    if (clash) {
+        const where = munCommitteeOf(rec) ? `in ${munCommitteeOf(rec)}${munTierOf(rec) ? ' (' + munTierOf(rec) + ')' : ''}` : `in the ${munTierOf(rec) || 'MUN'} list`;
+        const msg = `"${clash.rec.allotment}" is already allotted ${where} to:\n${allotmentHolder(clash.rec)}`;
+        if (clash.kind === 'same') { alert(`❌ Allotment already given\n\n${msg}\n\nChoose a different allotment.`); input.focus(); return; }
+        if (!confirm(`⚠️ "${value}" looks like a spelling of an allotment that is already given.\n\n${msg}\n\nPress Cancel to fix it, or OK only if "${value}" is really a different allotment.`)) { input.focus(); return; }
+    }
     try {
-        await db.collection("registrations").doc(docId).update({ allotment: input.value.trim() });
+        await db.collection("registrations").doc(docId).update({ allotment: value });
     } catch (error) {
         alert("Error saving allotment: " + error.message);
     }
@@ -7203,8 +7274,8 @@ function renderRegistrationsTable(eventType, subType) {
     setSubTableMode(subType === 'Delegates');
     if (subType === 'Delegates') return renderDelegatesTable(tbody);
 
-    // Allotment column is only for MUN delegation lists (typed per delegation, like payment status)
-    const showAllot = eventType === 'MUN' && isDelegationSubType(subType);
+    // Allotment column: MUN delegation lists (per delegation) and committee lists (per committee entry / private delegate)
+    const showAllot = showsAllotment(eventType, subType);
     const allotTh = document.getElementById('allotment-th');
     if (allotTh) allotTh.style.display = showAllot ? '' : 'none';
     const firstTh = document.getElementById('sub-first-th');
@@ -7295,12 +7366,16 @@ function renderRegistrationsTable(eventType, subType) {
         const flag = ROW_FLAGS[rowStatus];
         const flagHtml = flag ? `<br><span class="row-flag" style="background:${flag.color}33; color:${flag.color}; border:1px solid ${flag.color};">${flag.text}</span>` : '';
         const allot = (data.allotment || '').trim();
+        // Committee lists: show the delegation's own allotment as a hint
+        const parentAllot = subType === 'Categories' && data.parentDelegationId
+            ? ((allRegistrations.find(x => x.id === data.parentDelegationId) || {}).allotment || '').trim() : '';
+        const allotHint = parentAllot ? `<br><span style="color: var(--text-muted); font-size: .8rem;">Delegation allotment: ${escapeHtml(parentAllot)}</span>` : '';
         const allotCell = showAllot ? `
                 <td style="min-width: 210px;">
                     <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.8rem; display: inline-block;
                         background: ${allot ? '#10b98122' : '#6b728022'}; color: ${allot ? '#10b981' : '#9ca3af'}; border: 1px solid ${allot ? '#10b981' : '#6b7280'};">
                         ${allot ? escapeHtml(allot) : 'NOT ALLOTTED'}
-                    </span><br>
+                    </span>${allotHint}<br>
                     <input type="text" id="allot-${data.id}" value="${escapeHtml(allot)}" placeholder="Type allotment (e.g. UNSC - Russia)" style="margin-top: 6px; width: 100%; padding: 6px 8px;">
                     <button class="btn" style="padding: 4px 8px; font-size: 0.90rem; margin-top: 6px; width: auto;" onclick="saveAllotment('${data.id}')">Save Allotment</button>
                 </td>` : '';
@@ -7389,7 +7464,7 @@ function renderRegistrationsTable(eventType, subType) {
         }
         // MUN
         if (r.subType === 'Private Delegates' && currentSubType === 'Categories') {
-            return { name: `${d['Full Name'] || '-'} (Private Delegate${d['Grade'] ? ', ' + d['Grade'] : ''})`, sub: '',
+            return { name: `${d['Full Name'] || '-'} (Private Delegate${d['Grade'] ? ', ' + d['Grade'] : ''})`, sub: r.allotment ? 'Allotment: ' + r.allotment : '',
                      division: d['Level'] ? d['Level'] + ' Delegation' : '-', members: join('Private Delegate', d['School / Institution Name']) };
         }
         if (r.subType === 'Private Delegates') {
@@ -7403,7 +7478,7 @@ function renderRegistrationsTable(eventType, subType) {
         if (cat) {
             // Committee lists: delegates first, their delegation after
             const people = splitPeople(d['Delegates']);
-            return { name: people.join('\n') || '-', sub: '', division: d['Delegation Tier'] || '-',
+            return { name: people.join('\n') || '-', sub: r.allotment ? 'Allotment: ' + r.allotment : '', division: d['Delegation Tier'] || '-',
                      members: join(d['Delegation'] || '-', d['School']) };
         }
         const people = [];
@@ -7946,7 +8021,7 @@ function renderRegistrationsTable(eventType, subType) {
 
         const csvRows = [
         
-        ['Category / Committee', 'Submitted At', ...(isDelegationSubType(currentSubType) && currentSubEvent === 'MUN' ? ['Allotment'] : []), ...headersList].map(escapeCSV).join(',')
+        ['Category / Committee', 'Submitted At', ...(showsAllotment(currentSubEvent, currentSubType) ? ['Allotment'] : []), ...headersList].map(escapeCSV).join(',')
     
         ];
 
@@ -7956,7 +8031,7 @@ function renderRegistrationsTable(eventType, subType) {
         
             const dateStr = r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate().toLocaleString() : 'N/A';
         
-            const row = [category, dateStr, ...(isDelegationSubType(currentSubType) && currentSubEvent === 'MUN' ? [r.allotment || ''] : [])];
+            const row = [category, dateStr, ...(showsAllotment(currentSubEvent, currentSubType) ? [r.allotment || ''] : [])];
 
     
             headersList.forEach(header => {
