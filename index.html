@@ -1406,6 +1406,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     </div>
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button id="mun-tier-btn" class="btn" style="width: auto; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="regradeMunDelegations(this)">Move MUN Submissions by Grade: Junior (Grade 6 – O2) / Senior (O3 – A2)</button>
+        <button id="mun-list-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunList(this)">Import MUN List (28 Oct: 5 teams, 27 O3 delegates)</button>
     </div>
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button id="paper-import-btn" class="btn" style="width: auto;" onclick="importPaperRegistrations('paper-2026-10-13', this)">Import Paper Registrations (13 Oct)</button>
@@ -6570,6 +6571,85 @@ async function importPaperRegistrations(batchKey, btn) {
         alert('Import failed, nothing was saved: ' + (err.message || err));
     } finally {
         if (btn) { btn.disabled = false; btn.innerText = cfg.label; }
+    }
+}
+
+// ---- MUN list (sheet of 28 Oct): 5 teams, every delegate O3, so all Senior Delegation ----
+// The sheet has no school, emails or phone numbers: the school (and an optional contact Gmail) are asked on import.
+// "Team A" on the sheet is Team 1 (allotted Russia). The first name of each team is taken as its head delegate.
+const MUN_LIST_IMPORT_BATCH = 'mun-list-2026-10-28';
+const MUN_LIST_IMPORT = [
+    { team: 'Team 1', allotment: 'Russia', delegates: [
+        ['Ghulam Zahra', 'WHO'], ['Syed Ali Zoraiz', 'UNSC'], ['Khadeeja Umair', 'DISEC'], ['Aliana Taha', 'UNW'], ['Hassun Mehmood', 'UNHRC']] },
+    { team: 'Team 2', delegates: [
+        ['Mahrukh Omer', 'UNHRC'], ['Syed Azlan', 'WHO'], ['Momin Butt', 'DISEC'], ['Daud Muneeb', 'UNSC'], ['Laamiah Arif', 'UNW']] },
+    { team: 'Team 3', delegates: [
+        ['Haniya Hashmi', 'DISEC'], ['Aviya Sanam', 'UNSC'], ['Fatima Zahra Abbas', 'UNW'], ['Aminah Fatima Bilal', 'UNHRC'], ['Anaya Wahla', 'WHO']] },
+    { team: 'Team 4', delegates: [
+        ['Safaa Waqas Cheema', 'WHO'], ['Noor Fatima Bilal', 'UNHRC'], ['Jasmeyn Saeed', 'UNSC'], ['Mikael Rokhri', 'DISEC'], ['Razane Ahmad', 'UNW']] },
+    { team: 'Team 5', delegates: [
+        ['Ayat Dogar', 'UNW'], ['Laymah Khan', 'UNHRC'], ['Zoya Randhawa', 'WHO'], ['Zinia Nabi Malik', 'UNSC'], ['Safeer', 'DISEC'],
+        ['Rania Anjum', 'UNW'], ['Ans Iftikhar', 'UNHRC']] }
+];
+
+async function importMunList(btn) {
+    if (!isAdmin) return alert('Please log in as admin first.');
+    if (allRegistrations.some(r => r.importBatch === MUN_LIST_IMPORT_BATCH)) return alert('This MUN list has already been imported.');
+    const fullCommittee = short => munCommittees.find(c => c === short || c.startsWith(short + ' ')) || short;
+    const tier = 'Senior Delegation', grade = 'O3';
+    const people = MUN_LIST_IMPORT.reduce((n, t) => n + t.delegates.length, 0);
+
+    const school = (prompt(`Import ${MUN_LIST_IMPORT.length} MUN teams (${people} delegates, all O3, Senior Delegation).\n\nSchool / institution name for these teams:`) || '').trim();
+    if (!school) return;
+    const email = (prompt('Contact Gmail for these teams (used as the head delegate email).\nLeave blank if there is none; the rows will then show as "invalid email".') || '').trim();
+    const payment = confirm('Mark these teams as PAID?\n\nOK = Paid\nCancel = Unpaid') ? 'paid' : 'unpaid';
+    if (!confirm(`Import ${MUN_LIST_IMPORT.length} teams from ${school} as Senior Delegations (${payment.toUpperCase()})?\n\n` +
+        MUN_LIST_IMPORT.map(t => `${school} ${t.team}${t.allotment ? ' (' + t.allotment + ')' : ''}: ${t.delegates.map(d => d[0]).join(', ')}`).join('\n'))) return;
+
+    const label = btn ? btn.innerText : '';
+    if (btn) { btn.disabled = true; btn.innerText = 'Importing...'; }
+    try {
+        const stamp = firebase.firestore.FieldValue.serverTimestamp();
+        const batch = db.batch();
+        MUN_LIST_IMPORT.forEach(t => {
+            const name = `${school} ${t.team}`;
+            const delegates = t.delegates.map(([n, c], i) => ({ name: n, committee: fullCommittee(c), grade, head: i === 0 }));
+            const [head, ...others] = delegates;
+            const form = {
+                'Delegation Name': name,
+                'School / Institution Name': school,
+                'Head Delegate Name': head.name,
+                'Head Delegate Email': email,
+                'Delegation Tier': tier,
+                'Head Delegate Grade': grade,
+                'Head Delegate Committee': head.committee
+            };
+            others.forEach((d, i) => {
+                form[`Delegate ${i + 2} Name`] = d.name;
+                form[`Delegate ${i + 2} Grade`] = grade;
+                form[`Delegate ${i + 2} Committee`] = d.committee;
+            });
+            const ref = db.collection('registrations').doc();
+            batch.set(ref, {
+                eventType: 'MUN', subType: 'Delegations', registrationType: 'Delegations',
+                categoryOrCommittee: tier, paymentStatus: payment, allotment: t.allotment || '',
+                submittedAt: stamp, importBatch: MUN_LIST_IMPORT_BATCH, formData: form, details: form, delegates
+            });
+            Object.entries(munCommitteeDelegates(delegates)).forEach(([committee, names]) => {
+                const cf = { 'Delegates': names, 'School': school, 'Delegation': name, 'Delegation Tier': tier, 'Head Delegate Email': email };
+                batch.set(db.collection('registrations').doc(), {
+                    eventType: 'MUN', subType: 'Categories', registrationType: 'Categories',
+                    categoryOrCommittee: committee, parentDelegationId: ref.id,
+                    paymentStatus: payment, submittedAt: stamp, importBatch: MUN_LIST_IMPORT_BATCH, formData: cf, details: cf
+                });
+            });
+        });
+        await batch.commit();
+        alert(`Done: ${MUN_LIST_IMPORT.length} teams (${people} delegates) registered as Senior Delegations.`);
+    } catch (err) {
+        alert('Import failed, nothing was saved: ' + (err.message || err));
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = label; }
     }
 }
 
