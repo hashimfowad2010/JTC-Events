@@ -1408,7 +1408,8 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <button id="mun-tier-btn" class="btn" style="width: auto; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="regradeMunDelegations(this)">Move MUN Submissions by Grade: Junior (Grade 6 – O2) / Senior (O3 – A2)</button>
         <button id="mun-list-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunList(this)">Import MUN List (28 Oct: 5 teams, 27 O2 delegates)</button>
         <button id="mun-list-junior-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="moveMunListToJunior(this)">Move 28 Oct MUN List to Junior (O2)</button>
-        <button id="mun-aitc-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunAitc(this)">Import BSS AITC Delegation (Junior, 6 delegates)</button>
+        <button id="mun-aitc-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunListDelegations('mun-aitc-2026-10-28', this)">Import BSS AITC Delegation (Junior, 6 delegates)</button>
+        <button id="mun-csc-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunListDelegations('mun-csc-2026-10-28', this)">Import BSS CSC Teams A + B (Junior, 10 delegates)</button>
     </div>
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button id="paper-import-btn" class="btn" style="width: auto;" onclick="importPaperRegistrations('paper-2026-10-13', this)">Import Paper Registrations (13 Oct)</button>
@@ -6657,62 +6658,79 @@ async function importMunList(btn) {
     }
 }
 
-// ---- BSS AITC delegation (sent 28 Oct): Junior Delegation, all six delegates O2 ----
-const MUN_AITC_IMPORT_BATCH = 'mun-aitc-2026-10-28';
-const MUN_AITC = {
-    school: 'BSS AITC', name: 'BSS AITC', tier: 'Junior Delegation', grade: 'O2',
-    email: 'isra.1242@beaconite.edu.pk', phone: '+92 321 5381538',
-    delegates: [['Isra Irfan', 'UNSC'], ['Emaan Ahmed Kaleem', 'DISEC'], ['Mahnoor Nadeem', 'UNHRC'],
-                ['Noor Jannat', 'UNW'], ['Adheen Sharif', 'WHO'], ['Haram Mehmood', 'PNA']]
+// ---- MUN delegations sent as lists (28 Oct). Key = importBatch, so each list can only be imported once.
+// The first delegate of each team is its head delegate. Committees are the short names (UNSC, WHO, ...).
+const MUN_LIST_IMPORTS = {
+    // BSS AITC: Junior Delegation, all six delegates O2
+    'mun-aitc-2026-10-28': {
+        school: 'BSS AITC', tier: 'Junior Delegation', grade: 'O2',
+        teams: [{ name: 'BSS AITC', email: 'isra.1242@beaconite.edu.pk', phone: '+92 321 5381538',
+            delegates: [['Isra Irfan', 'UNSC'], ['Emaan Ahmed Kaleem', 'DISEC'], ['Mahnoor Nadeem', 'UNHRC'],
+                        ['Noor Jannat', 'UNW'], ['Adheen Sharif', 'WHO'], ['Haram Mehmood', 'PNA']] }]
+    },
+    // BSS CSC: two Junior teams, all O2. Contact is Hashim's Gmail, no phone number.
+    'mun-csc-2026-10-28': {
+        school: 'BSS CSC', tier: 'Junior Delegation', grade: 'O2',
+        teams: [
+            { name: 'BSS CSC Team A', email: 'hashimfowad.2010@gmail.com', phone: '',
+              delegates: [['Sehar', 'UNW'], ['Dure', 'WHO'], ['Rida', 'UNHRC'], ['Fatima Shahid', 'DISEC'], ['Hadiya Naveed', 'PNA']] },
+            { name: 'BSS CSC Team B', email: 'hashimfowad.2010@gmail.com', phone: '',
+              delegates: [['Dua Sami', 'UNHRC'], ['Amna Ali Khan', 'WHO'], ['Armeen Waqas', 'DISEC'], ['Meerab', 'PNA'], ['Haleema Sadia', 'UNW']] }
+        ]
+    }
 };
 
-async function importMunAitc(btn) {
+async function importMunListDelegations(key, btn) {
+    const cfg = MUN_LIST_IMPORTS[key];
+    if (!cfg) return;
     if (!isAdmin) return alert('Please log in as admin first.');
-    if (allRegistrations.some(r => r.importBatch === MUN_AITC_IMPORT_BATCH)) return alert('The BSS AITC delegation has already been imported.');
-    const a = MUN_AITC;
-    const fullCommittee = short => munCommittees.find(c => c === short || c.startsWith(short + ' ')) || short;
-    const delegates = a.delegates.map(([n, c], i) => ({ name: n, committee: fullCommittee(c), grade: a.grade, head: i === 0 }));
-    const payment = confirm('Mark the BSS AITC delegation as PAID?\n\nOK = Paid\nCancel = Unpaid') ? 'paid' : 'unpaid';
-    if (!confirm(`Register ${a.name} as a ${a.tier} (${payment.toUpperCase()})?\n\n` +
-        delegates.map(d => `${d.name}${d.head ? ' (Head Delegate)' : ''}, ${d.grade} - ${d.committee}`).join('\n'))) return;
+    if (allRegistrations.some(r => r.importBatch === key)) return alert(`${cfg.school} has already been imported.`);
+    const fullCommittee = short => munCommittees.find(c => c === short || c.toUpperCase().startsWith(short.toUpperCase() + ' ')) || short;
+    const teams = cfg.teams.map(t => ({ ...t, delegates: t.delegates.map(([n, c], i) => ({ name: n, committee: fullCommittee(c), grade: cfg.grade, head: i === 0 })) }));
+    const people = teams.reduce((n, t) => n + t.delegates.length, 0);
+    const payment = confirm(`Mark ${cfg.school} (${teams.length} ${teams.length === 1 ? 'delegation' : 'delegations'}) as PAID?\n\nOK = Paid\nCancel = Unpaid`) ? 'paid' : 'unpaid';
+    if (!confirm(`Register ${teams.length} ${cfg.tier}${teams.length === 1 ? '' : 's'} from ${cfg.school} (${people} delegates, ${payment.toUpperCase()})?\n\n` +
+        teams.map(t => `${t.name}:\n` + t.delegates.map(d => `  ${d.name}${d.head ? ' (Head Delegate)' : ''}, ${d.grade} - ${d.committee}`).join('\n')).join('\n\n'))) return;
 
     const label = btn ? btn.innerText : '';
     if (btn) { btn.disabled = true; btn.innerText = 'Importing...'; }
     try {
         const stamp = firebase.firestore.FieldValue.serverTimestamp();
         const batch = db.batch();
-        const [head, ...others] = delegates;
-        const form = {
-            'Delegation Name': a.name,
-            'School / Institution Name': a.school,
-            'Head Delegate Name': head.name,
-            'Head Delegate Email': a.email,
-            'Head Delegate Contact': a.phone,
-            'Delegation Tier': a.tier,
-            'Head Delegate Grade': a.grade,
-            'Head Delegate Committee': head.committee
-        };
-        others.forEach((d, i) => {
-            form[`Delegate ${i + 2} Name`] = d.name;
-            form[`Delegate ${i + 2} Grade`] = d.grade;
-            form[`Delegate ${i + 2} Committee`] = d.committee;
-        });
-        const ref = db.collection('registrations').doc();
-        batch.set(ref, {
-            eventType: 'MUN', subType: 'Delegations', registrationType: 'Delegations',
-            categoryOrCommittee: a.tier, paymentStatus: payment, allotment: '',
-            submittedAt: stamp, importBatch: MUN_AITC_IMPORT_BATCH, formData: form, details: form, delegates
-        });
-        Object.entries(munCommitteeDelegates(delegates)).forEach(([committee, names]) => {
-            const cf = { 'Delegates': names, 'School': a.school, 'Delegation': a.name, 'Delegation Tier': a.tier, 'Head Delegate Email': a.email };
-            batch.set(db.collection('registrations').doc(), {
-                eventType: 'MUN', subType: 'Categories', registrationType: 'Categories',
-                categoryOrCommittee: committee, parentDelegationId: ref.id,
-                paymentStatus: payment, submittedAt: stamp, importBatch: MUN_AITC_IMPORT_BATCH, formData: cf, details: cf
+        teams.forEach(t => {
+            const [head, ...others] = t.delegates;
+            const form = {
+                'Delegation Name': t.name,
+                'School / Institution Name': cfg.school,
+                'Head Delegate Name': head.name,
+                'Head Delegate Email': t.email,
+                'Head Delegate Contact': t.phone,
+                'Delegation Tier': cfg.tier,
+                'Head Delegate Grade': cfg.grade,
+                'Head Delegate Committee': head.committee
+            };
+            others.forEach((d, i) => {
+                form[`Delegate ${i + 2} Name`] = d.name;
+                form[`Delegate ${i + 2} Grade`] = d.grade;
+                form[`Delegate ${i + 2} Committee`] = d.committee;
+            });
+            const ref = db.collection('registrations').doc();
+            batch.set(ref, {
+                eventType: 'MUN', subType: 'Delegations', registrationType: 'Delegations',
+                categoryOrCommittee: cfg.tier, paymentStatus: payment, allotment: '',
+                submittedAt: stamp, importBatch: key, formData: form, details: form, delegates: t.delegates
+            });
+            Object.entries(munCommitteeDelegates(t.delegates)).forEach(([committee, names]) => {
+                const cf = { 'Delegates': names, 'School': cfg.school, 'Delegation': t.name, 'Delegation Tier': cfg.tier, 'Head Delegate Email': t.email };
+                batch.set(db.collection('registrations').doc(), {
+                    eventType: 'MUN', subType: 'Categories', registrationType: 'Categories',
+                    categoryOrCommittee: committee, parentDelegationId: ref.id,
+                    paymentStatus: payment, submittedAt: stamp, importBatch: key, formData: cf, details: cf
+                });
             });
         });
         await batch.commit();
-        alert(`Done: ${a.name} registered as a ${a.tier} (${delegates.length} delegates).`);
+        alert(`Done: ${teams.length} ${cfg.school} ${cfg.tier}${teams.length === 1 ? '' : 's'} registered (${people} delegates).`);
     } catch (err) {
         alert('Import failed, nothing was saved: ' + (err.message || err));
     } finally {
