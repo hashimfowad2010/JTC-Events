@@ -1415,6 +1415,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button class="btn" style="width: auto; background: linear-gradient(135deg, #10b981, #047857);" onclick="exportSportsParticipantsPDF(this)">📄 Sports Fest Participants List (PDF)</button>
         <button class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #10b981, #047857);" onclick="exportMunDelegatesExcel(this)">📊 All MUN Delegates (Excel)</button>
+        <button class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #f59e0b, #b45309);" onclick="openFreeAllotments()">🎯 Allotments Not Given</button>
     </div>
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button id="mun-tier-btn" class="btn" style="width: auto; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="regradeMunDelegations(this)">Move MUN Submissions by Grade: Junior (Grade 6 – O2) / Senior (O3 – A2)</button>
@@ -1858,6 +1859,19 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <h2 id="notice-title" style="color: var(--secondary); margin-top: 10px;"></h2>
         <p id="notice-text" style="color: var(--text-muted); margin: 15px 0 20px; line-height: 1.6;"></p>
         <button class="btn" onclick="closeModal('notice-modal')">Close</button>
+    </div>
+</div>
+
+<!-- ALLOTMENTS NOT GIVEN (admin) -->
+<div id="free-allot-modal" class="modal" onclick="if (event.target === this) closeModal('free-allot-modal')">
+    <div class="modal-content" style="max-width: 720px; max-height: 85vh; overflow-y: auto;">
+        <h2 style="color: var(--secondary); text-align: center; margin-bottom: 6px;">Allotments Not Given</h2>
+        <p style="color: var(--text-muted); text-align: center; margin-bottom: 18px;">Pool names nobody has been allotted yet, from the live registrations.</p>
+        <div id="free-allot-list" style="display: grid; gap: 14px; margin-bottom: 18px;"></div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary" onclick="copyFreeAllotments(this)">Copy List</button>
+            <button class="btn" onclick="closeModal('free-allot-modal')">Close</button>
+        </div>
     </div>
 </div>
 
@@ -3075,20 +3089,24 @@ async function handleSportsRegistrationSubmit(e) {
             return addTiles(box, names, counts, '');
         }
 
-        // MUN: junior and senior committees are separate. Counts include private delegates.
+        // MUN: junior and senior committees are separate, except Sokovia (one committee for both).
+        // Counts include private delegates.
         box.className = '';
-        ['Junior', 'Senior'].forEach(tier => {
-            const names = [...munCommittees], counts = {};
+        const combined = c => committeePoolKey(c) === 'crisis';
+        ['Junior', 'Senior', ''].forEach(tier => {
+            const names = munCommittees.filter(c => combined(c) === !tier), counts = {};
             allRegistrations.forEach(r => {
                 const c = r.eventType === 'MUN' && munCommitteeOf(r);
-                const t = c && munTierOf(r);
-                if (c && (!t || t === tier)) counts[c] = (counts[c] || 0) + 1;
+                if (!c || combined(c) !== !tier) return;
+                const t = munTierOf(r);
+                if (!tier || !t || t === tier) counts[c] = (counts[c] || 0) + 1;
             });
             Object.keys(counts).forEach(n => { if (!names.includes(n)) names.push(n); });
+            if (!names.length) return;
             const total = Object.values(counts).reduce((a, b) => a + b, 0);
             const head = document.createElement('h3');
             head.style.cssText = 'margin: 10px 0 12px; color: var(--secondary);';
-            head.textContent = `${tier} Committees (${total} registration${total === 1 ? '' : 's'})`;
+            head.textContent = `${tier ? tier + ' Committees' : 'Junior + Senior Together'} (${total} registration${total === 1 ? '' : 's'})`;
             const grid = document.createElement('div');
             grid.className = 'grid-2';
             grid.style.marginBottom = '28px';
@@ -3157,7 +3175,8 @@ async function handleSportsRegistrationSubmit(e) {
         if (searchRow) searchRow.style.display = isDelegationSubType(subType) ? 'flex' : 'none';
         setSubTableMode(subType === 'Delegates');
 
-        const typeLabel = (currentSubEvent === 'MUN' && subType === 'Categories') ? `${tier ? tier + ' ' : ''}Committees` : subType;
+        const typeLabel = (currentSubEvent === 'MUN' && subType === 'Categories')
+            ? `${tier ? tier + ' ' : categoryName && committeePoolKey(categoryName) === 'crisis' ? 'Junior + Senior ' : ''}Committees` : subType;
         document.getElementById('sub-category-title').innerText =
             `${currentSubEvent} > ${typeLabel}${categoryName ? ' > ' + categoryName : ''} Submissions`;
 
@@ -7403,6 +7422,40 @@ function findAllotmentClash(rec, value) {
     return similar;
 }
 
+// ---- Pool names nobody has yet: countries and PNA per tier, Sokovia for Junior + Senior together ----
+const FREE_ALLOT_LISTS = [['countries', 'Junior'], ['countries', 'Senior'], ['pna', 'Junior'], ['pna', 'Senior'], ['crisis', '']];
+function freeAllotmentLists() {
+    const used = {};
+    allRegistrations.filter(r => r.eventType === 'MUN' && (r.allotment || '').trim()).forEach(r => {
+        const name = matchAllotmentPool(r, r.allotment).poolName;
+        if (!name) return;
+        const c = munCommitteeOf(r);
+        const pool = c ? committeePoolKey(c) : Object.keys(ALLOTMENT_POOLS).find(k => ALLOTMENT_POOLS[k].names.includes(name));
+        (used[pool === 'crisis' ? 'crisis|' : `${pool}|${munTierOf(r)}`] ||= new Set()).add(name);
+    });
+    return FREE_ALLOT_LISTS.map(([pool, tier]) => ({
+        title: pool === 'crisis' ? 'Sokovia Accords (Junior + Senior)' : `${pool === 'pna' ? 'PNA' : 'Countries (UNHRC, UNSC, DISEC, UNW, WHO)'} – ${tier}`,
+        total: ALLOTMENT_POOLS[pool].names.length,
+        free: ALLOTMENT_POOLS[pool].names.filter(n => !(used[`${pool}|${tier}`] || new Set()).has(n))
+    }));
+}
+function openFreeAllotments() {
+    if (!isAdmin) return alert('Please log in as admin first.');
+    document.getElementById('free-allot-list').innerHTML = freeAllotmentLists().map(l => `
+        <div style="padding: 12px 14px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.04);">
+            <strong style="color: var(--secondary);">${escapeHtml(l.title)}</strong>
+            <span style="color: var(--text-muted); font-size: .85rem;"> · ${l.free.length} of ${l.total} not given</span>
+            <div style="margin-top: 6px; line-height: 1.6;">${l.free.length ? l.free.map(escapeHtml).join(', ') : '<em>All given</em>'}</div>
+        </div>`).join('');
+    document.getElementById('free-allot-modal').style.display = 'flex';
+}
+async function copyFreeAllotments(btn) {
+    const text = freeAllotmentLists().map(l => `${l.title}: ${l.free.length} of ${l.total} not given\n${l.free.join(', ') || 'All given'}`).join('\n\n');
+    try { await navigator.clipboard.writeText(text); btn.innerText = 'Copied!'; }
+    catch (e) { prompt('Copy the list:', text); }
+    setTimeout(() => { btn.innerText = 'Copy List'; }, 1500);
+}
+
 // Only allotments from the row's pool; misspellings get the closest pool spellings.
 // Returns the spelling to save, or null when the admin should go back and fix it.
 function poolCheckedAllotment(rec, value) {
@@ -7584,7 +7637,10 @@ function renderRegistrationsTable(eventType, subType) {
         const dateStr = data.submittedAt && data.submittedAt.toDate ? data.submittedAt.toDate().toLocaleString() : 'N/A';
         const nameDiff = dupCmp && label.hide.some(k => dupCmp.diffKeys.has(k));
         const nameCell = label.names.map(n => `<strong class="${nameDiff ? 'diff-line' : ''}" style="color: var(--secondary);">${escapeHtml(n)}</strong>`).join('<br>') +
-            (label.sub ? `<br><span style="color: var(--text-muted); font-size: .85rem;">${escapeHtml(label.sub)}</span>` : '');
+            (label.sub ? `<br><span style="color: var(--text-muted); font-size: .85rem;">${escapeHtml(label.sub)}</span>` : '') +
+            // Sokovia list (Junior + Senior together): mark each entry's tier
+            (eventType === 'MUN' && subType === 'Categories' && !currentSubTier && munTierOf(data)
+                ? `<br><span style="color: var(--text-muted); font-size: .8rem; font-weight: bold;">${munTierOf(data).toUpperCase()}</span>` : '');
 
         // Payment status badge and toggle button logic
         const paymentStatus = data.paymentStatus || 'unpaid';
