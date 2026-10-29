@@ -1067,6 +1067,17 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     </div>
 
     <div class="wide-tiles main-only">
+        <div class="hero-tile wide-tile" data-mun-cta="study-guides" onclick="openStudyGuides()">
+            <img src="study guides.jpg" alt="Study Guides" onerror="this.onerror=null;this.src='JTCMUN.png'">
+            <div class="hero-tile-label">
+                <h3>Study Guides</h3>
+                <p class="tile-sub">Background guides for every JTCMUN committee</p>
+                <span class="hero-cta">View Study Guides &rarr;</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="wide-tiles main-only">
         <div class="hero-tile wide-tile socials-tile disabled" aria-disabled="true">
             <img src="schedule.jpg" alt="Schedule" onerror="this.onerror=null;this.src='JTCMUN.png'">
             <div class="hero-tile-label">
@@ -1845,6 +1856,16 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <h2 id="notice-title" style="color: var(--secondary); margin-top: 10px;"></h2>
         <p id="notice-text" style="color: var(--text-muted); margin: 15px 0 20px; line-height: 1.6;"></p>
         <button class="btn" onclick="closeModal('notice-modal')">Close</button>
+    </div>
+</div>
+
+<!-- STUDY GUIDES MODAL (links set in MUN_STUDY_GUIDES, EDIT ME) -->
+<div id="study-guide-modal" class="modal" onclick="if (event.target === this) closeModal('study-guide-modal')">
+    <div class="modal-content" style="max-width: 640px; max-height: 85vh; overflow-y: auto;">
+        <h2 style="color: var(--secondary); text-align: center; margin-bottom: 6px;">📚 Study Guides</h2>
+        <p style="color: var(--text-muted); text-align: center; margin-bottom: 18px;">Read your committee's guide before the conference.</p>
+        <div id="study-guide-list" style="display: grid; gap: 12px; margin-bottom: 18px;"></div>
+        <button class="btn" onclick="closeModal('study-guide-modal')">Close</button>
     </div>
 </div>
 
@@ -7144,21 +7165,15 @@ function showsAllotment(eventType, subType) {
 const ALLOTMENT_POOLS = {
     countries: { label: 'Countries (UNHRC, UNSC, DISEC, UNW, WHO)', names: [
         'United States', 'Israel', 'United Kingdom', 'Finland', 'Oman', 'Nepal', 'Vatican City', 'Peru', 'Austria', 'France',
-        'Germany', 'Switzerland', 'Jordan', 'Canada', 'Kenya', 'Russia', 'DPRK', 'UAE', 'Palestine', 'China',
-        'India', 'Brazil', 'Lebanon', 'New Zealand', 'Ukraine', 'Belgium', 'Sri Lanka', 'Spain', 'Iran', 'Iraq',
-        'Italy', 'Malta', 'Latvia', 'Ireland', 'Australia', 'Sweden', 'Slovenia', 'Greece', 'Croatia', 'Romania',
-        'Mexico', 'Denmark', 'Palau', 'Maldives', 'Nigeria', 'Netherlands', 'Gabon', 'Egypt', 'Ethiopia', 'Afghanistan',
-        'Yemen', 'Venezuela', 'Uzbekistan', 'Vietnam', 'Pakistan', 'Syria', 'Saudi Arabia', 'Japan', 'South Africa', 'Turkey'] },
+        'Germany', 'Jordan', 'Canada', 'Kenya', 'Russia', 'DPRK', 'UAE', 'Palestine', 'China', 'India',
+        'Lebanon', 'Belgium', 'Iran', 'Italy', 'Ireland', 'Australia', 'Mexico', 'Denmark', 'Afghanistan', 'Syria',
+        'Saudi Arabia', 'Japan', 'Laos', 'Poland', 'Lithuania'] },
     pna: { label: 'PNA', names: [
-        'Asim Munir', 'Shehbaz Sharif', 'Nawaz Sharif', 'Bilawal Bhutto', 'Maryam Nawaz', 'Hammad Azhar', 'Khaliq ur Rehman', 'Zeb Jafar',
-        'Asif Ali Zardari', 'Dr Tariq Fazal', 'Sohail Afridi', 'Khurram Dastgir Khan', 'Maulana Fazal ur Rehman', 'Altaf Hussain',
-        'Asad Umar', 'Ahsan Iqbal', 'Shazia Marri', 'Omar Ayub Khan', 'Ishaq Dar', 'Rana Sanaullah', 'Barrister Gohar',
-        'Yousaf Raza Gilani', 'Murad Ali Shah', 'Atta Ullah Tarar', 'Najam Sethi', 'Asad Qaiser', 'Mahmood Qureshi', 'Khawaja Asif',
-        'Sherry Rehman', 'Aseefa Bhutto', 'Akhtar Mengal', 'Khan Achakzai', 'Zulfiqar Ali Khosa', 'Ali Amin Gandapur', 'Aurangzeb',
-        'Saad Rafique', 'Azam Nazeer', 'Latif Khosa', 'Umar Cheema', 'Shahzeb Khan Zada', 'Asma Shirazi', 'Hamid Mir', 'Parvez Ashraf',
-        'Mustafa Khokhar', 'Hamid Khan', 'Munir Malik', 'Kamran Murtaza', 'DG ISPR', 'Sarmad Ali', 'Miftah Ismail', 'Raza Rabbani',
-        'Aitzaz Ahsan', 'Gohar Ali Khan', 'Lal Chand Malhi', 'Syed Naved Qamar', 'Ali Muhammad', 'Tariq Fazal', 'Fakhar Durrani',
-        'Sohail Warraich'] },
+        'Asim Munir', 'Shehbaz Sharif', 'Nawaz Sharif', 'Bilawal Bhutto', 'Maryam Nawaz', 'Khaliq ur Rehman', 'Zeb Jafar',
+        'Asif Ali Zardari', 'Maulana Fazal ur Rehman', 'Altaf Hussain', 'Asad Umar', 'Ahsan Iqbal', 'Shazia Marri', 'Omar Ayub Khan',
+        'Ishaq Dar', 'Rana Sanaullah', 'Barrister Gohar', 'Yousaf Raza Gilani', 'Atta Ullah Tarar', 'Najam Sethi', 'Asad Qaiser',
+        'Mahmood Qureshi', 'Khawaja Asif', 'Aseefa Bhutto', 'Akhtar Mengal', 'Khan Achakzai', 'Zulfiqar Ali Khosa',
+        'Ali Amin Gandapur', 'Aurangzeb', 'Shahzeb Khan Zada', 'Hamid Mir', 'Parvez Ashraf', 'DG ISPR', 'Gohar Ali Khan'] },
     crisis: { label: 'Sokovia Accords (Crisis)', names: [
         'Tony Stark', 'Steve Rogers', 'Thaddeus Ross', "King T'Challa", 'Bucky Barnes', 'Bruce Banner', 'Thor', 'Scott Lang', 'Maria Hill',
         'Everett K. Ross', 'Peter Parker', 'President Russia', 'President China', 'President Nigeria', 'Prime Minister Sokovia',
@@ -7169,19 +7184,20 @@ const ALLOTMENT_POOLS = {
         'United Nations Sec. Gen', 'Adrian Toomes', 'Hope van Dyne', 'Bill Metzger', 'Agent P Cleary', 'Happy Hogan', 'Felix Blake',
         'Wilson Fisk', 'Madame Gao', 'General Dreykov', 'Xu Wenwu', 'Mac Gargan', 'Aaron Davis', 'Dr Wilfred Nagel',
         'Director of Interpol', 'General Okoye', 'High Commissioner UNHRC', 'Dr List', 'Chairman Pym Technologies', 'Luke Cage',
-        'Vasily Karpov', 'May Parker', 'Justin Hammer', 'President Niger', 'Prime Minister UK', 'Melinda May', 'Arnim Zola'] }
+        'Vasily Karpov', 'May Parker', 'Justin Hammer', 'President Niger', 'Prime Minister UK', 'Melinda May', 'Arnim Zola',
+        'Grant Ward', 'Sunil Bakshi', 'Ulysses Klaue', 'President of Chad', 'Matt Murdock', 'Wong', 'Jessica Jones'] }
 };
 // Other ways the same allotment gets typed (keys written the way normText() leaves them)
 const ALLOTMENT_ALIASES = {
     usa: 'United States', us: 'United States', america: 'United States', unitedstatesofamerica: 'United States',
     uk: 'United Kingdom', britain: 'United Kingdom', greatbritain: 'United Kingdom', northkorea: 'DPRK',
-    unitedarabemirates: 'UAE', vatican: 'Vatican City', holysee: 'Vatican City', turkiye: 'Turkey', ksa: 'Saudi Arabia',
-    prc: 'China', thenetherlands: 'Netherlands', holland: 'Netherlands',
+    unitedarabemirates: 'UAE', vatican: 'Vatican City', holysee: 'Vatican City', ksa: 'Saudi Arabia', prc: 'China',
+    laopdr: 'Laos', presidentchad: 'President of Chad', daredevil: 'Matt Murdock',
     friday: 'F.R.I.D.A.Y.', tchalla: "King T'Challa", blackpanther: "King T'Challa", ironman: 'Tony Stark',
     captainamerica: 'Steve Rogers', hulk: 'Bruce Banner', spiderman: 'Peter Parker', blackwidow: 'Natasha Romanoff',
     scarletwitch: 'Wanda Maximoff', hawkeye: 'Clint Barton', antman: 'Scott Lang', wintersoldier: 'Bucky Barnes',
     falcon: 'Sam Wilson', warmachine: 'James Rhodes', vulture: 'Adrian Toomes', kingpin: 'Wilson Fisk',
-    barristergoharalikhan: 'Barrister Gohar', shahmahmoodqureshi: 'Mahmood Qureshi', khawajasaadrafique: 'Saad Rafique'
+    barristergoharalikhan: 'Barrister Gohar', shahmahmoodqureshi: 'Mahmood Qureshi'
 };
 function normText(v) { return String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
 // The pool a committee allots from
@@ -7257,10 +7273,15 @@ function ensureAllotmentDatalists() {
 
 // Where an allotment must be unique: committee rows and private delegates per committee + tier,
 // delegations per tier, committee directors per tier
+// Committee rows: a country is given once per tier across all the country committees (Austria in Junior UNW
+// blocks Austria in every Junior committee, not in Senior); PNA once per tier; Sokovia once for Junior and Senior together
 function allotmentScope(r) {
     if (r.eventType !== 'MUN') return '';
     const committee = munCommitteeOf(r);
-    if (committee) return `committee|${munTierOf(r)}|${normKey(committee)}`;
+    if (committee) {
+        const pool = committeePoolKey(committee);
+        return pool === 'crisis' ? 'pool|crisis' : `pool|${pool}|${munTierOf(r)}`;
+    }
     if (r.subType === 'Committee Directors') return `director|${munTierOf(r)}`;
     return `delegation|${munTierOf(r)}`;
 }
@@ -7299,7 +7320,7 @@ function findAllotmentClash(rec, value) {
     let similar = null;
     for (const r of allRegistrations) {
         if (r.id === rec.id || !(r.allotment || '').trim() || allotmentScope(r) !== scope) continue;
-        const theirs = normAllotment(r.allotment, committee);
+        const theirs = normAllotment(r.allotment, munCommitteeOf(r) || committee);
         if (!theirs) continue;
         const theirsPool = normText(matchAllotmentPool(r, r.allotment).poolName);
         if (minePool && theirsPool) { if (minePool === theirsPool) return { kind: 'same', rec: r }; continue; }
@@ -7334,7 +7355,8 @@ async function saveAllotment(docId) {
     }
     const clash = rec && value ? findAllotmentClash(rec, value) : null;
     if (clash) {
-        const where = munCommitteeOf(rec) ? `in ${munCommitteeOf(rec)}${munTierOf(rec) ? ' (' + munTierOf(rec) + ')' : ''}` : `in the ${munTierOf(rec) || 'MUN'} list`;
+        const other = clash.rec, otherCommittee = munCommitteeOf(other);
+        const where = otherCommittee ? `in ${otherCommittee}${munTierOf(other) ? ' (' + munTierOf(other) + ')' : ''}` : `in the ${munTierOf(other) || 'MUN'} list`;
         const msg = `"${clash.rec.allotment}" is already allotted ${where} to:\n${allotmentHolder(clash.rec)}`;
         if (clash.kind === 'same') { alert(`❌ Allotment already given\n\n${msg}\n\nChoose a different allotment.`); input.focus(); return; }
         if (!confirm(`⚠️ "${value}" looks like a spelling of an allotment that is already given.\n\n${msg}\n\nPress Cancel to fix it, or OK only if "${value}" is really a different allotment.`)) { input.focus(); return; }
@@ -8993,10 +9015,38 @@ function openCodeOfConduct(type) {
         const modal = document.getElementById('rules-modal');
         if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
         document.getElementById('modal-title').innerText = item.title || 'Committee';
-        document.getElementById('modal-rules').innerHTML = item.desc
+        document.getElementById('modal-rules').innerHTML = (item.desc
             ? escapeHtml(item.desc).replace(/\n/g, '<br>')
-            : '<em>Details coming soon.</em>';
+            : '<em>Details coming soon.</em>') + `<div style="margin-top: 16px;">${studyGuideButton(id)}</div>`;
         modal.style.display = 'flex';
+    }
+
+    // ---- Study guides: one per committee, links in MUN_STUDY_GUIDES (EDIT ME)
+    function studyGuideUrl(id) {
+        const url = String((typeof MUN_STUDY_GUIDES !== 'undefined' && MUN_STUDY_GUIDES[id]) || '').trim();
+        return /^https?:\/\//i.test(url) ? url : '';
+    }
+    function studyGuideButton(id) {
+        const url = studyGuideUrl(id);
+        return url
+            ? `<a class="btn" href="${escapeHtml(url)}" target="_blank" rel="noopener" style="display: inline-block; width: auto; text-decoration: none;">Open Study Guide &#8599;</a>`
+            : `<span class="btn" style="display: inline-block; width: auto; opacity: .55; cursor: default;">Study Guide Coming Soon</span>`;
+    }
+    function openStudyGuides() {
+        const list = document.getElementById('study-guide-list');
+        list.innerHTML = munCommitteeList.map(c => {
+            const name = munCommittees.find(n => normText(n).startsWith(c.id)) || c.id.toUpperCase();
+            return `
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+                            padding: 12px 14px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.04);">
+                    <div style="flex: 1 1 260px; min-width: 0;">
+                        <strong style="color: var(--secondary);">${escapeHtml(name)}</strong>
+                        ${c.agenda && !name.includes(c.agenda) ? `<div style="color: var(--text-muted); font-size: .88rem; margin-top: 3px;">${escapeHtml(c.agenda)}</div>` : ''}
+                    </div>
+                    ${studyGuideButton(c.id)}
+                </div>`;
+        }).join('');
+        document.getElementById('study-guide-modal').style.display = 'flex';
     }
 
     function renderManagement() {
@@ -9460,6 +9510,16 @@ const MUN_EVENT_DATE  = '2026-10-30T00:00:00+05:00';   // 30 October 2026, start
 const MUN_EVENT_LABEL = 'JTC MUN begins in';
 const SPORTS_FEST_ENDED = true;       // true = Sports Fest is over: Register Now / Schedule / Socials say the event has ended
 const CD_APPLICATIONS_OPEN = false;   // false = Committee Director tile says applications are closed
+// MUN study guides: paste each committee's Google Drive link between the quotes ('' = "Coming Soon")
+const MUN_STUDY_GUIDES = {
+    unhrc:   '',   // UNHRC
+    unsc:    '',   // UNSC
+    disec:   '',   // DISEC
+    unw:     '',   // UN Women
+    pna:     '',   // Pakistan National Assembly
+    who:     '',   // WHO
+    sokovia: ''    // Sokovia Accords (Specialized Crisis Committee)
+};
 const MAP_EMBED_URL = '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3403.603933447607!2d74.27443191185881!3d31.452568974137467!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919016fdb873cd1%3A0x815f40a50155a88f!2sBeaconhouse%20Johar%20Town%20(Boys)%20Campus%20Senior%2FMiddle!5e0!3m2!1sen!2s!4v1790775537768!5m2!1sen!2s" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>';   // paste the Google Maps "Embed a map" src URL here
 const CONTACTS = [
     { name: 'Naqi Ali', phone: '0336-8674125', img: 'naqiali.jpeg' },
