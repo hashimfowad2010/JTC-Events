@@ -7140,6 +7140,121 @@ function showsAllotment(eventType, subType) {
     return eventType === 'MUN' && (isDelegationSubType(subType) || subType === 'Categories');
 }
 
+// ---- Allotment pools (from the placard decks): only these can be allotted ----
+const ALLOTMENT_POOLS = {
+    countries: { label: 'Countries (UNHRC, UNSC, DISEC, UNW, WHO)', names: [
+        'United States', 'Israel', 'United Kingdom', 'Finland', 'Oman', 'Nepal', 'Vatican City', 'Peru', 'Austria', 'France',
+        'Germany', 'Switzerland', 'Jordan', 'Canada', 'Kenya', 'Russia', 'DPRK', 'UAE', 'Palestine', 'China',
+        'India', 'Brazil', 'Lebanon', 'New Zealand', 'Ukraine', 'Belgium', 'Sri Lanka', 'Spain', 'Iran', 'Iraq',
+        'Italy', 'Malta', 'Latvia', 'Ireland', 'Australia', 'Sweden', 'Slovenia', 'Greece', 'Croatia', 'Romania',
+        'Mexico', 'Denmark', 'Palau', 'Maldives', 'Nigeria', 'Netherlands', 'Gabon', 'Egypt', 'Ethiopia', 'Afghanistan',
+        'Yemen', 'Venezuela', 'Uzbekistan', 'Vietnam', 'Pakistan', 'Syria', 'Saudi Arabia', 'Japan', 'South Africa', 'Turkey'] },
+    pna: { label: 'PNA', names: [
+        'Asim Munir', 'Shehbaz Sharif', 'Nawaz Sharif', 'Bilawal Bhutto', 'Maryam Nawaz', 'Hammad Azhar', 'Khaliq ur Rehman', 'Zeb Jafar',
+        'Asif Ali Zardari', 'Dr Tariq Fazal', 'Sohail Afridi', 'Khurram Dastgir Khan', 'Maulana Fazal ur Rehman', 'Altaf Hussain',
+        'Asad Umar', 'Ahsan Iqbal', 'Shazia Marri', 'Omar Ayub Khan', 'Ishaq Dar', 'Rana Sanaullah', 'Barrister Gohar',
+        'Yousaf Raza Gilani', 'Murad Ali Shah', 'Atta Ullah Tarar', 'Najam Sethi', 'Asad Qaiser', 'Mahmood Qureshi', 'Khawaja Asif',
+        'Sherry Rehman', 'Aseefa Bhutto', 'Akhtar Mengal', 'Khan Achakzai', 'Zulfiqar Ali Khosa', 'Ali Amin Gandapur', 'Aurangzeb',
+        'Saad Rafique', 'Azam Nazeer', 'Latif Khosa', 'Umar Cheema', 'Shahzeb Khan Zada', 'Asma Shirazi', 'Hamid Mir', 'Parvez Ashraf',
+        'Mustafa Khokhar', 'Hamid Khan', 'Munir Malik', 'Kamran Murtaza', 'DG ISPR', 'Sarmad Ali', 'Miftah Ismail', 'Raza Rabbani',
+        'Aitzaz Ahsan', 'Gohar Ali Khan', 'Lal Chand Malhi', 'Syed Naved Qamar', 'Ali Muhammad', 'Tariq Fazal', 'Fakhar Durrani',
+        'Sohail Warraich'] },
+    crisis: { label: 'Sokovia Accords (Crisis)', names: [
+        'Tony Stark', 'Steve Rogers', 'Thaddeus Ross', "King T'Challa", 'Bucky Barnes', 'Bruce Banner', 'Thor', 'Scott Lang', 'Maria Hill',
+        'Everett K. Ross', 'Peter Parker', 'President Russia', 'President China', 'President Nigeria', 'Prime Minister Sokovia',
+        'Chancellor Germany', 'Natasha Romanoff', 'Wanda Maximoff', 'Vision', 'Nick Fury', 'Sharon Carter', 'Clint Barton',
+        'Jeffrey Mace', 'Helmut Zemo', 'James Rhodes', 'Loki', 'Pepper Potts', 'Peggy Carter', 'Miriam Sharpe', 'Jane Foster',
+        'Sam Wilson', 'Shuri', 'Brock Rumlow', 'Phil Coulson', 'Dr Helen Cho', 'President Italy', 'Dr Leo Fitz', 'Christine Everhart',
+        'President France', 'Anne Marie Hoag', 'Ancient One', 'Wolfgang von Strucker', 'F.R.I.D.A.Y.', 'Florence Kasumba', 'PM India',
+        'United Nations Sec. Gen', 'Adrian Toomes', 'Hope van Dyne', 'Bill Metzger', 'Agent P Cleary', 'Happy Hogan', 'Felix Blake',
+        'Wilson Fisk', 'Madame Gao', 'General Dreykov', 'Xu Wenwu', 'Mac Gargan', 'Aaron Davis', 'Dr Wilfred Nagel',
+        'Director of Interpol', 'General Okoye', 'High Commissioner UNHRC', 'Dr List', 'Chairman Pym Technologies', 'Luke Cage',
+        'Vasily Karpov', 'May Parker', 'Justin Hammer', 'President Niger', 'Prime Minister UK', 'Melinda May', 'Arnim Zola'] }
+};
+// Other ways the same allotment gets typed (keys written the way normText() leaves them)
+const ALLOTMENT_ALIASES = {
+    usa: 'United States', us: 'United States', america: 'United States', unitedstatesofamerica: 'United States',
+    uk: 'United Kingdom', britain: 'United Kingdom', greatbritain: 'United Kingdom', northkorea: 'DPRK',
+    unitedarabemirates: 'UAE', vatican: 'Vatican City', holysee: 'Vatican City', turkiye: 'Turkey', ksa: 'Saudi Arabia',
+    prc: 'China', thenetherlands: 'Netherlands', holland: 'Netherlands',
+    friday: 'F.R.I.D.A.Y.', tchalla: "King T'Challa", blackpanther: "King T'Challa", ironman: 'Tony Stark',
+    captainamerica: 'Steve Rogers', hulk: 'Bruce Banner', spiderman: 'Peter Parker', blackwidow: 'Natasha Romanoff',
+    scarletwitch: 'Wanda Maximoff', hawkeye: 'Clint Barton', antman: 'Scott Lang', wintersoldier: 'Bucky Barnes',
+    falcon: 'Sam Wilson', warmachine: 'James Rhodes', vulture: 'Adrian Toomes', kingpin: 'Wilson Fisk',
+    barristergoharalikhan: 'Barrister Gohar', shahmahmoodqureshi: 'Mahmood Qureshi', khawajasaadrafique: 'Saad Rafique'
+};
+function normText(v) { return String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+// The pool a committee allots from
+function committeePoolKey(c) { return /sokovia|crisis/i.test(c) ? 'crisis' : /\bPNA\b|pakistan national/i.test(c) ? 'pna' : 'countries'; }
+// The pool a row allots from: its committee's pool; delegations any pool; directors are not checked
+function allotmentPoolKey(r) {
+    if (r.eventType !== 'MUN' || r.subType === 'Committee Directors') return '';
+    const committee = munCommitteeOf(r);
+    return committee ? committeePoolKey(committee) : 'all';
+}
+function poolNames(key) { return key === 'all' ? Object.values(ALLOTMENT_POOLS).flatMap(p => p.names) : (ALLOTMENT_POOLS[key] || { names: [] }).names; }
+function poolLabel(key) { return key === 'all' ? 'MUN' : ALLOTMENT_POOLS[key].label; }
+// "UNW - Russia" / "Russia (UNW)" -> { committee: 'UNW (UN Women)', rest: 'Russia' }
+function splitCommitteePrefix(value, committees) {
+    const s = String(value || '').trim();
+    for (const c of committees) {
+        const code = c.replace(/\s*\([^)]*\)\s*/, '').trim(), full = (c.match(/\(([^)]+)\)/) || [])[1];
+        for (const w of [c, code, full].filter(Boolean)) {
+            const e = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const front = s.match(new RegExp(`^${e}\\b\\s*[-:–,/]?\\s*(.+)$`, 'i'));
+            if (front) return { committee: c, code, rest: front[1].trim() };
+            const back = s.match(new RegExp(`^(.+?)\\s*[-:–,/(]?\\s*\\b${e}\\s*\\)?$`, 'i'));
+            if (back) return { committee: c, code, rest: back[1].trim() };
+        }
+    }
+    return { committee: '', code: '', rest: s };
+}
+// Checks a typed allotment against the row's pool.
+// In the pool -> { name: what gets saved, poolName }; not in it -> { suggestions: [closest pool spellings] }
+function matchAllotmentPool(rec, value) {
+    const key = allotmentPoolKey(rec);
+    if (!key) return { name: value.trim(), poolName: '' };
+    const own = munCommitteeOf(rec);
+    const whole = poolNames(key).find(n => normText(n) === normText(value));
+    if (whole) return { name: whole, poolName: whole };   // e.g. "High Commissioner UNHRC" is a name, not a prefix
+    const parts = splitCommitteePrefix(value, own ? [own] : munCommittees);
+    // Delegation lists: "UNSC - Russia" is checked against that committee's pool and keeps its prefix
+    const names = !own && parts.committee ? poolNames(committeePoolKey(parts.committee)) : poolNames(key);
+    const fmt = n => (!own && parts.code ? `${parts.code} - ${n}` : n);
+    const typed = normText(parts.rest);
+    if (!typed) return { suggestions: [] };
+    const exact = names.find(n => normText(n) === typed) || (names.includes(ALLOTMENT_ALIASES[typed]) ? ALLOTMENT_ALIASES[typed] : '');
+    if (exact) return { name: fmt(exact), poolName: exact };
+    const suggestions = names.map(n => {
+        const m = normText(n);
+        let d = editDistance(typed, m);
+        let ok = d <= Math.max(2, Math.round(m.length * 0.35));
+        // Part of a name ("Stark", "Gohar") or a longer form of it ("Republic of India")
+        if ((typed.length >= 3 && m.includes(typed)) || (m.length >= 4 && typed.includes(m))) { d = Math.min(d, 1); ok = true; }
+        // A misspelt part of a name ("T'Chala" -> King T'Challa, "Shareef" -> ... Sharif)
+        const words = n.split(/[\s.'’-]+/).map(normText).filter(Boolean);
+        for (let i = 0; i < words.length; i++) for (let j = i + 1; j <= words.length; j++) {
+            if (j - i === words.length) continue;
+            const part = words.slice(i, j).join('');
+            if (part.length < 4) continue;
+            const dp = editDistance(typed, part);
+            if (dp <= Math.max(1, Math.round(part.length * 0.25))) { d = Math.min(d, dp + 0.5); ok = true; }
+        }
+        return { n, d, ok };
+    }).filter(x => x.ok).sort((a, b) => a.d - b.d).slice(0, 4).map(x => fmt(x.n));
+    return { suggestions };
+}
+// Datalists that suggest pool names while typing in the allotment boxes
+function ensureAllotmentDatalists() {
+    if (document.getElementById('allot-pool-all')) return;
+    ['countries', 'pna', 'crisis', 'all'].forEach(key => {
+        const dl = document.createElement('datalist');
+        dl.id = 'allot-pool-' + key;
+        dl.innerHTML = poolNames(key).map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+        document.body.appendChild(dl);
+    });
+}
+
 // Where an allotment must be unique: committee rows and private delegates per committee + tier,
 // delegations per tier, committee directors per tier
 function allotmentScope(r) {
@@ -7151,15 +7266,7 @@ function allotmentScope(r) {
 }
 // "UNW - Russia", "russia", "Russia." -> "russia" (committee name / code in front or behind is ignored)
 function normAllotment(v, committee) {
-    let s = String(v || '').toLowerCase();
-    if (committee) {
-        const c = String(committee).toLowerCase(), code = (c.match(/\(([^)]+)\)/) || [])[1];
-        [c, c.replace(/\s*\([^)]*\)\s*/, '').trim(), code].filter(Boolean).forEach(w => {
-            const e = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            s = s.replace(new RegExp(`^\\s*${e}\\s*[-:–,/]?\\s*`), '').replace(new RegExp(`\\s*[-:–,/(]?\\s*${e}\\s*\\)?\\s*$`), '');
-        });
-    }
-    return s.replace(/[^a-z0-9]/g, '');
+    return normText(splitCommitteePrefix(v, committee ? [committee] : munCommittees).rest);
 }
 function editDistance(a, b) {
     let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
@@ -7179,19 +7286,23 @@ function allotmentHolder(r) {
     const people = splitPeople(d['Delegates']).join(', ');
     return `${people || '-'}${regDelegationName(r) ? ' – ' + regDelegationName(r) : ''}`;
 }
-// Same allotment (any caps / spacing) -> 'same'; a likely misspelling of one -> 'similar'
+// Same allotment (any caps / spacing / alias) -> 'same'; a likely misspelling of one -> 'similar'.
+// Two different pool names (e.g. Iran and Iraq) never clash.
 function findAllotmentClash(rec, value) {
     const scope = allotmentScope(rec);
     if (!scope) return null;
     const committee = munCommitteeOf(rec);
     const mine = normAllotment(value, committee);
     if (!mine) return null;
+    const minePool = normText(matchAllotmentPool(rec, value).poolName);
     const allowed = mine.length >= 8 ? 2 : mine.length >= 4 ? 1 : 0;
     let similar = null;
     for (const r of allRegistrations) {
         if (r.id === rec.id || !(r.allotment || '').trim() || allotmentScope(r) !== scope) continue;
         const theirs = normAllotment(r.allotment, committee);
         if (!theirs) continue;
+        const theirsPool = normText(matchAllotmentPool(r, r.allotment).poolName);
+        if (minePool && theirsPool) { if (minePool === theirsPool) return { kind: 'same', rec: r }; continue; }
         if (theirs === mine) return { kind: 'same', rec: r };
         if (!similar && allowed && editDistance(mine, theirs) <= allowed) similar = { kind: 'similar', rec: r };
     }
@@ -7201,8 +7312,26 @@ function findAllotmentClash(rec, value) {
 async function saveAllotment(docId) {
     const input = document.getElementById('allot-' + docId);
     if (!input) return;
-    const value = input.value.trim();
+    let value = input.value.trim();
     const rec = allRegistrations.find(r => r.id === docId);
+    // Only allotments from the committee's pool; misspellings get the closest pool spellings
+    if (rec && value) {
+        const m = matchAllotmentPool(rec, value);
+        if (m.name) value = m.name;
+        else {
+            const pool = poolLabel(allotmentPoolKey(rec));
+            const [best, ...others] = m.suggestions;
+            if (!best) {
+                alert(`❌ "${value}" is not in the ${pool} allotment pool.\n\nOnly allotments from the pool can be given. Start typing in the box to pick one from the list.`);
+                input.focus(); return;
+            }
+            if (!confirm(`❌ "${value}" is not in the ${pool} allotment pool.\n\nDid you mean "${best}"?${others.length ? '\nOther close matches: ' + others.join(', ') : ''}\n\nOK = save "${best}"\nCancel = go back and fix it`)) {
+                input.focus(); return;
+            }
+            value = best;
+        }
+        input.value = value;
+    }
     const clash = rec && value ? findAllotmentClash(rec, value) : null;
     if (clash) {
         const where = munCommitteeOf(rec) ? `in ${munCommitteeOf(rec)}${munTierOf(rec) ? ' (' + munTierOf(rec) + ')' : ''}` : `in the ${munTierOf(rec) || 'MUN'} list`;
@@ -7276,6 +7405,7 @@ function renderRegistrationsTable(eventType, subType) {
 
     // Allotment column: MUN delegation lists (per delegation) and committee lists (per committee entry / private delegate)
     const showAllot = showsAllotment(eventType, subType);
+    if (showAllot) ensureAllotmentDatalists();
     const allotTh = document.getElementById('allotment-th');
     if (allotTh) allotTh.style.display = showAllot ? '' : 'none';
     const firstTh = document.getElementById('sub-first-th');
@@ -7370,13 +7500,18 @@ function renderRegistrationsTable(eventType, subType) {
         const parentAllot = subType === 'Categories' && data.parentDelegationId
             ? ((allRegistrations.find(x => x.id === data.parentDelegationId) || {}).allotment || '').trim() : '';
         const allotHint = parentAllot ? `<br><span style="color: var(--text-muted); font-size: .8rem;">Delegation allotment: ${escapeHtml(parentAllot)}</span>` : '';
+        const poolKey = showAllot ? allotmentPoolKey(data) : '';
+        // Saved before the pools existed and not one of them
+        const offPool = allot && poolKey && !matchAllotmentPool(data, allot).name;
+        const allotColor = offPool ? '#f59e0b' : allot ? '#10b981' : '#6b7280';
         const allotCell = showAllot ? `
                 <td style="min-width: 210px;">
                     <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.8rem; display: inline-block;
-                        background: ${allot ? '#10b98122' : '#6b728022'}; color: ${allot ? '#10b981' : '#9ca3af'}; border: 1px solid ${allot ? '#10b981' : '#6b7280'};">
-                        ${allot ? escapeHtml(allot) : 'NOT ALLOTTED'}
+                        background: ${allotColor}22; color: ${allot ? allotColor : '#9ca3af'}; border: 1px solid ${allotColor};">
+                        ${allot ? escapeHtml(allot) : 'NOT ALLOTTED'}${offPool ? ' · NOT IN POOL' : ''}
                     </span>${allotHint}<br>
-                    <input type="text" id="allot-${data.id}" value="${escapeHtml(allot)}" placeholder="Type allotment (e.g. UNSC - Russia)" style="margin-top: 6px; width: 100%; padding: 6px 8px;">
+                    <input type="text" id="allot-${data.id}" value="${escapeHtml(allot)}" ${poolKey ? `list="allot-pool-${poolKey}"` : ''} autocomplete="off"
+                        placeholder="${poolKey === 'all' ? 'Type allotment (e.g. UNSC - Russia)' : poolKey ? 'Type or pick an allotment' : 'Type allotment'}" style="margin-top: 6px; width: 100%; padding: 6px 8px;">
                     <button class="btn" style="padding: 4px 8px; font-size: 0.90rem; margin-top: 6px; width: auto;" onclick="saveAllotment('${data.id}')">Save Allotment</button>
                 </td>` : '';
 
