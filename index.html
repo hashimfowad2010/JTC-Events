@@ -7271,11 +7271,11 @@ function ensureAllotmentDatalists() {
     });
 }
 
-// Where an allotment must be unique: committee rows and private delegates per committee + tier,
-// delegations per tier, committee directors per tier
-// Committee rows: a country is given once per tier across all the country committees (Austria in Junior UNW
-// blocks Austria in every Junior committee, not in Senior); PNA once per tier; Sokovia once for Junior and Senior together
-function allotmentScope(r) {
+// Where an allotment must be unique. Committee rows: a country is given once per tier across all the country
+// committees (Austria in Junior UNW blocks Austria in every Junior committee, not in Senior); PNA once per tier;
+// Sokovia once for Junior and Senior together. A delegation's own (older) allotment counts as its UN country.
+// Committee directors per tier.
+function allotmentScope(r, value = r.allotment) {
     if (r.eventType !== 'MUN') return '';
     const committee = munCommitteeOf(r);
     if (committee) {
@@ -7283,7 +7283,58 @@ function allotmentScope(r) {
         return pool === 'crisis' ? 'pool|crisis' : `pool|${pool}|${munTierOf(r)}`;
     }
     if (r.subType === 'Committee Directors') return `director|${munTierOf(r)}`;
+    const m = value ? matchAllotmentPool(r, value) : {};
+    if (m.poolName && ALLOTMENT_POOLS.countries.names.includes(m.poolName)) return `pool|countries|${munTierOf(r)}`;
     return `delegation|${munTierOf(r)}`;
+}
+
+// ---- Delegation lists: one allotment per committee type (UN country, PNA role, Sokovia role) ----
+// Saved on the delegation's committee rows, so allotments given in the committee lists show here too.
+const ALLOTMENT_SLOT_LABEL = { countries: 'UN committees', pna: 'PNA', crisis: 'Sokovia Accords' };
+function committeeCode(c) { return String(c || '').replace(/\s*\([^)]*\)\s*/, '').trim() || c; }
+function delegationAllotmentSlots(del) {
+    const rows = getDelegationGroup(del.id).map(id => allRegistrations.find(r => r.id === id))
+        .filter(r => r && r.id !== del.id && !isDelegationRecord(r) && munCommitteeOf(r));
+    return ['countries', 'pna', 'crisis'].map(key => {
+        const slotRows = rows.filter(r => committeePoolKey(munCommitteeOf(r)) === key)
+            .sort((a, b) => munCommittees.indexOf(munCommitteeOf(a)) - munCommittees.indexOf(munCommitteeOf(b)));
+        // Older delegation-level allotment = its UN country until one is saved on the committees
+        const legacy = key === 'countries' ? (del.allotment || '').trim() : '';
+        const values = [...new Set(slotRows.map(r => (r.allotment || '').trim()).filter(Boolean))];
+        return { key, rows: slotRows, values, legacy: values.length ? '' : legacy };
+    }).filter(s => s.rows.length);
+}
+// "UN committees: Russia · PNA: Ishaq Dar · Sokovia Accords: Loki" (for the PDF / CSV)
+function delegationAllotmentText(del) {
+    const slots = delegationAllotmentSlots(del);
+    if (!slots.length) return (del.allotment || '').trim();
+    return slots.map(s => {
+        const v = s.values.length > 1 ? s.rows.filter(r => (r.allotment || '').trim()).map(r => `${committeeCode(munCommitteeOf(r))} ${r.allotment.trim()}`).join(', ')
+            : s.values[0] || s.legacy;
+        return v ? `${ALLOTMENT_SLOT_LABEL[s.key]}: ${v}` : '';
+    }).filter(Boolean).join(' · ');
+}
+function delegationAllotmentCell(del, slots) {
+    return slots.map(s => {
+        const mixed = s.values.length > 1;
+        const value = s.values.length === 1 ? s.values[0] : s.legacy;
+        const missing = s.values.length ? s.rows.filter(r => !(r.allotment || '').trim()).map(r => committeeCode(munCommitteeOf(r))) : [];
+        const offPool = value && !matchAllotmentPool(s.rows[0], value).name;
+        const color = mixed || offPool || s.legacy || missing.length ? '#f59e0b' : value ? '#10b981' : '#6b7280';
+        const badge = mixed ? s.rows.map(r => `${committeeCode(munCommitteeOf(r))}: ${(r.allotment || '').trim() || '-'}`).join(' · ') + ' · DIFFERENT'
+            : value ? value + (offPool ? ' · NOT IN POOL' : s.legacy ? ' · NOT SAVED ON COMMITTEES' : missing.length ? ' · MISSING IN ' + missing.join(', ') : '')
+            : 'NOT ALLOTTED';
+        const title = s.key === 'countries' ? `${ALLOTMENT_SLOT_LABEL[s.key]} (${s.rows.map(r => committeeCode(munCommitteeOf(r))).join(', ')})` : ALLOTMENT_SLOT_LABEL[s.key];
+        return `
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-size: .78rem; font-weight: bold; color: var(--text-muted); margin-bottom: 3px;">${escapeHtml(title)}</div>
+                        <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.8rem; display: inline-block;
+                            background: ${color}22; color: ${value || mixed ? color : '#9ca3af'}; border: 1px solid ${color};">${escapeHtml(badge)}</span><br>
+                        <input type="text" id="allot-${del.id}-${s.key}" value="${escapeHtml(value)}" list="allot-pool-${s.key}" autocomplete="off"
+                            placeholder="Type or pick an allotment" style="margin-top: 6px; width: 100%; padding: 6px 8px;">
+                        <button class="btn" style="padding: 4px 8px; font-size: 0.90rem; margin-top: 6px; width: auto;" onclick="saveDelegationAllotment('${del.id}', '${s.key}')">Save</button>
+                    </div>`;
+    }).join('');
 }
 // "UNW - Russia", "russia", "Russia." -> "russia" (committee name / code in front or behind is ignored)
 function normAllotment(v, committee) {
@@ -7308,18 +7359,20 @@ function allotmentHolder(r) {
     return `${people || '-'}${regDelegationName(r) ? ' – ' + regDelegationName(r) : ''}`;
 }
 // Same allotment (any caps / spacing / alias) -> 'same'; a likely misspelling of one -> 'similar'.
-// Two different pool names (e.g. Iran and Iraq) never clash.
+// Two different pool names (e.g. Iran and Iraq) never clash. Rows of the same delegation never clash
+// (one delegation is the same country in all its UN committees).
 function findAllotmentClash(rec, value) {
-    const scope = allotmentScope(rec);
+    const scope = allotmentScope(rec, value);
     if (!scope) return null;
     const committee = munCommitteeOf(rec);
     const mine = normAllotment(value, committee);
     if (!mine) return null;
     const minePool = normText(matchAllotmentPool(rec, value).poolName);
     const allowed = mine.length >= 8 ? 2 : mine.length >= 4 ? 1 : 0;
+    const ownGroup = new Set(getDelegationGroup(rec.id));
     let similar = null;
     for (const r of allRegistrations) {
-        if (r.id === rec.id || !(r.allotment || '').trim() || allotmentScope(r) !== scope) continue;
+        if (ownGroup.has(r.id) || !(r.allotment || '').trim() || allotmentScope(r) !== scope) continue;
         const theirs = normAllotment(r.allotment, munCommitteeOf(r) || committee);
         if (!theirs) continue;
         const theirsPool = normText(matchAllotmentPool(r, r.allotment).poolName);
@@ -7330,39 +7383,68 @@ function findAllotmentClash(rec, value) {
     return similar;
 }
 
+// Only allotments from the row's pool; misspellings get the closest pool spellings.
+// Returns the spelling to save, or null when the admin should go back and fix it.
+function poolCheckedAllotment(rec, value) {
+    const m = matchAllotmentPool(rec, value);
+    if (m.name) return m.name;
+    const pool = poolLabel(allotmentPoolKey(rec));
+    const [best, ...others] = m.suggestions;
+    if (!best) {
+        alert(`❌ "${value}" is not in the ${pool} allotment pool.\n\nOnly allotments from the pool can be given. Start typing in the box to pick one from the list.`);
+        return null;
+    }
+    if (!confirm(`❌ "${value}" is not in the ${pool} allotment pool.\n\nDid you mean "${best}"?${others.length ? '\nOther close matches: ' + others.join(', ') : ''}\n\nOK = save "${best}"\nCancel = go back and fix it`)) return null;
+    return best;
+}
+// false when the allotment is already given (or the admin cancels on a likely misspelling of one)
+function allotmentClashAllows(rec, value) {
+    const clash = findAllotmentClash(rec, value);
+    if (!clash) return true;
+    const other = clash.rec, otherCommittee = munCommitteeOf(other);
+    const where = otherCommittee ? `in ${otherCommittee}${munTierOf(other) ? ' (' + munTierOf(other) + ')' : ''}` : `in the ${munTierOf(other) || 'MUN'} list`;
+    const msg = `"${other.allotment}" is already allotted ${where} to:\n${allotmentHolder(other)}`;
+    if (clash.kind === 'same') { alert(`❌ Allotment already given\n\n${msg}\n\nChoose a different allotment.`); return false; }
+    return confirm(`⚠️ "${value}" looks like a spelling of an allotment that is already given.\n\n${msg}\n\nPress Cancel to fix it, or OK only if "${value}" is really a different allotment.`);
+}
+
 async function saveAllotment(docId) {
     const input = document.getElementById('allot-' + docId);
     if (!input) return;
     let value = input.value.trim();
     const rec = allRegistrations.find(r => r.id === docId);
-    // Only allotments from the committee's pool; misspellings get the closest pool spellings
     if (rec && value) {
-        const m = matchAllotmentPool(rec, value);
-        if (m.name) value = m.name;
-        else {
-            const pool = poolLabel(allotmentPoolKey(rec));
-            const [best, ...others] = m.suggestions;
-            if (!best) {
-                alert(`❌ "${value}" is not in the ${pool} allotment pool.\n\nOnly allotments from the pool can be given. Start typing in the box to pick one from the list.`);
-                input.focus(); return;
-            }
-            if (!confirm(`❌ "${value}" is not in the ${pool} allotment pool.\n\nDid you mean "${best}"?${others.length ? '\nOther close matches: ' + others.join(', ') : ''}\n\nOK = save "${best}"\nCancel = go back and fix it`)) {
-                input.focus(); return;
-            }
-            value = best;
-        }
+        value = poolCheckedAllotment(rec, value);
+        if (value === null) { input.focus(); return; }
         input.value = value;
-    }
-    const clash = rec && value ? findAllotmentClash(rec, value) : null;
-    if (clash) {
-        const other = clash.rec, otherCommittee = munCommitteeOf(other);
-        const where = otherCommittee ? `in ${otherCommittee}${munTierOf(other) ? ' (' + munTierOf(other) + ')' : ''}` : `in the ${munTierOf(other) || 'MUN'} list`;
-        const msg = `"${clash.rec.allotment}" is already allotted ${where} to:\n${allotmentHolder(clash.rec)}`;
-        if (clash.kind === 'same') { alert(`❌ Allotment already given\n\n${msg}\n\nChoose a different allotment.`); input.focus(); return; }
-        if (!confirm(`⚠️ "${value}" looks like a spelling of an allotment that is already given.\n\n${msg}\n\nPress Cancel to fix it, or OK only if "${value}" is really a different allotment.`)) { input.focus(); return; }
+        if (!allotmentClashAllows(rec, value)) { input.focus(); return; }
     }
     try {
         await db.collection("registrations").doc(docId).update({ allotment: value });
+    } catch (error) {
+        alert("Error saving allotment: " + error.message);
+    }
+}
+
+// Delegation list: saves one committee type's allotment on all of the delegation's committee rows of that type
+async function saveDelegationAllotment(delId, key) {
+    const input = document.getElementById(`allot-${delId}-${key}`);
+    const del = allRegistrations.find(r => r.id === delId);
+    const slot = del && delegationAllotmentSlots(del).find(s => s.key === key);
+    if (!input || !slot) return;
+    let value = input.value.trim();
+    if (value) {
+        value = poolCheckedAllotment(slot.rows[0], value);
+        if (value === null) { input.focus(); return; }
+        input.value = value;
+        if (!allotmentClashAllows(slot.rows[0], value)) { input.focus(); return; }
+    }
+    try {
+        const batch = db.batch();
+        slot.rows.forEach(r => batch.update(db.collection("registrations").doc(r.id), { allotment: value }));
+        // The older delegation-level allotment is replaced by the one on its UN committees
+        if (key === 'countries' && (del.allotment || '').trim()) batch.update(db.collection("registrations").doc(del.id), { allotment: '' });
+        await batch.commit();
     } catch (error) {
         alert("Error saving allotment: " + error.message);
     }
@@ -7518,15 +7600,19 @@ function renderRegistrationsTable(eventType, subType) {
         const flag = ROW_FLAGS[rowStatus];
         const flagHtml = flag ? `<br><span class="row-flag" style="background:${flag.color}33; color:${flag.color}; border:1px solid ${flag.color};">${flag.text}</span>` : '';
         const allot = (data.allotment || '').trim();
-        // Committee lists: show the delegation's own allotment as a hint
-        const parentAllot = subType === 'Categories' && data.parentDelegationId
+        // Committee lists: an older delegation-level allotment (its UN country) not yet saved on this row
+        const parentAllot = subType === 'Categories' && !allot && data.parentDelegationId && committeePoolKey(munCommitteeOf(data)) === 'countries'
             ? ((allRegistrations.find(x => x.id === data.parentDelegationId) || {}).allotment || '').trim() : '';
         const allotHint = parentAllot ? `<br><span style="color: var(--text-muted); font-size: .8rem;">Delegation allotment: ${escapeHtml(parentAllot)}</span>` : '';
         const poolKey = showAllot ? allotmentPoolKey(data) : '';
         // Saved before the pools existed and not one of them
         const offPool = allot && poolKey && !matchAllotmentPool(data, allot).name;
         const allotColor = offPool ? '#f59e0b' : allot ? '#10b981' : '#6b7280';
-        const allotCell = showAllot ? `
+        // Delegation lists: one box per committee type the delegation is in
+        const slots = showAllot && isDelegationSubType(subType) ? delegationAllotmentSlots(data) : [];
+        const allotCell = slots.length ? `
+                <td style="min-width: 230px;">${delegationAllotmentCell(data, slots)}
+                </td>` : showAllot ? `
                 <td style="min-width: 210px;">
                     <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.8rem; display: inline-block;
                         background: ${allotColor}22; color: ${allot ? allotColor : '#9ca3af'}; border: 1px solid ${allotColor};">
@@ -7647,7 +7733,8 @@ function renderRegistrationsTable(eventType, subType) {
             const g = d[`Delegate ${i} Grade`], c = d[`Delegate ${i} Committee`] || d[`Delegate ${i} Preferred Committee`];
             people.push(`${n}${g ? ' (' + g + ')' : ''}${c ? ' - ' + c : ''}`);
         }
-        return { ...nm(d['Delegation Name'] || '-', d['School / Institution Name']),
+        const allotText = delegationAllotmentText(r);
+        return { ...nm(d['Delegation Name'] || '-', d['School / Institution Name'], allotText ? 'Allotment: ' + allotText : ''),
                  division: d['Delegation Tier'] || r.categoryOrCommittee || '-', members: people.join('\n') || '-' };
     }
 
@@ -8188,7 +8275,8 @@ function renderRegistrationsTable(eventType, subType) {
         
             const dateStr = r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate().toLocaleString() : 'N/A';
         
-            const row = [category, dateStr, ...(showsAllotment(currentSubEvent, currentSubType) ? [r.allotment || ''] : [])];
+            const allotment = isDelegationSubType(currentSubType) ? delegationAllotmentText(r) : (r.allotment || '');
+            const row = [category, dateStr, ...(showsAllotment(currentSubEvent, currentSubType) ? [allotment] : [])];
 
     
             headersList.forEach(header => {
@@ -9512,13 +9600,13 @@ const SPORTS_FEST_ENDED = true;       // true = Sports Fest is over: Register No
 const CD_APPLICATIONS_OPEN = false;   // false = Committee Director tile says applications are closed
 // MUN study guides: paste each committee's Google Drive link between the quotes ('' = "Coming Soon")
 const MUN_STUDY_GUIDES = {
-    unhrc:   '',   // UNHRC
-    unsc:    '',   // UNSC
-    disec:   '',   // DISEC
-    unw:     '',   // UN Women
-    pna:     '',   // Pakistan National Assembly
-    who:     '',   // WHO
-    sokovia: ''    // Sokovia Accords (Specialized Crisis Committee)
+    unhrc:   'https://drive.google.com/file/d/1F-IbkK1wGK5F9C5OkyTvuHHbDzpXRFrY/view?usp=drive_link',   // UNHRC
+    unsc:    'https://drive.google.com/file/d/1qrs0KYOaRoz8aD8a-iGxYbv1xRGXNDT-/view?usp=drive_link',   // UNSC
+    disec:   'https://drive.google.com/file/d/1k_JWA69UlqlEJRqntuxLpQSTlRL82b8F/view?usp=drive_link',   // DISEC
+    unw:     'https://drive.google.com/file/d/1rnK82AM0lOS9zUwHcPlQ3sP5wjXz7cZQ/view?usp=drive_link',   // UN Women
+    pna:     'https://drive.google.com/file/d/1GeIKWmVz12nQXao5qFTk_8uIPHu8RgJP/view?usp=drive_link',   // Pakistan National Assembly
+    who:     'https://drive.google.com/file/d/1NWQdKY-59sLhOqelMFiaqCpk9hvMdUle/view?usp=drive_link',   // WHO
+    sokovia: 'https://drive.google.com/file/d/1DexB3LLKCIg70FrdB4dszLfbYdPlZTPe/view?usp=drive_link'    // Sokovia Accords (Specialized Crisis Committee)
 };
 const MAP_EMBED_URL = '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3403.603933447607!2d74.27443191185881!3d31.452568974137467!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919016fdb873cd1%3A0x815f40a50155a88f!2sBeaconhouse%20Johar%20Town%20(Boys)%20Campus%20Senior%2FMiddle!5e0!3m2!1sen!2s!4v1790775537768!5m2!1sen!2s" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>';   // paste the Google Maps "Embed a map" src URL here
 const CONTACTS = [
