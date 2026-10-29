@@ -1555,6 +1555,8 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
             One row per person, from online forms and paper sheets. The same name at the same school is shown once, with all their delegations and categories.
             Paper-sheet categories are shown as written on the sheet. Payment comes from the delegation; change it from Delegations.
         </p>
+        <!-- MUN committee / delegation lists: allotments still free (filled by renderRemainingAllotments) -->
+        <div id="allot-remaining-panel" style="display: none; margin: 8px 0 16px;"></div>
         <div id="sub-status-legend" class="status-legend">
             <span><i style="background:#10b981"></i>Paid</span>
             <span><i style="background:#9ca3af"></i>Valid, unpaid</span>
@@ -7233,6 +7235,8 @@ const ALLOTMENT_ALIASES = {
     captainamerica: 'Steve Rogers', hulk: 'Bruce Banner', spiderman: 'Peter Parker', blackwidow: 'Natasha Romanoff',
     scarletwitch: 'Wanda Maximoff', hawkeye: 'Clint Barton', antman: 'Scott Lang', wintersoldier: 'Bucky Barnes',
     falcon: 'Sam Wilson', warmachine: 'James Rhodes', vulture: 'Adrian Toomes', kingpin: 'Wilson Fisk',
+    indianpm: 'PM India', primeministerindia: 'PM India', primeministerofindia: 'PM India', auntmay: 'May Parker',
+    generalasimmunir: 'Asim Munir', generalasimmuneer: 'Asim Munir', asimmuneer: 'Asim Munir',
     barristergoharalikhan: 'Barrister Gohar', sheikhrasheedahmed: 'Sheikh Rasheed', sheikhrashid: 'Sheikh Rasheed',
     sheikhrasheedahmad: 'Sheikh Rasheed', sheikhrashidahmed: 'Sheikh Rasheed', sardarlatifkhosa: 'Latif Khosa', tariqfazal: 'Dr Tariq Fazal',
     tariqfazalchaudhry: 'Dr Tariq Fazal', drtariqfazalchaudhry: 'Dr Tariq Fazal', mariyamaurangzeb: 'Maryam Aurangzeb',
@@ -7369,7 +7373,7 @@ function delegationAllotmentCell(del, slots) {
                         <div style="font-size: .78rem; font-weight: bold; color: var(--text-muted); margin-bottom: 3px;">${escapeHtml(title)}</div>
                         <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.8rem; display: inline-block;
                             background: ${color}22; color: ${value || mixed ? color : '#9ca3af'}; border: 1px solid ${color};">${escapeHtml(badge)}</span><br>
-                        <input type="text" id="allot-${del.id}-${s.key}" value="${escapeHtml(value)}" list="allot-pool-${s.key}" autocomplete="off"
+                        <input type="text" id="allot-${del.id}-${s.key}" value="${escapeHtml(value)}" list="${freeAllotListId(s.key, munTierOf(del))}" autocomplete="off"
                             placeholder="Type or pick an allotment" style="margin-top: 6px; width: 100%; padding: 6px 8px;">
                         <button class="btn" style="padding: 4px 8px; font-size: 0.90rem; margin-top: 6px; width: auto;" onclick="saveDelegationAllotment('${del.id}', '${s.key}')">Save</button>
                     </div>`;
@@ -7434,13 +7438,28 @@ function freeAllotmentLists() {
         (used[pool === 'crisis' ? 'crisis|' : `${pool}|${munTierOf(r)}`] ||= new Set()).add(name);
     });
     return FREE_ALLOT_LISTS.map(([pool, tier]) => ({
+        pool, tier,
         title: pool === 'crisis' ? 'Sokovia Accords (Junior + Senior)' : `${pool === 'pna' ? 'PNA' : 'Countries (UNHRC, UNSC, DISEC, UNW, WHO)'} – ${tier}`,
         total: ALLOTMENT_POOLS[pool].names.length,
         free: ALLOTMENT_POOLS[pool].names.filter(n => !(used[`${pool}|${tier}`] || new Set()).has(n))
     }));
 }
+// Allotment boxes only suggest names still free in their pool (+ tier); delegation-wide boxes and rows without a tier get the whole pool
+function freeAllotListId(pool, tier) {
+    if (pool === 'crisis') return 'allot-free-crisis';
+    return pool !== 'all' && tier ? `allot-free-${pool}-${tier}` : `allot-pool-${pool}`;
+}
+function refreshFreeAllotmentDatalists() {
+    freeAllotmentLists().forEach(l => {
+        const id = freeAllotListId(l.pool, l.tier);
+        let dl = document.getElementById(id);
+        if (!dl) { dl = document.createElement('datalist'); dl.id = id; document.body.appendChild(dl); }
+        dl.innerHTML = l.free.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+    });
+}
 function openFreeAllotments() {
     if (!isAdmin) return alert('Please log in as admin first.');
+    if (!allRegistrations.some(r => r.eventType === 'MUN')) return alert('Registrations are still loading. Try again in a few seconds.');
     document.getElementById('free-allot-list').innerHTML = freeAllotmentLists().map(l => `
         <div style="padding: 12px 14px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.04);">
             <strong style="color: var(--secondary);">${escapeHtml(l.title)}</strong>
@@ -7449,6 +7468,37 @@ function openFreeAllotments() {
         </div>`).join('');
     document.getElementById('free-allot-modal').style.display = 'flex';
 }
+// Top of a MUN committee list: what its pool still has free; top of a delegation list: all three pools for that tier
+const closedAllotLists = new Set();   // lists the admin collapsed stay collapsed when the data refreshes
+function renderRemainingAllotments(eventType, subType) {
+    const panel = document.getElementById('allot-remaining-panel');
+    if (!panel) return;
+    let want = null;
+    if (eventType === 'MUN' && subType === 'Categories' && currentSubCategory) {
+        const pool = committeePoolKey(currentSubCategory);
+        want = l => l.pool === pool && (pool === 'crisis' || !currentSubTier || l.tier === currentSubTier);
+    } else if (eventType === 'MUN' && (subType === 'Junior Delegation' || subType === 'Senior Delegation')) {
+        const tier = subType.split(' ')[0];
+        want = l => l.pool === 'crisis' || l.tier === tier;
+    } else if (eventType === 'MUN' && subType === 'Delegations') {
+        want = () => true;
+    }
+    if (!want) { panel.style.display = 'none'; panel.innerHTML = ''; return; }
+    const lists = freeAllotmentLists().filter(want);
+    panel.innerHTML = lists.map(l => `
+        <details ${closedAllotLists.has(l.title) ? '' : 'open'} data-title="${escapeHtml(l.title)}" ontoggle="closedAllotLists[this.open ? 'delete' : 'add'](this.dataset.title)"
+            style="margin-bottom: 8px; padding: 10px 14px; border: 1px solid #f59e0b66; border-radius: 12px; background: #f59e0b12;">
+            <summary style="cursor: pointer; font-weight: bold; color: #f59e0b;">
+                Still available: ${escapeHtml(l.title)} <span style="color: var(--text-muted); font-weight: normal;">· ${l.free.length} of ${l.total}</span>
+            </summary>
+            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
+                ${l.free.length ? l.free.map(n => `<span style="padding: 3px 9px; border-radius: 10px; font-size: .8rem; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05);">${escapeHtml(n)}</span>`).join('')
+                    : '<em style="color: var(--text-muted);">All given</em>'}
+            </div>
+        </details>`).join('');
+    panel.style.display = '';
+}
+
 async function copyFreeAllotments(btn) {
     const text = freeAllotmentLists().map(l => `${l.title}: ${l.free.length} of ${l.total} not given\n${l.free.join(', ') || 'All given'}`).join('\n\n');
     try { await navigator.clipboard.writeText(text); btn.innerText = 'Copied!'; }
@@ -7578,11 +7628,12 @@ function renderRegistrationsTable(eventType, subType) {
 
     // Sports Fest > Delegates: one row per person instead of per submission
     setSubTableMode(subType === 'Delegates');
+    renderRemainingAllotments(eventType, subType);
     if (subType === 'Delegates') return renderDelegatesTable(tbody);
 
     // Allotment column: MUN delegation lists (per delegation) and committee lists (per committee entry / private delegate)
     const showAllot = showsAllotment(eventType, subType);
-    if (showAllot) ensureAllotmentDatalists();
+    if (showAllot) { ensureAllotmentDatalists(); refreshFreeAllotmentDatalists(); }
     const allotTh = document.getElementById('allotment-th');
     if (allotTh) allotTh.style.display = showAllot ? '' : 'none';
     const firstTh = document.getElementById('sub-first-th');
@@ -7694,7 +7745,7 @@ function renderRegistrationsTable(eventType, subType) {
                         background: ${allotColor}22; color: ${allot ? allotColor : '#9ca3af'}; border: 1px solid ${allotColor};">
                         ${allot ? escapeHtml(allot) : 'NOT ALLOTTED'}${offPool ? ' · NOT IN POOL' : ''}
                     </span>${allotHint}<br>
-                    <input type="text" id="allot-${data.id}" value="${escapeHtml(allot)}" ${poolKey ? `list="allot-pool-${poolKey}"` : ''} autocomplete="off"
+                    <input type="text" id="allot-${data.id}" value="${escapeHtml(allot)}" ${poolKey ? `list="${freeAllotListId(poolKey, munTierOf(data))}"` : ''} autocomplete="off"
                         placeholder="${poolKey === 'all' ? 'Type allotment (e.g. UNSC - Russia)' : poolKey ? 'Type or pick an allotment' : 'Type allotment'}" style="margin-top: 6px; width: 100%; padding: 6px 8px;">
                     <button class="btn" style="padding: 4px 8px; font-size: 0.90rem; margin-top: 6px; width: auto;" onclick="saveAllotment('${data.id}')">Save Allotment</button>
                 </td>` : '';
