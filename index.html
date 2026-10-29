@@ -1424,6 +1424,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
         <button id="mun-aitc-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunListDelegations('mun-aitc-2026-10-28', this)">Import BSS AITC Delegation (Junior, 6 delegates)</button>
         <button id="mun-csc-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunListDelegations('mun-csc-2026-10-28', this)">Import BSS CSC Teams A + B (Junior, 10 delegates)</button>
         <button id="mun-kims-a-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunListDelegations('mun-kims-a-2026-10-29', this)">Import KIMS Del A (2 Senior + 4 Junior)</button>
+        <button id="mun-muniverse-a-import-btn" class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="importMunListDelegations('mun-muniverse-a-2026-10-30', this)">Import Muniverse Team A (4 Senior + 1 Junior)</button>
     </div>
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button id="paper-import-btn" class="btn" style="width: auto;" onclick="importPaperRegistrations('paper-2026-10-13', this)">Import Paper Registrations (13 Oct)</button>
@@ -3443,7 +3444,10 @@ function readEditDelegates() {
 // Same text the registration form writes into a committee entry's "Delegates" field
 function munCommitteeDelegates(delegates) {
     const byCommittee = {};
-    delegates.forEach(d => { if (d.name && d.committee) (byCommittee[d.committee] ||= []).push(d.name + (d.head ? ' (Head Delegate, ' : ' (') + d.grade + ')'); });
+    delegates.forEach(d => {
+        const note = [d.head ? 'Head Delegate' : '', d.grade].filter(Boolean).join(', ');   // grade may be blank on imported lists
+        if (d.name && d.committee) (byCommittee[d.committee] ||= []).push(d.name + (note ? ` (${note})` : ''));
+    });
     return Object.fromEntries(Object.entries(byCommittee).map(([c, names]) => [c, names.join(', ')]));
 }
 
@@ -6733,6 +6737,17 @@ const MUN_LIST_IMPORTS = {
             { name: 'KIMS Del A (Junior)', tier: 'Junior Delegation', email: 'mustafaaimran27@gmail.com', phone: '',
               delegates: [['Amna Zeeshan', 'UNW', 'O1'], ['Ahmed Raza', 'PNA', 'O2'], ['Rayyan Jawwad', 'Sokovia', 'O1'], ['Usama Naveed', 'UNHRC', 'Grade 7']] }
         ]
+    },
+    // Muniverse Team A: 4 Senior + 1 Junior, so two delegations. Grades were not sent (left blank).
+    // Contact is Hashim's Gmail and number. Crisis = Sokovia Accords.
+    'mun-muniverse-a-2026-10-30': {
+        school: 'Muniverse',
+        teams: [
+            { name: 'Muniverse Team A (Senior)', tier: 'Senior Delegation', email: HD_DEFAULT_EMAIL, phone: HD_DEFAULT_PHONE,
+              delegates: [['Arham Rabani', 'UNSC', ''], ['Aayan Hassan', 'UNHRC', ''], ['Muhammad Faraz', 'DISEC', ''], ['Muhammad Anas', 'Sokovia', '']] },
+            { name: 'Muniverse Team A (Junior)', tier: 'Junior Delegation', email: HD_DEFAULT_EMAIL, phone: HD_DEFAULT_PHONE,
+              delegates: [['Ayaan Ahmed Kaleem', 'UNHRC', '']] }
+        ]
     }
 };
 
@@ -6743,13 +6758,13 @@ async function importMunListDelegations(key, btn) {
     if (allRegistrations.some(r => r.importBatch === key)) return alert(`${cfg.school} has already been imported.`);
     const fullCommittee = short => munCommittees.find(c => c === short || c.toUpperCase().startsWith(short.toUpperCase() + ' ')) || short;
     const teams = cfg.teams.map(t => ({ ...t, tier: t.tier || cfg.tier,
-        delegates: t.delegates.map(([n, c, g], i) => ({ name: n, committee: fullCommittee(c), grade: g || cfg.grade, head: i === 0 })) }));
+        delegates: t.delegates.map(([n, c, g], i) => ({ name: n, committee: fullCommittee(c), grade: g || cfg.grade || '', head: i === 0 })) }));
     const people = teams.reduce((n, t) => n + t.delegates.length, 0);
     const tiers = [...new Set(teams.map(t => t.tier))];
     const what = tiers.length === 1 ? `${teams.length} ${tiers[0]}${teams.length === 1 ? '' : 's'}` : `${teams.length} delegations`;
     const payment = confirm(`Mark ${cfg.school} (${teams.length} ${teams.length === 1 ? 'delegation' : 'delegations'}) as PAID?\n\nOK = Paid\nCancel = Unpaid`) ? 'paid' : 'unpaid';
     if (!confirm(`Register ${what} from ${cfg.school} (${people} delegates, ${payment.toUpperCase()})?\n\n` +
-        teams.map(t => `${t.name} (${t.tier}):\n` + t.delegates.map(d => `  ${d.name}${d.head ? ' (Head Delegate)' : ''}, ${d.grade} - ${d.committee}`).join('\n')).join('\n\n'))) return;
+        teams.map(t => `${t.name} (${t.tier}):\n` + t.delegates.map(d => `  ${d.name}${d.head ? ' (Head Delegate)' : ''}${d.grade ? ', ' + d.grade : ''} - ${d.committee}`).join('\n')).join('\n\n'))) return;
 
     const label = btn ? btn.innerText : '';
     if (btn) { btn.disabled = true; btn.innerText = 'Importing...'; }
@@ -9815,7 +9830,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ============ EDIT ME ============ */
 const EVENT_DATE  = '2026-10-16T18:00:00+14:00';   // e.g. '2026-11-20T09:00:00+05:00'  (null = "date to be announced")
 const EVENT_LABEL = 'Sports Fest begins in';
-const MUN_EVENT_DATE  = '2026-10-30T00:00:00+05:00';   // 30 October 2026, start of day, Pakistan time (PKT = +05:00)
+const MUN_EVENT_DATE  = '2026-10-30T14:00:00+05:00';   // 30 October 2026, 2:00 pm Pakistan time (PKT = +05:00)
 const MUN_EVENT_LABEL = 'JTC MUN begins in';
 const SPORTS_FEST_ENDED = true;       // true = Sports Fest is over: Register Now / Schedule / Socials say the event has ended
 const CD_APPLICATIONS_OPEN = false;   // false = Committee Director tile says applications are closed
