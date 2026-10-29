@@ -1414,6 +1414,7 @@ button, .card, .big-tile, .coc-badge, input, select, textarea {
     <h2>Registration Submissions</h2>
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button class="btn" style="width: auto; background: linear-gradient(135deg, #10b981, #047857);" onclick="exportSportsParticipantsPDF(this)">📄 Sports Fest Participants List (PDF)</button>
+        <button class="btn" style="width: auto; margin-left: 8px; background: linear-gradient(135deg, #10b981, #047857);" onclick="exportMunDelegatesExcel(this)">📊 All MUN Delegates (Excel)</button>
     </div>
     <div class="admin-only hidden" style="margin-top: 12px;">
         <button id="mun-tier-btn" class="btn" style="width: auto; background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="regradeMunDelegations(this)">Move MUN Submissions by Grade: Junior (Grade 6 – O2) / Senior (O3 – A2)</button>
@@ -7679,6 +7680,100 @@ function renderRegistrationsTable(eventType, subType) {
                 .catch(err => { pdfLibPromise = null; throw err; });
         }
         return pdfLibPromise;
+    }
+
+    // ---- Excel list of every MUN delegate: one row per person, with status, category, committee and allotment ----
+    let xlsxLibPromise = null;
+    function loadXlsxLib() {
+        if (window.XLSX) return Promise.resolve();
+        if (!xlsxLibPromise) xlsxLibPromise = new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; s.onload = res;
+            s.onerror = () => { xlsxLibPromise = null; rej(new Error('Could not load the Excel library. Check your internet connection.')); };
+            document.head.appendChild(s);
+        });
+        return xlsxLibPromise;
+    }
+
+    function munDelegateRows() {
+        const fullCommittee = c => munCommittees.find(x => x === c || x.toUpperCase().startsWith(String(c || '').toUpperCase() + ' ')) || c || '';
+        const dupGroups = getDuplicateGroups();
+        const flagOf = r => { const f = ROW_FLAGS[getRowStatus(r, dupGroups)]; return f ? f.text : ''; };
+        const when = r => r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate() : '';
+        const rows = [], covered = new Set();
+        const add = (r, p) => rows.push({
+            Name: p.name || '-', 'Head Delegate': p.head ? 'Yes' : '', Grade: p.grade || '',
+            Category: munTierOf(r) || '-', Committee: fullCommittee(p.committee) || '-', Allotment: p.allotment || '',
+            Status: (r.paymentStatus || 'unpaid') === 'paid' ? 'PAID' : 'UNPAID',
+            Delegation: p.delegation || '', 'School / Institution': p.school || '', Type: p.type,
+            Email: regEmail(r), Flag: flagOf(r), 'Submitted At': when(r)
+        });
+        const mun = allRegistrations.filter(r => r.eventType === 'MUN');
+        mun.filter(r => isDelegationRecord(r) && r.subType !== 'Private Delegates' && r.subType !== 'Committee Directors').forEach(del => {
+            const group = getDelegationGroup(del.id).map(id => allRegistrations.find(x => x.id === id)).filter(x => x && x.id !== del.id);
+            group.forEach(x => covered.add(x.id));
+            munDelegatesFromRecord(del).filter(p => p.name || p.committee).forEach(p => {
+                const committee = fullCommittee(p.committee);
+                const row = group.find(x => munCommitteeOf(x) === committee);
+                const legacy = committee && committeePoolKey(committee) === 'countries' ? (del.allotment || '').trim() : '';
+                add(del, { ...p, committee, allotment: ((row && row.allotment) || '').trim() || legacy,
+                    delegation: regDelegationName(del) || del.categoryOrCommittee, school: regSchool(del), type: 'Delegation' });
+            });
+        });
+        // Committee entries whose delegation record is missing
+        mun.filter(r => !isDelegationRecord(r) && !covered.has(r.id)).forEach(r => {
+            const people = splitPeople(regData(r)['Delegates']);
+            (people.length ? people : ['-']).forEach(s => {
+                const m = s.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+                const inner = m ? m[2] : '';
+                add(r, { name: m ? m[1] : s, head: /head/i.test(inner), grade: inner.replace(/head delegate,?\s*/i, '').trim(),
+                    committee: munCommitteeOf(r), allotment: (r.allotment || '').trim(),
+                    delegation: regDelegationName(r), school: regSchool(r), type: 'Delegation' });
+            });
+        });
+        mun.filter(r => r.subType === 'Private Delegates').forEach(r => {
+            const d = regData(r);
+            add(r, { name: d['Full Name'], grade: d['Grade'], committee: d['Preferred Committee'], allotment: (r.allotment || '').trim(),
+                delegation: '', school: d['School / Institution Name'], type: 'Private Delegate' });
+        });
+        const order = c => { const i = munCommittees.indexOf(c); return i < 0 ? 99 : i; };
+        return rows.sort((a, b) => a.Category.localeCompare(b.Category) || order(a.Committee) - order(b.Committee) ||
+            a.Delegation.localeCompare(b.Delegation) || a.Name.localeCompare(b.Name));
+    }
+
+    async function exportMunDelegatesExcel(btn) {
+        if (!isAdmin) return alert('Please log in as admin first.');
+        const label = btn ? btn.innerText : '';
+        if (btn) { btn.disabled = true; btn.innerText = 'Preparing Excel...'; }
+        try {
+            await loadXlsxLib();
+            const rows = munDelegateRows();
+            if (!rows.length) return alert('No MUN delegates registered yet.');
+            const widths = { '#': 5, Name: 26, 'Head Delegate': 13, Grade: 9, Category: 10, Committee: 40, Allotment: 22, Status: 9,
+                Delegation: 28, 'School / Institution': 28, Type: 16, Email: 30, Flag: 26, 'Submitted At': 20 };
+            const sheet = list => {
+                const data = list.map((r, i) => ({ '#': i + 1, ...r }));
+                const ws = XLSX.utils.json_to_sheet(data, { cellDates: true, dateNF: 'dd mmm yyyy hh:mm' });
+                const cols = Object.keys(data[0]);
+                ws['!cols'] = cols.map(c => ({ wch: widths[c] || 14 }));
+                ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: data.length, c: cols.length - 1 } }) };
+                return ws;
+            };
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, sheet(rows), 'All Delegates');
+            // One sheet per committee (Junior and Senior together)
+            munCommittees.forEach(c => {
+                const list = rows.filter(r => r.Committee === c);
+                if (list.length) XLSX.utils.book_append_sheet(wb, sheet(list), committeeCode(c).slice(0, 31));
+            });
+            const other = rows.filter(r => !munCommittees.includes(r.Committee));
+            if (other.length) XLSX.utils.book_append_sheet(wb, sheet(other), 'No Committee');
+            XLSX.writeFile(wb, `JTC MUN Delegates ${new Date().toISOString().slice(0, 10)}.xlsx`);
+        } catch (err) {
+            alert('Could not make the Excel file: ' + (err.message || err));
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerText = label; }
+        }
     }
 
     // Same filter the table uses (event, type, category and the search box)
